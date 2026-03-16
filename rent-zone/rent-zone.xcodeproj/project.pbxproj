@@ -6,7 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		77728F9F2F67C9AB007A4E1F /* homeFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77728F9E2F67C9AB007A4E1F /* homeFile.swift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		77728F9E2F67C9AB007A4E1F /* homeFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = homeFile.swift; sourceTree = "<group>"; };
 		C249AC782F62973B005ADE41 /* rent-zone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "rent-zone.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -32,6 +37,7 @@
 		C249AC6F2F62973B005ADE41 = {
 			isa = PBXGroup;
 			children = (
+				77728F9E2F67C9AB007A4E1F /* homeFile.swift */,
 				C249AC7A2F62973B005ADE41 /* rent-zone */,
 				C249AC792F62973B005ADE41 /* Products */,
 			);
@@ -119,6 +125,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				77728F9F2F67C9AB007A4E1F /* homeFile.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
