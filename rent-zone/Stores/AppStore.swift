@@ -2,8 +2,6 @@ import SwiftUI
 import Combine
 
 class AppStore: ObservableObject {
-    var objectWillChange: ObservableObjectPublisher
-
     @Published var userStore = UserStore()
     @Published var productStore = ProductStore()
     @Published var categoryStore = CategoryStore()

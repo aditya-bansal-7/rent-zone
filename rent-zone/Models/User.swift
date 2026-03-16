@@ -4,8 +4,8 @@ struct User: Codable, Identifiable, Hashable {
     var id: UUID = UUID()
     var name: String
     var location: String
-    var isVerified: Bool
-    var favoriteProductIDs: [UUID]
+    var isVerified: Bool = false
+    var favoriteProducts: [UUID] = []
 }
 
 struct Account: Codable, Identifiable, Hashable {

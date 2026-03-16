@@ -46,13 +46,13 @@ class ReviewStore: ObservableObject {
 }
 
 class NotificationStore: ObservableObject {
-    @Published var notifications: [Notification] = []
+    @Published var notifications: [AppNotification] = []
     
     func fetchItems() {
         self.notifications = []
     }
     
-    func addItem(_ notification: Notification) {
+    func addItem(_ notification: AppNotification) {
         notifications.append(notification)
     }
     
@@ -60,7 +60,7 @@ class NotificationStore: ObservableObject {
         notifications.removeAll { $0.id == id }
     }
     
-    func updateItem(_ notification: Notification) {
+    func updateItem(_ notification: AppNotification) {
         if let index = notifications.firstIndex(where: { $0.id == notification.id }) {
             notifications[index] = notification
         }

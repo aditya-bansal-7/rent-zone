@@ -55,8 +55,8 @@ class CategoryStore: ObservableObject {
     
     func fetchItems() {
         self.categories = [
-            Category(name: "Men", type: .men),
-            Category(name: "Women", type: .women)
+            Category(name: "Men", images: "", type: .men),
+            Category(name: "Women", images: "", type: .women)
         ]
     }
     
