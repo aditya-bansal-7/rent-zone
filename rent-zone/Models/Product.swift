@@ -34,6 +34,8 @@ struct Product: Codable, Identifiable, Hashable {
     var pickupLocation: String
     var imageURLs: [String]
     var reviews: [Review] = []
+    var rating: Double = 0.0
+    var isPopular: Bool = false
 }
 
 struct Category: Codable, Identifiable, Hashable {
