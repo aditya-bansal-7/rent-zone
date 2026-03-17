@@ -164,13 +164,14 @@ struct HomeView: View {
         return VStack(alignment: .leading, spacing: 6) {
             // Image area
             ZStack(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray5))
-                    .aspectRatio(0.8, contentMode: .fit)
-                    .overlay(
-                        Image(systemName: "photo")
-                            .font(.system(size: 30))
-                            .foregroundColor(.gray.opacity(0.5))
+                Image(product.imageURLs.first ?? "")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(maxWidth: .infinity, minHeight: 220, maxHeight: 220)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray5))
                     )
                 
                 // Favorite button
