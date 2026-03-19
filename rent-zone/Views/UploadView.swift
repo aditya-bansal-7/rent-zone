@@ -2,13 +2,19 @@
 //  UploadView.swift
 //  rent-zone
 //
-//  Created by Vansh     on 13/03/26.
+//  Created by Vansh on 13/03/26.
 //
 
 import SwiftUI
 import MapKit
 
 struct UploadView: View {
+    
+    @EnvironmentObject var appStore: AppStore
+    
+    var categories: [Category] {
+        appStore.categoryStore.categories
+    }
     
     @State private var selectedCategory = ""
     @State private var selectedCondition = ""
@@ -20,7 +26,6 @@ struct UploadView: View {
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
     )
     
-    let categories = ["Dress", "Shirt", "Shoes"]
     let conditions = ["New", "Like New", "Used"]
     let sizes = ["XS", "S", "M", "L", "XL"]
     
@@ -37,7 +42,7 @@ struct UploadView: View {
                         Picker("Select the Category", selection: $selectedCategory) {
                             
                             ForEach(categories, id: \.self) { category in
-                                Text(category).tag(category)
+                                Text(category.name).tag(category.name)
                             }
                         }
                         
@@ -113,7 +118,7 @@ struct UploadView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.purple.opacity(0.2))
-                        .foregroundColor(.black)
+                        .foregroundStyle(.black)
                         .cornerRadius(30)
                 }
                 .listRowBackground(Color.clear)
@@ -128,6 +133,7 @@ struct UploadView: View {
                     //
                     } label: {
                         Image(systemName: "chevron.left")
+                            .foregroundStyle(.black)
                     }
                 }
         

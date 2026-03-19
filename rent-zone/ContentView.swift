@@ -5,12 +5,13 @@ struct ContentView: View {
     
     var body: some View {
         TabView {
-            
-            HomeView()
-                .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Home")
-                }
+            NavigationStack {
+                HomeView()
+            }
+            .tabItem {
+                Image(systemName: "house.fill")
+                Text("Home")
+            }
             
             Text("Categories")
                 .tabItem {
@@ -24,9 +25,11 @@ struct ContentView: View {
                     Text("Chat")
                 }
             
-            Text("Rent")
+            NavigationStack {
+                UploadView()
+            }
                 .tabItem {
-                    Image(systemName: "plus.circle")
+                    Image(systemName: "plus")
                     Text("Rent")
                 }
         }
