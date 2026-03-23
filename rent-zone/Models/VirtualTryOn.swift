@@ -1,6 +1,6 @@
 import Foundation
 
-struct VirtualTryOn: Codable, Identifiable, Hashable {
+struct VirtualTryOn: Identifiable, Hashable {
     var id: UUID = UUID()
     let userId: UUID
     let productId: UUID

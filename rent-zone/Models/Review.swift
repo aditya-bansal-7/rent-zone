@@ -1,6 +1,6 @@
 import Foundation
 
-struct Review: Codable, Identifiable, Hashable {
+struct Review: Identifiable, Hashable {
     var id: UUID = UUID()
     let productId: UUID
     let userId: UUID

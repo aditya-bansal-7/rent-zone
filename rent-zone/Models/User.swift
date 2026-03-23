@@ -1,14 +1,20 @@
 import Foundation
 
-struct User: Codable, Identifiable, Hashable {
+enum AccountProvider: String, Hashable, CaseIterable {
+    case google
+    case apple
+    case email
+}
+
+struct User: Identifiable, Hashable {
     var id: UUID = UUID()
     var name: String
     var location: String
     var isVerified: Bool = false
-    var favoriteProducts: [UUID] = []
+    var favouriteProducts: [UUID] = []
 }
 
-struct Account: Codable, Identifiable, Hashable {
+struct Account: Identifiable, Hashable {
     var id: UUID = UUID()
     let userId: UUID
     var provider: AccountProvider

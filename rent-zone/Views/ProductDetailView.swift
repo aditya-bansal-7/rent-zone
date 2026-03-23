@@ -9,13 +9,22 @@ struct ProductDetailView: View {
             VStack(spacing: 0) {
              
                 ZStack(alignment: .top) {
-                    Image(product.imageURLs.first ?? "sharara_orange")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: UIScreen.main.bounds.width, height: 450)
-                        .cornerRadius(20)
-                        
-                        .clipped()
+                    let images = product.imageURLs.isEmpty ? ["sharara_orange", "sharara_orange", "sharara_orange"] : product.imageURLs
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        LazyHStack(spacing: UIScreen.main.bounds.width * 0.025) {
+                            ForEach(Array(images.enumerated()), id: \.offset) { index, imageUrl in
+                                Image(imageUrl)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: UIScreen.main.bounds.width * 0.85, height: 450)
+                                    .cornerRadius(20)
+                                    .clipped()
+                            }
+                        }
+                        .scrollTargetLayout()
+                    }
+                    .scrollTargetBehavior(.viewAligned)
+                    .safeAreaPadding(.horizontal, UIScreen.main.bounds.width * 0.075)
         
                     HStack {
                         Button(action: {
