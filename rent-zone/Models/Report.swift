@@ -1,6 +1,6 @@
 import Foundation
 
-struct Report: Codable, Identifiable, Hashable {
+struct Report: Identifiable, Hashable {
     var id: UUID = UUID()
     let reportedByUserId: UUID
     let reportedUserId: UUID

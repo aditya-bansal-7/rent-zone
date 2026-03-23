@@ -1,13 +1,13 @@
 import Foundation
 
-enum ProductCondition: String, Codable, Hashable, CaseIterable {
+enum ProductCondition: String, Hashable, CaseIterable {
     case new
     case likeNew = "Like New"
     case good
     case worn
 }
 
-enum DescriptionTypes: String, Codable, Hashable, CaseIterable{
+enum DescriptionTypes: String, Hashable, CaseIterable{
     case fabric
     case brand
     case style
@@ -15,12 +15,12 @@ enum DescriptionTypes: String, Codable, Hashable, CaseIterable{
 }
 
 
-enum CategoryType: String, Codable, Hashable, CaseIterable {
+enum CategoryType: String, Hashable, CaseIterable {
     case men
     case women
 }
 
-struct Product: Codable, Identifiable, Hashable {
+struct Product: Identifiable, Hashable {
     var id: UUID = UUID()
     var name: String
     var rentPricePerDay: Double
@@ -38,7 +38,7 @@ struct Product: Codable, Identifiable, Hashable {
     var isPopular: Bool = false
 }
 
-struct Category: Codable, Identifiable, Hashable {
+struct Category: Identifiable, Hashable {
     var id: UUID = UUID()
     var name: String
     var images: String
