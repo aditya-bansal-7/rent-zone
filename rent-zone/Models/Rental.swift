@@ -1,7 +1,7 @@
 import Foundation
 
 
-enum RentalStatus: String, Codable, Hashable, CaseIterable {
+enum RentalStatus: String, Hashable, CaseIterable {
     case requested
     case approved
     case active
@@ -10,7 +10,7 @@ enum RentalStatus: String, Codable, Hashable, CaseIterable {
 }
 
 
-struct Rental: Codable, Identifiable, Hashable {
+struct Rental: Identifiable, Hashable {
     var id: UUID = UUID()
     let productId: UUID
     let rentedByUserId: UUID
