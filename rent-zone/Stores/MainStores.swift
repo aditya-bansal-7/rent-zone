@@ -163,6 +163,51 @@ class ProductStore: ObservableObject {
             products[index] = product
         }
     }
+    
+    func sortedAndFiltered(
+        sortOption: SortOption?,
+        priceRange: ClosedRange<Double>,
+        selectedSizes: Set<ClothingSize>,
+        selectedOccasions: Set<Occasion>,
+        selectedDate: Date?
+    ) -> [Product] {
+        var result = products
+        
+        // Filter by price range
+        result = result.filter { priceRange.contains($0.rentPricePerDay) }
+        
+        // Filter by size
+        if !selectedSizes.isEmpty {
+            result = result.filter { product in
+                selectedSizes.contains(where: { $0.rawValue == product.size })
+            }
+        }
+        
+        // Filter by date availability
+        if let date = selectedDate {
+            result = result.filter { product in
+                !product.bookedDates.contains(where: {
+                    Calendar.current.isDate($0, inSameDayAs: date)
+                })
+            }
+        }
+        
+        // Sort
+        if let sortOption = sortOption {
+            switch sortOption {
+            case .priceLowToHigh:
+                result.sort { $0.rentPricePerDay < $1.rentPricePerDay }
+            case .priceHighToLow:
+                result.sort { $0.rentPricePerDay > $1.rentPricePerDay }
+            case .ratingHighToLow:
+                result.sort { $0.rating > $1.rating }
+            case .newest:
+                break // No creation date to sort by currently
+            }
+        }
+        
+        return result
+    }
 }
 
 class CategoryStore: ObservableObject {
