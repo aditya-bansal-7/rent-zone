@@ -3,30 +3,34 @@ import SwiftUI
 struct ProductDetailView: View {
     let product: Product
     @Environment(\.dismiss) private var dismiss
+    @State private var showMenu = false
+    @State private var currentImageIndex = 0
+    @State private var isFavorite = false
     
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
              
                 ZStack(alignment: .top) {
-                    let images = product.imageURLs.isEmpty ? ["sharara_orange", "sharara_orange", "sharara_orange"] : product.imageURLs
+                    // Image Carousel with next image peek
                     ScrollView(.horizontal, showsIndicators: false) {
-                        LazyHStack(spacing: UIScreen.main.bounds.width * 0.025) {
-                            ForEach(Array(images.enumerated()), id: \.offset) { index, imageUrl in
-                                Image(imageUrl)
+                        HStack(spacing: 8) {
+                            ForEach(Array(product.imageURLs.enumerated()), id: \.offset) { index, imageName in
+                                Image(imageName)
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: UIScreen.main.bounds.width * 0.85, height: 450)
-                                    .cornerRadius(20)
+                                    .frame(width: UIScreen.main.bounds.width - 40, height: 450)
                                     .clipped()
+                                    .cornerRadius(20)
                             }
                         }
                         .scrollTargetLayout()
+                        .padding(.horizontal, 16)
                     }
                     .scrollTargetBehavior(.viewAligned)
-                    .safeAreaPadding(.horizontal, UIScreen.main.bounds.width * 0.075)
+                    .frame(height: 450)
         
-                    HStack {
+                    HStack(alignment: .top) {
                         Button(action: {
                             dismiss()
                         }) {
@@ -34,25 +38,69 @@ struct ProductDetailView: View {
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.black)
                                 .frame(width: 44, height: 44)
-                                .background(Color.white.opacity(0.85))
+                                .background(.ultraThinMaterial)
                                 .clipShape(Circle())
                         }
                         
                         Spacer()
                         
-                        Button(action: {}) {
-                            Image(systemName: "ellipsis")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.black)
-                                .frame(width: 44, height: 44)
-                                .background(Color.white.opacity(0.85))
-                                .clipShape(Circle())
+                        if showMenu {
+                            HStack(spacing: 24) {
+                                Button(action: {
+                                    isFavorite.toggle()
+                                }) {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                            .font(.system(size: 22, weight: .medium))
+                                            .foregroundColor(isFavorite ? .red : .black)
+                                        Text("Favourite")
+                                            .font(.system(size: 10, weight: .medium))
+                                            .foregroundColor(.black)
+                                    }
+                                }
+                                
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                        showMenu = false
+                                    }
+                                }) {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: "square.and.arrow.up")
+                                            .font(.system(size: 22, weight: .medium))
+                                        Text("Share")
+                                            .font(.system(size: 10, weight: .medium))
+                                    }
+                                    .foregroundColor(.black)
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(.ultraThinMaterial)
+                            .cornerRadius(16)
+                            .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 4)
+                            .transition(.scale(scale: 0.3, anchor: .topTrailing).combined(with: .opacity))
+                        } else {
+                            Button(action: {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                    showMenu = true
+                                }
+                            }) {
+                                Image(systemName: "ellipsis")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.black)
+                                    .frame(width: 44, height: 44)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                                    .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 2)
+                            }
+                            .transition(.scale(scale: 0.3, anchor: .topTrailing).combined(with: .opacity))
                         }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
                 }
             
+                // Product Info Card
                 VStack(alignment: .leading, spacing: 16) {
                     Text(product.name)
                         .font(.system(size: 24, weight: .bold))
@@ -93,10 +141,34 @@ struct ProductDetailView: View {
                 .cornerRadius(30)
                 .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: -5)
                 .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
+                .padding(.horizontal, 20)
                 .offset(y: -40)
                 .padding(.bottom, -40)
                 
+                // Description Card
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Description")
+                        .font(.system(size: 20, weight: .bold))
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        if let fabric = product.description[.fabric] {
+                            descriptionRow(title: "Fabric:", value: fabric)
+                        }
+                        if let brand = product.description[.brand] {
+                            descriptionRow(title: "Brand:", value: brand)
+                        }
+                        if let style = product.description[.style] {
+                            descriptionRow(title: "Style:", value: style)
+                        }
+                        if let fitAndComfort = product.description[.fitAndComfort] {
+                            descriptionRow(title: "Fit & Comfort:", value: fitAndComfort)
+                        }
+                    }
+                }
+                .cardStyle()
+                .padding(.top, 10)
 
+                // Availability Card
                 VStack(alignment: .leading, spacing: 20) {
                     HStack {
                         Text("Availability")
@@ -135,13 +207,43 @@ struct ProductDetailView: View {
                         }
                     }
                 }
-                .padding(24)
-                .background(Color.white)
-                .cornerRadius(30)
-                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
-                .padding(.horizontal, 20)
+                .cardStyle()
+                .padding(.top, 10)
+
+                // Profile Card
+                HStack(spacing: 14) {
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .frame(width: 48, height: 48)
+                        .foregroundColor(.gray.opacity(0.5))
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Text("Shreya Singh")
+                                .font(.system(size: 16, weight: .bold))
+                            Image(systemName: "checkmark.seal.fill")
+                                .foregroundColor(.blue)
+                                .font(.system(size: 14))
+                        }
+                        Text("Verified User")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.gray)
+                    }
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 4) {
+                        Text("4.5")
+                            .font(.system(size: 14, weight: .bold))
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                            .font(.system(size: 12))
+                    }
+                }
+                .cardStyle()
                 .padding(.top, 10)
            
+                // Request to Rent Button
                 Button(action: {}) {
                     Text("Request to Rent")
                         .font(.system(size: 16, weight: .semibold))
@@ -154,12 +256,12 @@ struct ProductDetailView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 24)
                 
-       
+                // Reviews Card
                 VStack(alignment: .leading, spacing: 20) {
                     HStack {
                         Text("Reviews")
                             .font(.system(size: 20, weight: .bold))
-                        Spacer()
+                        
                         HStack(spacing: 4) {
                             Image(systemName: "star.fill")
                                 .foregroundColor(.yellow)
@@ -167,6 +269,12 @@ struct ProductDetailView: View {
                             Text("4.5")
                                 .font(.system(size: 14, weight: .bold))
                         }
+                        
+                        Spacer()
+                        
+                        Text("20 Reviews")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.gray)
                     }
                     
                     ReviewItemView(
@@ -181,11 +289,7 @@ struct ProductDetailView: View {
                         text: "Rented for my clg fest performance such a savior at last moment"
                     )
                 }
-                .padding(24)
-                .background(Color.white)
-                .cornerRadius(30)
-                .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
-                .padding(.horizontal, 20)
+                .cardStyle()
                 .padding(.top, 24)
                 .padding(.bottom, 40)
                 
@@ -204,12 +308,27 @@ struct ProductDetailView: View {
         }
     }
     
-    // Safely gets the top padding offset inside an ignored safe area scroll container
-    private func safeAreaTop() -> CGFloat {
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-            return windowScene.windows.first?.safeAreaInsets.top ?? 47
+    private func descriptionRow(title: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: 4) {
+            Text(title)
+                .font(.system(size: 14, weight: .bold))
+            Text(value)
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(.black.opacity(0.8))
         }
-        return 47
+    }
+}
+
+// Consistent card styling modifier
+extension View {
+    func cardStyle() -> some View {
+        self
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white)
+            .cornerRadius(30)
+            .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
+            .padding(.horizontal, 20)
     }
 }
 
@@ -259,15 +378,21 @@ struct ReviewItemView: View {
 
 #Preview {
     ProductDetailView(product: Product(
-        name: "Rajisthani Poshak",
-        rentPricePerDay: 520,
+        name: "Sharara",
+        rentPricePerDay: 400,
         securityDeposit: 500,
         condition: .new,
         size: "Medium",
+        description: [
+            .fabric: "Silk blend With Embroidery",
+            .brand: "Biba Inspired",
+            .style: "Festive Ethnic",
+            .fitAndComfort: "Elegant look with Comfortable Wear"
+        ],
         listedByUserId: UUID(),
         categoryId: UUID(),
         pickupLocation: "Jaipur",
-        imageURLs: [],
+        imageURLs: ["sharara_orange", "sharara"],
         rating: 4.5,
         isPopular: true
     ))

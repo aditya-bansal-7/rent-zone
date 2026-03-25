@@ -94,8 +94,8 @@ struct ReportUserView: View {
                                 .foregroundColor(.black)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.purple.opacity(0.25))
-                                .cornerRadius(20)
+                                .background(Color(red: 243/255, green: 236/255, blue: 255/255))
+                                .cornerRadius(30)
                         }
                     }
                     .padding()
