@@ -81,7 +81,7 @@ struct ChatListView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 12) {
                     ForEach(conversations) { conversation in
-                        NavigationLink(destination: PersonalChatView(conversation: conversation)) {
+                        NavigationLink(value: conversation) {
                             ChatRowView(conversation: conversation)
                         }
                     }

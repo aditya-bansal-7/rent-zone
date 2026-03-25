@@ -6,7 +6,7 @@ struct ProductCardView: View {
     
     var body: some View {
         let isFavorite = favoriteProductIds.contains(product.id)
-        return NavigationLink(destination: ProductDetailView(product: product)) {
+        return NavigationLink(value: product) {
             VStack(alignment: .leading, spacing: 6) {
                 // Image area
             ZStack(alignment: .topTrailing) {

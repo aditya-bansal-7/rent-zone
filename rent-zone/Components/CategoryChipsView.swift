@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CategoryChipsView: View {
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     @Binding var selectedCategory: String
     
     var body: some View {
@@ -40,5 +40,5 @@ struct CategoryChipsView: View {
 
 #Preview {
     CategoryChipsView(selectedCategory: .constant("All Items"))
-        .environmentObject(AppStore())
+        .environment(AppStore())
 }

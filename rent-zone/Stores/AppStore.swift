@@ -1,14 +1,13 @@
 import SwiftUI
-import Combine
+import Observation
 
-class AppStore: ObservableObject {
-    @Published var userStore = UserStore()
-    @Published var productStore = ProductStore()
-    @Published var categoryStore = CategoryStore()
-    @Published var rentalStore = RentalStore()
-    @Published var reviewStore = ReviewStore()
-    @Published var notificationStore = NotificationStore()
-    
+@Observable class AppStore {
+    var userStore = UserStore()
+    var productStore = ProductStore()
+    var categoryStore = CategoryStore()
+    var rentalStore = RentalStore()
+    var reviewStore = ReviewStore()
+    var notificationStore = NotificationStore()
     
     init() {
         fetchInitialData()

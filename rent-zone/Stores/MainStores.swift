@@ -1,8 +1,8 @@
 import Foundation
-import Combine
+import Observation
 
-class UserStore: ObservableObject {
-    @Published var users: [User] = []
+@Observable class UserStore {
+    var users: [User] = []
     
     func fetchItems() {
         self.users = [
@@ -25,8 +25,8 @@ class UserStore: ObservableObject {
     }
 }
 
-class ProductStore: ObservableObject {
-    @Published var products: [Product] = []
+@Observable class ProductStore {
+    var products: [Product] = []
     
     func fetchItems() {
         let dummyUserId = UUID()
@@ -165,8 +165,8 @@ class ProductStore: ObservableObject {
     }
 }
 
-class CategoryStore: ObservableObject {
-    @Published var categories: [Category] = []
+@Observable class CategoryStore {
+    var categories: [Category] = []
     
     func fetchItems() {
         self.categories = [

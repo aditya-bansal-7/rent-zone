@@ -1,45 +1,39 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     
     var body: some View {
-        TabView {
-            NavigationStack {
-                HomeView()
-            }
-            .tabItem {
-                Image(systemName: "house.fill")
-                Text("Home")
-            }
-            
-            Text("Categories")
-                .tabItem {
-                    Image(systemName: "square.grid.2x2")
+        NavigationStack {
+            TabView {
+                Tab("Home", systemImage: "house.fill") {
+                    HomeView()
+                }
+                
+                Tab("Categories", systemImage: "square.grid.2x2") {
                     Text("Categories")
                 }
-            
-            NavigationStack {
-                ChatListView()
-            }
-                .tabItem {
-                    Image(systemName: "message.fill")
-                    Text("Chat")
+                
+                Tab("Chat", systemImage: "message.fill") {
+                    ChatListView()
                 }
-            
-            NavigationStack {
-                UploadView()
-            }
-                .tabItem {
-                    Image(systemName: "plus")
-                    Text("Rent")
+                
+                Tab("Rent", systemImage: "plus") {
+                    UploadView()
                 }
+            }
+            .navigationDestination(for: Product.self) { product in
+                ProductDetailView(product: product)
+            }
+            .navigationDestination(for: ChatConversation.self) { conversation in
+                PersonalChatView(conversation: conversation)
+            }
+            .tint(.blue)
         }
-        .tint(.blue)
     }
 }
 
 #Preview {
     ContentView()
-        .environmentObject(AppStore())
+        .environment(AppStore())
 }

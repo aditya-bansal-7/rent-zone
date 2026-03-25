@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HomeView: View {
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     @State private var searchText = ""
     @State private var selectedCategory = "All Items"
     @State private var favoriteProductIds: Set<UUID> = []
@@ -46,5 +46,5 @@ struct HomeView: View {
 
 #Preview {
     HomeView()
-        .environmentObject(AppStore())
+        .environment(AppStore())
 }

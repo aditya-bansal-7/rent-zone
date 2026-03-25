@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ReportUserView: View {
     
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     
     @State private var selectedReason = "Choose report reasons"
     @State private var description = ""
@@ -130,4 +130,5 @@ struct ReportUserView: View {
 
 #Preview {
     ReportUserView()
+        .environment(AppStore())
 }

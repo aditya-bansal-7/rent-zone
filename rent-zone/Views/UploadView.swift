@@ -1,16 +1,9 @@
-//
-//  UploadView.swift
-//  rent-zone
-//
-//  Created by Vansh on 13/03/26.
-//
-
 import SwiftUI
 import MapKit
 
 struct UploadView: View {
     
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     
     var categories: [Category] {
         appStore.categoryStore.categories
@@ -82,8 +75,6 @@ struct UploadView: View {
                         
                     }
                 
-            
-                
                 VStack(alignment: .leading){
                     Text("Description")
                         .font(Font.title2)
@@ -92,8 +83,6 @@ struct UploadView: View {
                     TextField("Describe Your Outfit", text: $description, axis: .vertical)
                         .frame(height: 100, alignment: .topLeading)
                 }
-                
-                
                 
                 VStack(alignment: .leading) {
                     Text("Pick-Up Location")
@@ -145,4 +134,5 @@ struct UploadView: View {
 
 #Preview {
     UploadView()
+        .environment(AppStore())
 }
