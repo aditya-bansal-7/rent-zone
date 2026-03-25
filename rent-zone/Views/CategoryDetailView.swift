@@ -72,10 +72,7 @@ struct CategoryDetailView: View {
                     ForEach(filteredProducts) { product in
                         ProductCardView(
                             product: product,
-                            isFavorite: favoriteProductIds.contains(product.id),
-                            onFavoriteTap: {
-                                toggleFavorite(product.id)
-                            }
+                            favoriteProductIds: $favoriteProductIds
                         )
                     }
                 }
@@ -229,13 +226,6 @@ struct CategoryDetailView: View {
         .background(Color.white)
     }
     
-    private func toggleFavorite(_ id: UUID) {
-        if favoriteProductIds.contains(id) {
-            favoriteProductIds.remove(id)
-        } else {
-            favoriteProductIds.insert(id)
-        }
-    }
 }
 
 #Preview {
