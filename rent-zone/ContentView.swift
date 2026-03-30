@@ -19,9 +19,11 @@ struct ContentView: View {
                     Text("Categories")
                 }
             
-            Text("Chat")
+            NavigationStack {
+                ChatListView()
+            }
                 .tabItem {
-                    Image(systemName: "message")
+                    Image(systemName: "message.fill")
                     Text("Chat")
                 }
             

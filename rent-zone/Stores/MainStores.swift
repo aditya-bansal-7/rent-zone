@@ -39,6 +39,12 @@ class ProductStore: ObservableObject {
                 securityDeposit: 1000,
                 condition: .good,
                 size: "M",
+                description: [
+                    .fabric: "Cotton with Mirror Work",
+                    .brand: "Traditional Rajasthani",
+                    .style: "Festive Ethnic",
+                    .fitAndComfort: "Comfortable traditional fit"
+                ],
                 listedByUserId: dummyUserId,
                 categoryId: dummyCategoryId,
                 pickupLocation: "Mumbai",
@@ -52,6 +58,12 @@ class ProductStore: ObservableObject {
                 securityDeposit: 800,
                 condition: .likeNew,
                 size: "S",
+                description: [
+                    .fabric: "Georgette with Sequin Work",
+                    .brand: "W Inspired",
+                    .style: "Party Wear",
+                    .fitAndComfort: "Flowy and lightweight"
+                ],
                 listedByUserId: dummyUserId,
                 categoryId: dummyCategoryId,
                 pickupLocation: "Delhi",
@@ -65,6 +77,12 @@ class ProductStore: ObservableObject {
                 securityDeposit: 1200,
                 condition: .new,
                 size: "L",
+                description: [
+                    .fabric: "Premium Wool Blend",
+                    .brand: "Raymond Style",
+                    .style: "Formal Western",
+                    .fitAndComfort: "Slim fit with stretch"
+                ],
                 listedByUserId: dummyUserId,
                 categoryId: dummyCategoryId,
                 pickupLocation: "Bangalore",
@@ -78,10 +96,16 @@ class ProductStore: ObservableObject {
                 securityDeposit: 900,
                 condition: .good,
                 size: "M",
+                description: [
+                    .fabric: "Silk blend With Embroidery",
+                    .brand: "Biba Inspired",
+                    .style: "Festive Ethnic",
+                    .fitAndComfort: "Elegant look with Comfortable Wear"
+                ],
                 listedByUserId: dummyUserId,
                 categoryId: dummyCategoryId,
                 pickupLocation: "Jaipur",
-                imageURLs: ["sharara_orange"],
+                imageURLs: ["sharara_orange", "sharara"],
                 rating: 5.0,
                 isPopular: true
             ),
@@ -91,6 +115,12 @@ class ProductStore: ObservableObject {
                 securityDeposit: 700,
                 condition: .likeNew,
                 size: "S",
+                description: [
+                    .fabric: "Net with Thread Work",
+                    .brand: "Meena Bazaar Style",
+                    .style: "Indo Western",
+                    .fitAndComfort: "Semi-fitted comfortable drape"
+                ],
                 listedByUserId: dummyUserId,
                 categoryId: dummyCategoryId,
                 pickupLocation: "Pune",
@@ -104,6 +134,12 @@ class ProductStore: ObservableObject {
                 securityDeposit: 600,
                 condition: .good,
                 size: "M",
+                description: [
+                    .fabric: "Chaniya Choli Cotton",
+                    .brand: "Gujarati Traditional",
+                    .style: "Navratri Special",
+                    .fitAndComfort: "Free-flowing garba-ready comfort"
+                ],
                 listedByUserId: dummyUserId,
                 categoryId: dummyCategoryId,
                 pickupLocation: "Ahmedabad",
