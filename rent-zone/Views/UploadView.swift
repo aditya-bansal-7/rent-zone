@@ -21,10 +21,7 @@ struct UploadView: View {
     @State private var selectedSize = ""
     @State private var price = ""
     @State private var description = ""
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 28.6139, longitude: 77.2090),
-        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-    )
+    @State private var cameraPosition: MapCameraPosition = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 28.6139, longitude: 77.2090), span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
     
     let conditions = ["New", "Like New", "Used"]
     let sizes = ["XS", "S", "M", "L", "XL"]
@@ -101,7 +98,7 @@ struct UploadView: View {
                         .bold()
                     
                     ZStack {
-                        Map(coordinateRegion: $region)
+                        Map(position: $cameraPosition) {}
                             .frame(height: 200)
                             .cornerRadius(15)
                     }
@@ -145,4 +142,5 @@ struct UploadView: View {
 
 #Preview {
     UploadView()
+        .environmentObject(AppStore())
 }
