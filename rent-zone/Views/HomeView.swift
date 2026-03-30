@@ -6,6 +6,7 @@ struct HomeView: View {
     @State private var selectedCategory = "All Items"
     @State private var favoriteProductIds: Set<UUID> = []
     @State private var isLoginSheetPresented = false
+    @State private var isProfileSheetPresented = false
     
     var popularProducts: [Product] {
         appStore.productStore.products.filter { $0.isPopular }
@@ -20,7 +21,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 16) {
                 UserHeaderView()
                     .onTapGesture {
-                        isLoginSheetPresented = true
+                        isProfileSheetPresented = true
                     }
                 SearchBarView(searchText: $searchText)
                 
@@ -39,6 +40,9 @@ struct HomeView: View {
         }
         .sheet(isPresented: $isLoginSheetPresented) {
             LoginView()
+        }
+        .sheet(isPresented: $isProfileSheetPresented) {
+            ProfileView()
         }
     }
     
