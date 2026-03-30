@@ -2,10 +2,15 @@ import SwiftUI
 
 struct ProductDetailView: View {
     let product: Product
+    @EnvironmentObject var appStore: AppStore
     @Environment(\.dismiss) private var dismiss
     @State private var showMenu = false
     @State private var currentImageIndex = 0
     @State private var isFavorite = false
+    @State private var showRentConfirmation = false
+    @State private var showCalendar = false
+    @State private var selectedDate: Date? = nil
+    @State private var calendarDisplayedMonth = Date()
     
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -174,35 +179,49 @@ struct ProductDetailView: View {
                         Text("Availability")
                             .font(.system(size: 20, weight: .bold))
                         Spacer()
-                        Text("Select Date")
-                            .font(.system(size: 12, weight: .medium))
-                            .underline()
-                            .foregroundColor(.gray)
+                        Button(action: {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                                showCalendar.toggle()
+                            }
+                        }) {
+                            Text("Select Date")
+                                .font(.system(size: 12, weight: .medium))
+                                .underline()
+                                .foregroundColor(.gray)
+                        }
                     }
                     
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 16) {
-                            ForEach(24...28, id: \.self) { day in
-                                let isCrossed = (day == 26 || day == 27)
-                                VStack(spacing: 6) {
-                                    Text("\(day)")
-                                        .font(.system(size: 20, weight: .bold))
-                                    Text("DEC")
-                                        .font(.system(size: 10, weight: .bold))
+                    if showCalendar {
+                        CalendarPickerView(
+                            selectedDate: $selectedDate,
+                            displayedMonth: $calendarDisplayedMonth
+                        )
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    } else {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(24...28, id: \.self) { day in
+                                    let isCrossed = (day == 26 || day == 27)
+                                    VStack(spacing: 6) {
+                                        Text("\(day)")
+                                            .font(.system(size: 20, weight: .bold))
+                                        Text("DEC")
+                                            .font(.system(size: 10, weight: .bold))
+                                    }
+                                    .padding(.vertical, 14)
+                                    .padding(.horizontal, 16)
+                                    .background(Color.white)
+                                    .cornerRadius(10)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(Color.black.opacity(0.15), lineWidth: 1)
+                                    )
+                                    .overlay(
+                                        DiagonalLineShape()
+                                            .stroke(Color.black.opacity(0.6), lineWidth: isCrossed ? 1 : 0)
+                                    )
+                                    .opacity(isCrossed ? 0.35 : 1.0)
                                 }
-                                .padding(.vertical, 14)
-                                .padding(.horizontal, 16)
-                                .background(Color.white)
-                                .cornerRadius(10)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.black.opacity(0.8), lineWidth: 1)
-                                )
-                                .overlay(
-                                    DiagonalLineShape()
-                                        .stroke(Color.black.opacity(0.8), lineWidth: isCrossed ? 1 : 0)
-                                )
-                                .opacity(isCrossed ? 0.3 : 1.0)
                             }
                         }
                     }
@@ -244,7 +263,13 @@ struct ProductDetailView: View {
                 .padding(.top, 10)
            
                 // Request to Rent Button
-                Button(action: {}) {
+                Button(action: {
+                    appStore.notificationStore.sendRentalRequest(
+                        product: product,
+                        fromUserName: appStore.userStore.users.first?.name ?? "A User"
+                    )
+                    showRentConfirmation = true
+                }) {
                     Text("Request to Rent")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.black)
@@ -297,6 +322,11 @@ struct ProductDetailView: View {
         }
         .navigationBarHidden(true)
         .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
+        .alert("Request Sent!", isPresented: $showRentConfirmation) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Your rental request for \(product.name) has been sent to the owner.")
+        }
     }
     
     private func detailRow(title: String, value: String) -> some View {
@@ -321,6 +351,18 @@ struct ProductDetailView: View {
 
 // Consistent card styling modifier
 extension View {
+    func if26GlassEffect(cornerRadius: CGFloat = 20) -> some View {
+        Group {
+            if #available(iOS 26.0, *) {
+                self.glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
+            } else {
+                self
+                    .cornerRadius(cornerRadius)
+                    .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
+            }
+        }
+    }
+    
     func cardStyle() -> some View {
         self
             .padding(24)

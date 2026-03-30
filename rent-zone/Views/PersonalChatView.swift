@@ -5,6 +5,7 @@ struct PersonalChatView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var messageText = ""
     @State private var showReport = false
+    @State private var showAttachmentMenu = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -116,12 +117,38 @@ struct PersonalChatView: View {
             }
             .background(Color(white: 0.97))
             
+            // Attachment menu
+            if showAttachmentMenu {
+                VStack(spacing: 0) {
+                    AttachmentMenuRow(label: "Camera", action: { showAttachmentMenu = false }) {
+                        CameraIconView()
+                    }
+                    Divider().overlay(Color.gray.opacity(0.3))
+                    AttachmentMenuRow(label: "Photos", action: { showAttachmentMenu = false }) {
+                        PhotosIconView()
+                    }
+                    Divider().overlay(Color.gray.opacity(0.3))
+                    AttachmentMenuRow(label: "Location", action: { showAttachmentMenu = false }) {
+                        LocationIconView()
+                    }
+                }
+                .if26AttachmentGlass()
+                .padding(.horizontal, 16)
+                .padding(.bottom, 6)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            
             // Message input
             HStack(spacing: 12) {
-                Button(action: {}) {
+                Button(action: {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        showAttachmentMenu.toggle()
+                    }
+                }) {
                     Image(systemName: "plus")
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.gray)
+                        .rotationEffect(.degrees(showAttachmentMenu ? 45 : 0))
                 }
                 
                 TextField("Type your message...", text: $messageText)
@@ -174,6 +201,138 @@ struct ChatBubbleView: View {
                 .foregroundColor(.gray)
         }
         .frame(maxWidth: .infinity, alignment: message.isFromCurrentUser ? .trailing : .leading)
+    }
+}
+
+struct AttachmentMenuRow<Icon: View>: View {
+    let label: String
+    let action: () -> Void
+    @ViewBuilder let icon: () -> Icon
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                icon()
+                    .frame(width: 44, height: 44)
+                
+                Text(label)
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundColor(.primary)
+                
+                Spacer()
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
+        }
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func if26AttachmentGlass() -> some View {
+        if #available(iOS 26.0, *) {
+            self.glassEffect(.regular, in: .rect(cornerRadius: 18))
+        } else {
+            self
+                .background(.ultraThinMaterial)
+                .cornerRadius(18)
+        }
+    }
+}
+
+// Camera icon — gray circle with darker lens ring and center dot
+struct CameraIconView: View {
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color(white: 0.55), Color(white: 0.42)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            
+            // Lens outer ring
+            Circle()
+                .stroke(Color(white: 0.7), lineWidth: 2.5)
+                .frame(width: 18, height: 18)
+            
+            // Lens inner
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color(white: 0.3), Color(white: 0.15)],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 8
+                    )
+                )
+                .frame(width: 14, height: 14)
+            
+            // Lens highlight
+            Circle()
+                .fill(Color.white.opacity(0.5))
+                .frame(width: 4, height: 4)
+                .offset(x: -2, y: -2)
+        }
+    }
+}
+
+// Photos icon — colorful 8-petal flower like iOS Photos app
+struct PhotosIconView: View {
+    let petalColors: [Color] = [
+        .red, .orange, .yellow, .green,
+        Color(red: 0.2, green: 0.8, blue: 1.0),
+        .blue, .purple,
+        Color(red: 1.0, green: 0.4, blue: 0.6)
+    ]
+    
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.white)
+            
+            ZStack {
+                ForEach(0..<8, id: \.self) { i in
+                    Capsule()
+                        .fill(petalColors[i].opacity(0.85))
+                        .frame(width: 7, height: 13)
+                        .offset(y: -6)
+                        .rotationEffect(.degrees(Double(i) * 45))
+                }
+            }
+            .frame(width: 28, height: 28)
+        }
+    }
+}
+
+// Location icon — green gradient circle with white ring and blue dot
+struct LocationIconView: View {
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.3, green: 0.85, blue: 0.45),
+                            Color(red: 0.2, green: 0.7, blue: 0.35)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            
+            // White ring
+            Circle()
+                .stroke(Color.white, lineWidth: 2.5)
+                .frame(width: 16, height: 16)
+            
+            // Blue center dot
+            Circle()
+                .fill(Color(red: 0.2, green: 0.5, blue: 1.0))
+                .frame(width: 9, height: 9)
+        }
     }
 }
 
