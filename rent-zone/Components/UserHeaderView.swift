@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct UserHeaderView: View {
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     @Binding var showNotifications: Bool
     
     var body: some View {
@@ -50,6 +50,6 @@ struct UserHeaderView: View {
 }
 
 #Preview {
-    UserHeaderView(showNotifications: .constant(false))
-        .environmentObject(AppStore())
+    UserHeaderView( showNotifications: .constant(false))
+        .environment(AppStore())
 }

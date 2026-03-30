@@ -1,7 +1,8 @@
 import Foundation
 import Observation
 
-@Observable class RentalStore {
+@Observable
+class RentalStore {
     var rentals: [Rental] = []
     
     func fetchItems() {
@@ -23,7 +24,8 @@ import Observation
     }
 }
 
-@Observable class ReviewStore {
+@Observable
+class ReviewStore {
     var reviews: [Review] = []
     
     func fetchItems() {
@@ -45,7 +47,8 @@ import Observation
     }
 }
 
-@Observable class NotificationStore {
+@Observable
+class NotificationStore {
     var notifications: [AppNotification] = []
     
     var unreadNotifications: [AppNotification] {

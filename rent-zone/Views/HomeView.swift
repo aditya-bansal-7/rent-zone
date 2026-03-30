@@ -17,48 +17,59 @@ struct HomeView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .top) {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 16) {
-                    UserHeaderView(showNotifications: $showNotifications)
-                        .onTapGesture {
-                            isLoginSheetPresented = true
-                        }
-                    SearchBarView(searchText: $searchText)
-                    
-                    CategoryChipsView(selectedCategory: $selectedCategory)
-                    
-                    // Popular Outfits
-                    SectionHeaderView(title: "POPULAR OUTFITS")
-                    ProductGridView(products: popularProducts, favoriteProductIds: $favoriteProductIds)
-                    
-                    // Recent Outfits
-                    SectionHeaderView(title: "RECENT OUTFITS")
-                    ProductGridView(products: recentProducts, favoriteProductIds: $favoriteProductIds)
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20)
-            }
-            .sheet(isPresented: $isLoginSheetPresented) {
-                LoginView()
-            }
+        NavigationStack {
             
-            // Notification overlay
-            if showNotifications {
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation(.easeOut(duration: 0.25)) {
-                            showNotifications = false
-                        }
+            
+            ZStack(alignment: .top) {
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        UserHeaderView(showNotifications: $showNotifications)
+                            .onTapGesture {
+                                isLoginSheetPresented = true
+                            }
+                        SearchBarView(searchText: $searchText)
+                        
+                        CategoryChipsView(selectedCategory: $selectedCategory)
+                        
+                        // Popular Outfits
+                        SectionHeaderView(title: "POPULAR OUTFITS")
+                        ProductGridView(products: popularProducts, favoriteProductIds: $favoriteProductIds)
+                        
+                        // Recent Outfits
+                        SectionHeaderView(title: "RECENT OUTFITS")
+                        ProductGridView(products: recentProducts, favoriteProductIds: $favoriteProductIds)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 20)
+                }
+                .sheet(isPresented: $isLoginSheetPresented) {
+                    LoginView()
+                }
                 
-                NotificationCentreView(isPresented: $showNotifications)
-                    .padding(.top, 60)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                // Notification overlay
+                if showNotifications {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.easeOut(duration: 0.25)) {
+                                showNotifications = false
+                            }
+                        }
+                    
+                    NotificationCentreView(isPresented: $showNotifications)
+                        .padding(.top, 60)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
             }
+            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showNotifications)
+            
         }
-        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showNotifications)
+        .navigationDestination(for: Product.self) { product in
+            ProductDetailView(product: product)
+        }
+        .navigationDestination(for: ChatConversation.self) { conversation in
+            PersonalChatView(conversation: conversation)
+        }
     }
     
 }

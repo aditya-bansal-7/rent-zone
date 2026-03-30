@@ -4,32 +4,27 @@ struct ContentView: View {
     @Environment(AppStore.self) var appStore
     
     var body: some View {
-        NavigationStack {
             TabView {
-                Tab("Home", systemImage: "house.fill") {
-                    HomeView()
-                }
+                HomeView()
+                    .tabItem {
+                        Label("Home", systemImage: "house.fill")
+                    }
                 
-                Tab("Categories", systemImage: "square.grid.2x2") {
-                    Text("Categories")
-                }
+                Text("Categories")
+                    .tabItem {
+                        Label("Categories", systemImage: "square.grid.2x2")
+                    }
                 
-                Tab("Chat", systemImage: "message.fill") {
-                    ChatListView()
-                }
+                ChatListView()
+                    .tabItem {
+                        Label("Chat", systemImage: "message.fill")
+                    }
                 
-                Tab("Rent", systemImage: "plus") {
-                    UploadView()
-                }
+                UploadView()
+                    .tabItem {
+                        Label("Rent", systemImage: "plus")
+                    }
             }
-            .navigationDestination(for: Product.self) { product in
-                ProductDetailView(product: product)
-            }
-            .navigationDestination(for: ChatConversation.self) { conversation in
-                PersonalChatView(conversation: conversation)
-            }
-            .tint(.blue)
-        }
     }
 }
 

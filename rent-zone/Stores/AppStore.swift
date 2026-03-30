@@ -1,7 +1,8 @@
 import SwiftUI
 import Observation
 
-@Observable class AppStore {
+@Observable
+class AppStore {
     var userStore = UserStore()
     var productStore = ProductStore()
     var categoryStore = CategoryStore()

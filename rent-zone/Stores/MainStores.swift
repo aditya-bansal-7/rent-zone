@@ -1,7 +1,8 @@
 import Foundation
 import Observation
 
-@Observable class UserStore {
+@Observable
+class UserStore {
     var users: [User] = []
     
     func fetchItems() {
@@ -25,7 +26,8 @@ import Observation
     }
 }
 
-@Observable class ProductStore {
+@Observable
+class ProductStore {
     var products: [Product] = []
     
     func fetchItems() {
@@ -210,7 +212,8 @@ import Observation
     }
 }
 
-@Observable class CategoryStore {
+@Observable
+class CategoryStore {
     var categories: [Category] = []
     
     func fetchItems() {
