@@ -47,6 +47,10 @@ struct ChatListView: View {
     ]
     
     var body: some View {
+        
+        NavigationStack{
+            
+   
         VStack(spacing: 0) {
             // Header
             HStack {
@@ -92,6 +96,7 @@ struct ChatListView: View {
         }
         .background(Color(white: 0.97))
         .navigationBarHidden(true)
+        }
     }
 }
 
@@ -153,6 +158,7 @@ struct ChatRowView: View {
         .cornerRadius(20)
         .shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 2)
     }
+    
 }
 
 #Preview {
