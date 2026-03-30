@@ -1,8 +1,9 @@
 import Foundation
-import Combine
+import Observation
 
-class RentalStore: ObservableObject {
-    @Published var rentals: [Rental] = []
+@Observable
+class RentalStore {
+    var rentals: [Rental] = []
     
     func fetchItems() {
         self.rentals = []
@@ -23,8 +24,9 @@ class RentalStore: ObservableObject {
     }
 }
 
-class ReviewStore: ObservableObject {
-    @Published var reviews: [Review] = []
+@Observable
+class ReviewStore {
+    var reviews: [Review] = []
     
     func fetchItems() {
         self.reviews = []
@@ -45,8 +47,9 @@ class ReviewStore: ObservableObject {
     }
 }
 
-class NotificationStore: ObservableObject {
-    @Published var notifications: [AppNotification] = []
+@Observable
+class NotificationStore {
+    var notifications: [AppNotification] = []
     
     var unreadNotifications: [AppNotification] {
         notifications.filter { !$0.isRead }

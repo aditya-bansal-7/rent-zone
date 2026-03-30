@@ -2,7 +2,7 @@ import SwiftUI
 
 struct RentalRequestDetailView: View {
     let notification: AppNotification
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {

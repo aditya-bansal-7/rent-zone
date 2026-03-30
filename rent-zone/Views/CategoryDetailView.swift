@@ -6,7 +6,7 @@
 import SwiftUI
 
 struct CategoryDetailView: View {
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     
     let categoryTitle: String
     
@@ -231,6 +231,6 @@ struct CategoryDetailView: View {
 #Preview {
     NavigationStack {
         CategoryDetailView(categoryTitle: "Dandiya Dresses")
-            .environmentObject(AppStore())
+            .environment(AppStore())
     }
 }

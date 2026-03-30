@@ -1,16 +1,9 @@
-//
-//  UploadView.swift
-//  rent-zone
-//
-//  Created by Vansh on 13/03/26.
-//
-
 import SwiftUI
 import MapKit
 
 struct UploadView: View {
     
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     
     var categories: [Category] {
         appStore.categoryStore.categories
@@ -21,7 +14,10 @@ struct UploadView: View {
     @State private var selectedSize = ""
     @State private var price = ""
     @State private var description = ""
-    @State private var cameraPosition: MapCameraPosition = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 28.6139, longitude: 77.2090), span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 28.6139, longitude: 77.2090),
+        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+    )
     
     let conditions = ["New", "Like New", "Used"]
     let sizes = ["XS", "S", "M", "L", "XL"]
@@ -79,8 +75,6 @@ struct UploadView: View {
                         
                     }
                 
-            
-                
                 VStack(alignment: .leading){
                     Text("Description")
                         .font(Font.title2)
@@ -90,15 +84,13 @@ struct UploadView: View {
                         .frame(height: 100, alignment: .topLeading)
                 }
                 
-                
-                
                 VStack(alignment: .leading) {
                     Text("Pick-Up Location")
                         .font(.title2)
                         .bold()
                     
                     ZStack {
-                        Map(position: $cameraPosition) {}
+                        Map(coordinateRegion: $region)
                             .frame(height: 200)
                             .cornerRadius(15)
                     }
@@ -142,5 +134,5 @@ struct UploadView: View {
 
 #Preview {
     UploadView()
-        .environmentObject(AppStore())
+        .environment(AppStore())
 }

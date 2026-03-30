@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ProductDetailView: View {
     let product: Product
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) private var dismiss
     @State private var showMenu = false
     @State private var currentImageIndex = 0

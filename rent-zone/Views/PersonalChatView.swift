@@ -173,7 +173,7 @@ struct PersonalChatView: View {
         .background(Color(white: 0.97))
         .sheet(isPresented: $showReport) {
             ReportUserView()
-                .environmentObject(AppStore())
+                .environment(AppStore())
         }
     }
 }

@@ -1,42 +1,16 @@
 import SwiftUI
-import Combine
+import Observation
 
-class AppStore: ObservableObject {
-    @Published var userStore = UserStore()
-    @Published var productStore = ProductStore()
-    @Published var categoryStore = CategoryStore()
-    @Published var rentalStore = RentalStore()
-    @Published var reviewStore = ReviewStore()
-    @Published var notificationStore = NotificationStore()
-    
-    private var cancellables = Set<AnyCancellable>()
+@Observable
+class AppStore {
+    var userStore = UserStore()
+    var productStore = ProductStore()
+    var categoryStore = CategoryStore()
+    var rentalStore = RentalStore()
+    var reviewStore = ReviewStore()
+    var notificationStore = NotificationStore()
     
     init() {
-        // Forward child store changes to AppStore observers
-        notificationStore.objectWillChange
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-            }
-            .store(in: &cancellables)
-        
-        rentalStore.objectWillChange
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-            }
-            .store(in: &cancellables)
-        
-        productStore.objectWillChange
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-            }
-            .store(in: &cancellables)
-        
-        userStore.objectWillChange
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
-            }
-            .store(in: &cancellables)
-        
         fetchInitialData()
     }
     

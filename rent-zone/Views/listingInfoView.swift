@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ListingInfoView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -173,5 +173,5 @@ struct ListingCardView: View {
 
 #Preview {
     ListingInfoView()
-        .environmentObject(AppStore())
+        .environment(AppStore())
 }

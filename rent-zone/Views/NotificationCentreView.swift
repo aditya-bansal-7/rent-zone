@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct NotificationCentreView: View {
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     @Binding var isPresented: Bool
     @State private var selectedTab = 0
     @State private var selectedNotification: AppNotification?
@@ -69,7 +69,7 @@ struct NotificationCentreView: View {
         .padding(.horizontal, 16)
         .sheet(item: $selectedNotification) { notification in
             RentalRequestDetailView(notification: notification)
-                .environmentObject(appStore)
+                .environment(appStore)
         }
     }
     

@@ -3,7 +3,7 @@ import MapKit
 
 struct ProductDetailEditView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var appStore: AppStore
+    @Environment(AppStore.self) var appStore
     
     let product: Product
     
@@ -300,5 +300,5 @@ struct ProductDetailEditView: View {
             imageURLs: ["sharara", "sharara_orange"]
         )
     )
-    .environmentObject(AppStore())
+    .environment(AppStore())
 }
