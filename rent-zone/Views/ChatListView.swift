@@ -3,7 +3,7 @@ import SwiftUI
 struct ChatListView: View {
     @Environment(\.dismiss) private var dismiss
     
-    let conversations: [ChatConversation] = [
+    @State private var conversations: [ChatConversation] = [
         ChatConversation(
             participantName: "Shreya",
             participantImage: "sharara_orange",
@@ -68,27 +68,48 @@ struct ChatListView: View {
                 Spacer()
                 
                 // Invisible spacer to balance
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.clear)
+                Color.clear.frame(width: 44, height: 44)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
             
-            Divider().opacity(0.3)
-            
             // Chat list
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 12) {
-                    ForEach(conversations) { conversation in
+            List {
+                ForEach(conversations) { conversation in
+                    ZStack {
                         NavigationLink(destination: PersonalChatView(conversation: conversation)) {
-                            ChatRowView(conversation: conversation)
+                            EmptyView()
                         }
+                        .opacity(0)
+                        
+                        ChatRowView(conversation: conversation)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            withAnimation {
+                                conversations.removeAll { $0.id == conversation.id }
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                        
+                        Button {
+                            if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
+                                withAnimation {
+                                    conversations[index].hasUnread.toggle()
+                                }
+                            }
+                        } label: {
+                            Label(
+                                conversation.hasUnread ? "Read" : "Unread",
+                                systemImage: conversation.hasUnread ? "envelope.open" : "envelope.badge"
+                            )
+                        }
+                        .tint(conversation.hasUnread ? .blue : .indigo)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
             }
+            .listStyle(.plain)
         }
         .background(Color(white: 0.97))
         .navigationBarHidden(true)
@@ -100,7 +121,7 @@ struct ChatRowView: View {
     
     var body: some View {
         HStack(spacing: 14) {
-            // Avatar with online indicator
+            // Avatar with online/unread indicator
             ZStack(alignment: .topTrailing) {
                 if let imageName = conversation.participantImage {
                     Image(imageName)
@@ -130,28 +151,16 @@ struct ChatRowView: View {
             // Name and time
             VStack(alignment: .leading, spacing: 4) {
                 Text(conversation.participantName)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 16, weight: conversation.hasUnread ? .heavy : .semibold))
                     .foregroundColor(.black)
                 Text(conversation.lastMessageTime)
-                    .font(.system(size: 12, weight: .regular))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundColor(.gray)
             }
             
             Spacer()
-            
-            // 3-dot menu
-            Button(action: {}) {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.gray)
-                    .rotationEffect(.degrees(90))
-            }
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .background(Color.white)
-        .cornerRadius(20)
-        .shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 2)
+        .padding(.vertical, 4)
     }
 }
 
@@ -160,3 +169,4 @@ struct ChatRowView: View {
         ChatListView()
     }
 }
+
