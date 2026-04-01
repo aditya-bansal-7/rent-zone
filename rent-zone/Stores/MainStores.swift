@@ -221,7 +221,7 @@ class CategoryStore {
             Category(name: "All Items", images: "square.grid.2x2", type: .women),
             Category(name: "Dress", images: "tshirt", type: .women),
             Category(name: "Tuxedo", images: "figure.stand", type: .men),
-            Category(name: "Jewellery", images: "sparkles", type: .women)
+            Category(name: "Jacket", images: "jacket", type: .men)
         ]
     }
     
