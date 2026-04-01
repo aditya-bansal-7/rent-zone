@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 enum ProductCondition: String, Hashable, CaseIterable {
     case new
@@ -33,6 +34,7 @@ struct Product: Identifiable, Hashable {
     var categoryId: UUID
     var pickupLocation: String
     var imageURLs: [String]
+    var uploadedImages: [UIImage] = []
     var reviews: [Review] = []
     var rating: Double = 0.0
     var isPopular: Bool = false

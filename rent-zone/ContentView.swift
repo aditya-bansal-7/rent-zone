@@ -20,7 +20,7 @@ struct ContentView: View {
                         Label("Chat", systemImage: "message.fill")
                     }
                 
-                UploadView()
+                UploadViewCamera()
                     .tabItem {
                         Label("Rent", systemImage: "plus")
                     }
