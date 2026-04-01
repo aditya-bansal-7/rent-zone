@@ -5,25 +5,21 @@ struct ContentView: View {
     
     var body: some View {
             TabView {
-                HomeView()
-                    .tabItem {
-                        Label("Home", systemImage: "house.fill")
-                    }
+                Tab("Home", systemImage: "house.fill") {
+                    HomeView()
+                }
                 
-                Text("Categories")
-                    .tabItem {
-                        Label("Categories", systemImage: "square.grid.2x2")
-                    }
+                Tab("Categories", systemImage: "square.grid.2x2") {
+                    CategoriesView()
+                }
                 
-                ChatListView()
-                    .tabItem {
-                        Label("Chat", systemImage: "message.fill")
-                    }
+                Tab("Chat", systemImage: "message.fill") {
+                    ChatListView()
+                }
                 
-                UploadView()
-                    .tabItem {
-                        Label("Rent", systemImage: "plus")
-                    }
+                Tab("Rent", systemImage: "plus") {
+                    UploadView()
+                }
             }
     }
 }

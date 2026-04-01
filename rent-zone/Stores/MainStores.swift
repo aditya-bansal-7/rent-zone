@@ -218,10 +218,20 @@ class CategoryStore {
     
     func fetchItems() {
         self.categories = [
-            Category(name: "All Items", images: "square.grid.2x2", type: .women),
-            Category(name: "Dress", images: "tshirt", type: .women),
-            Category(name: "Tuxedo", images: "figure.stand", type: .men),
-            Category(name: "Jacket", images: "jacket", type: .men)
+            // Women
+            Category(name: "Dresses", images: "Dress", type: .women),
+            Category(name: "Suits", images: "Suits", type: .women),
+            Category(name: "Saree", images: "Saree", type: .women),
+            Category(name: "Lehanga", images: "Lehanga", type: .women),
+            Category(name: "Formals", images: "Formal", type: .women),
+            Category(name: "Sharara", images: "Sharara", type: .women),
+            
+            // Men
+            Category(name: "Tuxedos", images: "Tuxedo", type: .men),
+            Category(name: "Jackets", images: "Jackets", type: .men),
+            Category(name: "Blazers", images: "Blazers", type: .men),
+            Category(name: "Formals", images: "Formals", type: .men),
+            Category(name: "Kurta", images: "Kurta", type: .men)
         ]
     }
     
