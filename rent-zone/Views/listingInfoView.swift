@@ -27,19 +27,7 @@ struct ListingInfoView: View {
                 }
             }
             
-            // Close button
-            Button(action: { dismiss() }) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.primary)
-                    .frame(width: 32, height: 32)
-                    .background(
-                        Circle()
-                            .fill(Color(.systemGray5))
-                    )
-            }
-            .padding(.top, 16)
-            .padding(.trailing, 20)
+
         }
     }
     
@@ -124,23 +112,25 @@ struct ListingCardView: View {
             // Image with edit button
             ZStack(alignment: .topTrailing) {
                 // Show uploaded image or asset image
-                if let firstImage = product.uploadedImages.first {
-                    Image(uiImage: firstImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                } else {
-                    Image(product.imageURLs.first ?? "")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemGray5))
-                        )
+                Group {
+                    if let firstImage = product.uploadedImages.first {
+                        Image(uiImage: firstImage)
+                            .resizable()
+                            .scaledToFill()
+                    } else {
+                        Image(product.imageURLs.first ?? "")
+                            .resizable()
+                            .scaledToFill()
+                    }
                 }
+                .frame(height: 180)
+                .frame(maxWidth: .infinity)
+                .clipped()
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.systemGray5))
+                )
                 
                 // Edit button
                 Button(action: { isEditSheetPresented = true }) {

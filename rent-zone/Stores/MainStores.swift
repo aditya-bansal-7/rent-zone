@@ -153,7 +153,7 @@ class ProductStore {
     }
     
     func addItem(_ product: Product) {
-        products.append(product)
+        products.insert(product, at: 0)
     }
     
     func removeItem(id: UUID) {
