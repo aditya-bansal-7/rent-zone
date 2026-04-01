@@ -170,6 +170,7 @@ struct PersonalChatView: View {
             .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: -2)
         }
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
         .background(Color(white: 0.97))
         .sheet(isPresented: $showReport) {
             ReportUserView()

@@ -62,13 +62,9 @@ struct HomeView: View {
                 }
             }
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showNotifications)
-            
-        }
-        .navigationDestination(for: Product.self) { product in
-            ProductDetailView(product: product)
-        }
-        .navigationDestination(for: ChatConversation.self) { conversation in
-            PersonalChatView(conversation: conversation)
+            .navigationDestination(for: Product.self) { product in
+                ProductDetailView(product: product)
+            }
         }
     }
     

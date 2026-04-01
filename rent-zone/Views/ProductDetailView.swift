@@ -321,6 +321,7 @@ struct ProductDetailView: View {
             }
         }
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
         .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
         .alert("Request Sent!", isPresented: $showRentConfirmation) {
             Button("OK", role: .cancel) { }
