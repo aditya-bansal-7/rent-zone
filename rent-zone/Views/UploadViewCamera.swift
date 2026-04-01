@@ -88,18 +88,7 @@ struct UploadViewCamera: View {
                     .frame(height: 40)
             }
             .navigationTitle("Upload Photos")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .foregroundStyle(.black)
-                            .fontWeight(.medium)
-                    }
-                }
-            }
+            
             .onChange(of: selectedItems) { _, newItems in
                 Task {
                     var images: [UIImage] = []

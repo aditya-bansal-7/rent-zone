@@ -13,6 +13,10 @@
 /* Begin PBXFileReference section */
 		84AE0CCA2F63D4CE0009175B /* UploadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UploadView.swift; path = "rent-zone/Views/UploadView.swift"; sourceTree = "<group>"; };
 		C249AC782F62973B005ADE41 /* rent-zone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "rent-zone.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2A336472F70F8D20053DFEA /* rent-zone.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "rent-zone.xcodeproj"; sourceTree = "<group>"; };
+		C2CDB41A2F6BBB9B000EE732 /* rent-zone.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "rent-zone.xcodeproj"; sourceTree = "<group>"; };
+		C2CDB4422F6BCBBD000EE732 /* rent-zone.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "rent-zone.xcodeproj"; sourceTree = "<group>"; };
+		C2E0FE322F73A63500076D3E /* rent-zone.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "rent-zone.xcodeproj"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -48,6 +52,26 @@
 			children = (
 				C249AC782F62973B005ADE41 /* rent-zone.app */,
 			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C2A336482F70F8D20053DFEA /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C2CDB41B2F6BBB9B000EE732 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C2CDB4432F6BCBBD000EE732 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C2E0FE332F73A63500076D3E /* Products */ = {
+			isa = PBXGroup;
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -103,6 +127,24 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C249AC792F62973B005ADE41 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = C2E0FE332F73A63500076D3E /* Products */;
+					ProjectRef = C2E0FE322F73A63500076D3E /* rent-zone.xcodeproj */;
+				},
+				{
+					ProductGroup = C2CDB41B2F6BBB9B000EE732 /* Products */;
+					ProjectRef = C2CDB41A2F6BBB9B000EE732 /* rent-zone.xcodeproj */;
+				},
+				{
+					ProductGroup = C2A336482F70F8D20053DFEA /* Products */;
+					ProjectRef = C2A336472F70F8D20053DFEA /* rent-zone.xcodeproj */;
+				},
+				{
+					ProductGroup = C2CDB4432F6BCBBD000EE732 /* Products */;
+					ProjectRef = C2CDB4422F6BCBBD000EE732 /* rent-zone.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				C249AC772F62973B005ADE41 /* rent-zone */,
@@ -268,7 +310,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -301,7 +343,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
