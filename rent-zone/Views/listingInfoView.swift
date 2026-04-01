@@ -26,8 +26,8 @@ struct ListingInfoView: View {
                         .padding(.bottom, 30)
                 }
             }
+            .toolbar(.hidden, for: .tabBar)
             
-
         }
     }
     

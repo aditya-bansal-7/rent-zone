@@ -30,6 +30,9 @@ struct CategoriesView: View {
                 }
             }
             .navigationTitle("Categories")
+            .navigationDestination(for: Product.self) { product in
+                ProductDetailView(product: product)
+            }
         }
     }
 
@@ -56,9 +59,7 @@ struct CategorySectionView: View {
                 
                 Spacer()
                 
-                Button(action: {
-                    // View All action
-                }) {
+                NavigationLink(destination: CategoryDetailView(categoryTitle: title)) {
                     Text("View All")
                         .font(.footnote)
                         .foregroundColor(.gray)
