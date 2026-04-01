@@ -123,15 +123,24 @@ struct ListingCardView: View {
         VStack(alignment: .leading, spacing: 6) {
             // Image with edit button
             ZStack(alignment: .topTrailing) {
-                Image(product.imageURLs.first ?? "")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemGray5))
-                    )
+                // Show uploaded image or asset image
+                if let firstImage = product.uploadedImages.first {
+                    Image(uiImage: firstImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                } else {
+                    Image(product.imageURLs.first ?? "")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemGray5))
+                        )
+                }
                 
                 // Edit button
                 Button(action: { isEditSheetPresented = true }) {

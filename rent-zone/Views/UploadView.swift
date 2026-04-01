@@ -1,9 +1,11 @@
 import SwiftUI
-import MapKit
 
 struct UploadView: View {
     
     @Environment(AppStore.self) var appStore
+    @Environment(\.dismiss) var dismiss
+    
+    var selectedImages: [UIImage] = []
     
     var categories: [Category] {
         appStore.categoryStore.categories
@@ -14,95 +16,106 @@ struct UploadView: View {
     @State private var selectedSize = ""
     @State private var price = ""
     @State private var description = ""
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 28.6139, longitude: 77.2090),
-        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-    )
+    @State private var navigateToListing = false
     
     let conditions = ["New", "Like New", "Used"]
     let sizes = ["XS", "S", "M", "L", "XL"]
     
+    // Map condition string to ProductCondition enum
+    private func conditionEnum(_ value: String) -> ProductCondition {
+        switch value {
+        case "New": return .new
+        case "Like New": return .likeNew
+        case "Used": return .good
+        default: return .good
+        }
+    }
+    
     var body: some View {
-        NavigationStack{
-            
-            Form{
-                Section{
-                    VStack(alignment: .leading){
-                        Text("Category")
-                            .font(.title2)
-                            .bold()
-                        
-                        Picker("Select the Category", selection: $selectedCategory) {
-                            
-                            ForEach(categories, id: \.self) { category in
-                                Text(category.name).tag(category.name)
-                            }
-                        }
-                        
-                    }
-                    VStack(alignment: .leading){
-                        Text("Condition")
-                            .font(Font.title2)
-                            .bold()
-                        
-                        Picker("Select Condition", selection: $selectedCondition) {
-                            
-                            ForEach(conditions, id: \.self) { condition in
-                                Text(condition).tag(condition)
-                            }
-                        }
-                        
-                    }
-                    VStack(alignment: .leading){
-                        Text("Size")
-                            .font(Font.title2)
-                            .bold()
-                        
-                        Picker("Select Size", selection: $selectedSize) {
-                            
-                            ForEach(sizes, id: \.self) { size in
-                                Text(size).tag(size)
-                                
-                            }
+        Form {
+            Section {
+                VStack(alignment: .leading) {
+                    Text("Category")
+                        .font(.title2)
+                        .bold()
+                    
+                    Picker("Select the Category", selection: $selectedCategory) {
+                        ForEach(categories, id: \.self) { category in
+                            Text(category.name).tag(category.name)
                         }
                     }
-                    VStack(alignment: .leading){
-                        Text("Price")
-                            .font(Font.title2)
-                            .bold()
-                        
-                        TextField("Enter Price", text: $price)
-                        
-                    }
+                }
                 
-                VStack(alignment: .leading){
+                VStack(alignment: .leading) {
+                    Text("Condition")
+                        .font(.title2)
+                        .bold()
+                    
+                    Picker("Select Condition", selection: $selectedCondition) {
+                        ForEach(conditions, id: \.self) { condition in
+                            Text(condition).tag(condition)
+                        }
+                    }
+                }
+                
+                VStack(alignment: .leading) {
+                    Text("Size")
+                        .font(.title2)
+                        .bold()
+                    
+                    Picker("Select Size", selection: $selectedSize) {
+                        ForEach(sizes, id: \.self) { size in
+                            Text(size).tag(size)
+                        }
+                    }
+                }
+                
+                VStack(alignment: .leading) {
+                    Text("Price")
+                        .font(.title2)
+                        .bold()
+                    
+                    TextField("Enter Price", text: $price)
+                        .keyboardType(.numberPad)
+                }
+                
+                VStack(alignment: .leading) {
                     Text("Description")
-                        .font(Font.title2)
+                        .font(.title2)
                         .bold()
                     
                     TextField("Describe Your Outfit", text: $description, axis: .vertical)
                         .frame(height: 100, alignment: .topLeading)
                 }
                 
+                // Location placeholder
                 VStack(alignment: .leading) {
                     Text("Pick-Up Location")
                         .font(.title2)
                         .bold()
                     
                     ZStack {
-                        Map(coordinateRegion: $region)
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.gray.opacity(0.15))
                             .frame(height: 200)
-                            .cornerRadius(15)
+                        
+                        VStack(spacing: 8) {
+                            Image(systemName: "mappin.and.ellipse")
+                                .font(.system(size: 30))
+                                .foregroundStyle(.gray)
+                            Text("Location Preview")
+                                .font(.subheadline)
+                                .foregroundStyle(.gray)
+                        }
                     }
                 }
             }
             
             Section {
-                
                 Button {
-                    //
+                    createProduct()
+                    navigateToListing = true
                 } label: {
-                    
                     Text("List")
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -113,26 +126,38 @@ struct UploadView: View {
                 .listRowBackground(Color.clear)
             }
         }
-    
-            .navigationTitle("Provide Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                    //
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .foregroundStyle(.black)
-                    }
-                }
-        
-            }
-           
+        .navigationTitle("Provide Details")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(isPresented: $navigateToListing) {
+            ListingInfoView()
         }
+    }
+    
+    // Create and add product to store
+    private func createProduct() {
+        let categoryId = categories.first(where: { $0.name == selectedCategory })?.id ?? UUID()
+        let userId = appStore.userStore.users.first?.id ?? UUID()
+        
+        let product = Product(
+            name: selectedCategory.isEmpty ? "New Outfit" : selectedCategory,
+            rentPricePerDay: Double(price) ?? 0,
+            securityDeposit: 500,
+            condition: conditionEnum(selectedCondition),
+            size: selectedSize,
+            listedByUserId: userId,
+            categoryId: categoryId,
+            pickupLocation: "Greater Noida",
+            imageURLs: [],
+            uploadedImages: selectedImages
+        )
+        
+        appStore.productStore.addItem(product)
     }
 }
 
 #Preview {
-    UploadView()
-        .environment(AppStore())
+    NavigationStack {
+        UploadView()
+            .environment(AppStore())
+    }
 }
