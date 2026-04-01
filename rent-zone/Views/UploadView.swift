@@ -8,8 +8,8 @@ struct UploadView: View {
     var categories: [Category] {
         appStore.categoryStore.categories
     }
-    
-    @State private var selectedCategory = ""
+
+    @State private var selectedCategory: Category? = nil
     @State private var selectedCondition = ""
     @State private var selectedSize = ""
     @State private var price = ""
@@ -18,6 +18,11 @@ struct UploadView: View {
         center: CLLocationCoordinate2D(latitude: 28.6139, longitude: 77.2090),
         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
     )
+    
+    init() {
+        // Defer selection setup to onAppear since @Environment isn't available in init
+        _selectedCategory = State(initialValue: nil)
+    }
     
     let conditions = ["New", "Like New", "Used"]
     let sizes = ["XS", "S", "M", "L", "XL"]
@@ -33,11 +38,11 @@ struct UploadView: View {
                             .bold()
                         
                         Picker("Select the Category", selection: $selectedCategory) {
-                            
-                            ForEach(categories, id: \.self) { category in
-                                Text(category.name).tag(category.name)
+                            ForEach(categories, id: \.id) { category in
+                                Text(category.name).tag(Optional(category))
                             }
                         }
+                        .pickerStyle(.menu)
                         
                     }
                     VStack(alignment: .leading){
@@ -96,8 +101,15 @@ struct UploadView: View {
                     }
                 }
             }
+            .onAppear {
+                if selectedCategory == nil {
+                    selectedCategory = categories.first
+                }
+            }
             
             Section {
+                
+                let isFormValid = selectedCategory != nil && !selectedCondition.isEmpty && !selectedSize.isEmpty && !price.isEmpty && !description.isEmpty
                 
                 Button {
                     //
@@ -111,6 +123,7 @@ struct UploadView: View {
                         .cornerRadius(30)
                 }
                 .listRowBackground(Color.clear)
+                .disabled(!isFormValid)
             }
         }
     

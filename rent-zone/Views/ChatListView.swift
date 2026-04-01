@@ -53,31 +53,10 @@ struct ChatListView: View {
    
         VStack(spacing: 0) {
             // Header
-            HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.black)
-                        .frame(width: 44, height: 44)
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
-                }
-                
-                Spacer()
-                
-                Text("Chat")
-                    .font(.system(size: 22, weight: .bold))
-                
-                Spacer()
-                
-                // Invisible spacer to balance
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.clear)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            Text("Chat")
+                .font(.system(size: 22, weight: .bold))
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
             
             Divider().opacity(0.3)
             
@@ -94,8 +73,11 @@ struct ChatListView: View {
                 .padding(.top, 16)
             }
         }
-        .background(Color(white: 0.97))
-        .navigationBarHidden(true)
+            .background(Color(white: 0.97))
+            .navigationBarHidden(true)
+            .navigationDestination(for: ChatConversation.self) { conversation in
+                PersonalChatView(conversation: conversation)
+            }
         }
     }
 }
