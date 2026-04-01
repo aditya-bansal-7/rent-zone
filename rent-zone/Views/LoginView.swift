@@ -17,6 +17,7 @@ struct LoginView: View {
     @State private var confirmPassword = ""
     
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppStore.self) private var appStore
     
     var body: some View {
         VStack(spacing: 0) {
@@ -189,6 +190,9 @@ struct LoginView: View {
                         switch result {
                         case .success(let authResults):
                             print("Authentication successful: \(authResults)")
+                            if let user = appStore.userStore.users.first(where: { $0.name == "Payal Singh" }) {
+                                appStore.userStore.currentUser = user
+                            }
                             dismiss()
                         case .failure(let error):
                             print("Authentication failed: \(error.localizedDescription)")
@@ -227,12 +231,19 @@ struct LoginView: View {
                 step = .enterOTP
             }
         case .enterPassword:
-            dismiss() // Handle Login Success
+            loginUserMock()
         case .enterOTP:
             step = .createPassword
         case .createPassword:
-            dismiss() // Handle Auth Success
+            loginUserMock()
         }
+    }
+    
+    private func loginUserMock() {
+        if let user = appStore.userStore.users.first(where: { $0.name == "Payal Singh" }) {
+            appStore.userStore.currentUser = user
+        }
+        dismiss()
     }
     
     private var primaryButtonTitle: String {

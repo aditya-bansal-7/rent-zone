@@ -18,7 +18,7 @@ struct ContentView: View {
                 }
                 
                 Tab("Rent", systemImage: "plus") {
-                    UploadView()
+                    UploadViewCamera()
                 }
             }
     }

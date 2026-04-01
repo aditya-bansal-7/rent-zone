@@ -4,10 +4,11 @@ import Observation
 @Observable
 class UserStore {
     var users: [User] = []
+    var currentUser: User? = nil
     
     func fetchItems() {
         self.users = [
-            User(name: "Payal Singh", location: "Mumbai", isVerified: true)
+            User(name: "Payal Singh", location: "Mumbai", isVerified: true, profileImage: "payal")
         ]
     }
 
