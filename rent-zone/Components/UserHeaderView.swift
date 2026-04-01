@@ -6,13 +6,9 @@ struct UserHeaderView: View {
     
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Welcome")
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundColor(.gray)
+            
                 Text("Payal Singh")
                     .font(.system(size: 20, weight: .bold))
-            }
             
             Spacer()
             
