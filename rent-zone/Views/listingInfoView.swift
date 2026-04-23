@@ -113,15 +113,10 @@ struct ListingCardView: View {
             ZStack(alignment: .topTrailing) {
                 // Show uploaded image or asset image
                 Group {
-                    if let firstImage = product.uploadedImages.first {
-                        Image(uiImage: firstImage)
-                            .resizable()
-                            .scaledToFill()
-                    } else {
                         Image(product.imageURLs.first ?? "")
                             .resizable()
                             .scaledToFill()
-                    }
+
                 }
                 .frame(height: 180)
                 .frame(maxWidth: .infinity)

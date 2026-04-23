@@ -52,8 +52,7 @@ class ProductStore {
                 categoryId: dummyCategoryId,
                 pickupLocation: "Mumbai",
                 imageURLs: ["rajasthani_poshak"],
-                rating: 4.5,
-                isPopular: true
+                rating: 4.5
             ),
             Product(
                 name: "Sharara",
@@ -72,7 +71,6 @@ class ProductStore {
                 pickupLocation: "Delhi",
                 imageURLs: ["sharara"],
                 rating: 4.5,
-                isPopular: true
             ),
             Product(
                 name: "Tuxedo Black",
@@ -91,7 +89,7 @@ class ProductStore {
                 pickupLocation: "Bangalore",
                 imageURLs: ["tuxedo_black"],
                 rating: 4.0,
-                isPopular: true
+             
             ),
             Product(
                 name: "Sharara",
@@ -110,7 +108,7 @@ class ProductStore {
                 pickupLocation: "Jaipur",
                 imageURLs: ["sharara_orange", "sharara"],
                 rating: 5.0,
-                isPopular: true
+        
             ),
             Product(
                 name: "Modern Lehenga",
@@ -129,7 +127,7 @@ class ProductStore {
                 pickupLocation: "Pune",
                 imageURLs: ["modern_lehenga"],
                 rating: 4.5,
-                isPopular: false
+             
             ),
             Product(
                 name: "Garba Dress",
@@ -148,7 +146,7 @@ class ProductStore {
                 pickupLocation: "Ahmedabad",
                 imageURLs: ["garba_dress"],
                 rating: 4.3,
-                isPopular: false
+              
             )
         ]
     }

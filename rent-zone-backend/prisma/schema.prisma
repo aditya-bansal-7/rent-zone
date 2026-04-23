@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum AccountProvider {
+  google
+  apple
+  email
+}
+
+enum ProductCondition {
+  new
+  likeNew
+  good
+  worn
+}
+
+enum CategoryType {
+  men
+  women
+}
+
+enum RentalStatus {
+  requested
+  approved
+  active
+  returned
+  cancelled
+}
+
+enum NotificationType {
+  rentalRequest
+  general
+}
+
+enum NotificationStatus {
+  pending
+  accepted
+  rejected
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id                  String            @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  location            String
+  isVerified          Boolean           @default(false)
+  favouriteProductIds String[]          @db.ObjectId
+  profileImage        String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  // Relations
+  account             Account?
+  products            Product[]
+  rentalsAsRenter     Rental[]          @relation("RentedBy")
+  rentalsAsOwner      Rental[]          @relation("RentedFrom")
+  reviews             Review[]
+  notifications       Notification[]
+  reportsFiled        Report[]          @relation("ReportedBy")
+  reportsReceived     Report[]          @relation("ReportedUser")
+  conversations       ChatParticipant[]
+  virtualTryOns       VirtualTryOn[]
+}
+
+model Account {
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String          @unique @db.ObjectId
+  provider     AccountProvider
+  email        String          @unique
+  passwordHash String?
+  refreshToken String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Category {
+  id       String       @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  image    String
+  type     CategoryType
+
+  products Product[]
+}
+
+model Product {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  rentPricePerDay Float
+  securityDeposit Float
+  condition       ProductCondition
+  size            String
+  description     Json             @default("{}")
+  bookedDates     DateTime[]
+  listedByUserId  String           @db.ObjectId
+  categoryId      String           @db.ObjectId
+  pickupLocation  String
+  imageURLs       String[]
+  rating          Float            @default(0.0)
+  occasion        String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  listedBy        User             @relation(fields: [listedByUserId], references: [id])
+  category        Category         @relation(fields: [categoryId], references: [id])
+  reviews         Review[]
+  rentals         Rental[]
+  notifications   Notification[]
+  virtualTryOns   VirtualTryOn[]
+}
+
+model Rental {
+  id               String       @id @default(auto()) @map("_id") @db.ObjectId
+  productId        String       @db.ObjectId
+  rentedByUserId   String       @db.ObjectId
+  rentedFromUserId String       @db.ObjectId
+  startDate        DateTime
+  endDate          DateTime
+  totalPrice       Float
+  status           RentalStatus @default(requested)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  product          Product      @relation(fields: [productId], references: [id])
+  rentedBy         User         @relation("RentedBy", fields: [rentedByUserId], references: [id])
+  rentedFrom       User         @relation("RentedFrom", fields: [rentedFromUserId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId String   @db.ObjectId
+  userId    String   @db.ObjectId
+  rating    Int
+  content   String
+  imageURLs String[]
+  createdAt DateTime @default(now())
+
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model ChatConversation {
+  id           String            @id @default(auto()) @map("_id") @db.ObjectId
+  productId    String?           @db.ObjectId
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  participants ChatParticipant[]
+  messages     ChatMessage[]
+}
+
+model ChatParticipant {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String           @db.ObjectId
+  userId         String           @db.ObjectId
+
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id])
+  user           User             @relation(fields: [userId], references: [id])
+}
+
+model ChatMessage {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String           @db.ObjectId
+  senderId       String           @db.ObjectId
+  content        String
+  createdAt      DateTime         @default(now())
+
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id])
+}
+
+model Notification {
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String             @db.ObjectId
+  title            String
+  content          String
+  icon             String
+  isRead           Boolean            @default(false)
+  type             NotificationType   @default(general)
+  status           NotificationStatus @default(pending)
+  productId        String?            @db.ObjectId
+  fromUserId       String?            @db.ObjectId
+  rentalDate       DateTime?
+  totalPrice       Float?
+  productImageName String?
+  productName      String?
+  requesterName    String?
+  createdAt        DateTime           @default(now())
+
+  user             User               @relation(fields: [userId], references: [id])
+  product          Product?           @relation(fields: [productId], references: [id])
+}
+
+model Report {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  reportedByUserId String   @db.ObjectId
+  reportedUserId   String   @db.ObjectId
+  reason           String
+  description      String
+  isValid          Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  reportedBy       User     @relation("ReportedBy", fields: [reportedByUserId], references: [id])
+  reportedUser     User     @relation("ReportedUser", fields: [reportedUserId], references: [id])
+}
+
+model VirtualTryOn {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  productId      String   @db.ObjectId
+  resultImageURL String
+  createdAt      DateTime @default(now())
+
+  user           User     @relation(fields: [userId], references: [id])
+  product        Product  @relation(fields: [productId], references: [id])
+}
