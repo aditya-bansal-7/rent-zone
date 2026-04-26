@@ -1,156 +1,246 @@
 import SwiftUI
 
 struct UploadView: View {
-    
+
     @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) var dismiss
-    
-    var selectedImages: [String] = []
-    
+
+    // Passed in from UploadViewCamera
+    var selectedImages: [UIImage] = []
+
     var categories: [Category] {
         appStore.categoryStore.categories
     }
-    
-    @State private var selectedCategory = ""
-    @State private var selectedCondition = ""
-    @State private var selectedSize = ""
+
+    @State private var selectedCategoryId = ""
+    @State private var selectedCondition = "good"
+    @State private var selectedSize = "M"
     @State private var price = ""
-    @State private var description = ""
+    @State private var securityDeposit = ""
+    @State private var pickupLocation = ""
+    @State private var selectedOccasion = ""
+    @State private var fabricDescription = ""
+    @State private var brandDescription = ""
+    @State private var styleDescription = ""
+    @State private var fitDescription = ""
+
+    @State private var isUploading = false
+    @State private var uploadError: String? = nil
+    @State private var uploadSuccess = false
+    @State private var uploadedProduct: Product? = nil
+    @State private var showLoginSheet = false
     @State private var navigateToListing = false
-    
-    let conditions = ["New", "Like New", "Used"]
+
+    let conditions = [("new", "New"), ("likeNew", "Like New"), ("good", "Good"), ("worn", "Worn")]
     let sizes = ["XS", "S", "M", "L", "XL"]
-    
-    // Map condition string to ProductCondition enum
-    private func conditionEnum(_ value: String) -> ProductCondition {
-        switch value {
-        case "New": return .new
-        case "Like New": return .likeNew
-        case "Used": return .good
-        default: return .good
-        }
-    }
-    
+    let occasions = ["Wedding", "Party", "Festival", "Casual", "Formal"]
+
     var body: some View {
         Form {
-            Section {
-                VStack(alignment: .leading) {
+            // MARK: - Basic Info
+            Section("Basic Info") {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Category")
-                        .font(.title2)
-                        .bold()
-                    
-                    Picker("Select the Category", selection: $selectedCategory) {
-                        ForEach(categories, id: \.self) { category in
-                            Text(category.name).tag(category.name)
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Picker("Category", selection: $selectedCategoryId) {
+                        Text("Select a category").tag("")
+                        ForEach(categories, id: \.id) { cat in
+                            Text("\(cat.type == .women ? "👗" : "👔") \(cat.name)").tag(cat.id)
                         }
                     }
+                    .pickerStyle(.menu)
                 }
-                
-                VStack(alignment: .leading) {
+
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Condition")
-                        .font(.title2)
-                        .bold()
-                    
-                    Picker("Select Condition", selection: $selectedCondition) {
-                        ForEach(conditions, id: \.self) { condition in
-                            Text(condition).tag(condition)
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Picker("Condition", selection: $selectedCondition) {
+                        ForEach(conditions, id: \.0) { cond in
+                            Text(cond.1).tag(cond.0)
                         }
                     }
+                    .pickerStyle(.segmented)
                 }
-                
-                VStack(alignment: .leading) {
+
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Size")
-                        .font(.title2)
-                        .bold()
-                    
-                    Picker("Select Size", selection: $selectedSize) {
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Picker("Size", selection: $selectedSize) {
                         ForEach(sizes, id: \.self) { size in
                             Text(size).tag(size)
                         }
                     }
+                    .pickerStyle(.segmented)
                 }
-                
-                VStack(alignment: .leading) {
-                    Text("Price")
-                        .font(.title2)
-                        .bold()
-                    
-                    TextField("Enter Price", text: $price)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Occasion")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    Picker("Occasion", selection: $selectedOccasion) {
+                        Text("None").tag("")
+                        ForEach(occasions, id: \.self) { occ in
+                            Text(occ).tag(occ)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+            }
+
+            // MARK: - Pricing
+            Section("Pricing") {
+                HStack {
+                    Text("₹")
+                    TextField("Rent per day", text: $price)
                         .keyboardType(.numberPad)
                 }
-                
-                VStack(alignment: .leading) {
-                    Text("Description")
-                        .font(.title2)
-                        .bold()
-                    
-                    TextField("Describe Your Outfit", text: $description, axis: .vertical)
-                        .frame(height: 100, alignment: .topLeading)
+
+                HStack {
+                    Text("₹")
+                    TextField("Security deposit", text: $securityDeposit)
+                        .keyboardType(.numberPad)
                 }
-                
-                // Location placeholder
-                VStack(alignment: .leading) {
-                    Text("Pick-Up Location")
-                        .font(.title2)
-                        .bold()
-                    
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 15)
-                            .fill(Color.gray.opacity(0.15))
-                            .frame(height: 200)
-                        
-                        VStack(spacing: 8) {
-                            Image(systemName: "mappin.and.ellipse")
-                                .font(.system(size: 30))
-                                .foregroundStyle(.gray)
-                            Text("Location Preview")
-                                .font(.subheadline)
-                                .foregroundStyle(.gray)
+            }
+
+            // MARK: - Location
+            Section("Pickup Location") {
+                TextField("e.g. Andheri West, Mumbai", text: $pickupLocation)
+            }
+
+            // MARK: - Description
+            Section("Outfit Details (optional)") {
+                TextField("Fabric (e.g. Pure Silk)", text: $fabricDescription)
+                TextField("Brand / Style inspiration", text: $brandDescription)
+                TextField("Style (e.g. Festive Ethnic)", text: $styleDescription)
+                TextField("Fit & Comfort notes", text: $fitDescription)
+            }
+
+            // MARK: - Selected Photos preview
+            if !selectedImages.isEmpty {
+                Section("Photos (\(selectedImages.count) selected)") {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(selectedImages.indices, id: \.self) { idx in
+                                Image(uiImage: selectedImages[idx])
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 80, height: 80)
+                                    .clipped()
+                                    .cornerRadius(10)
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
                 }
             }
-            
+
+            // MARK: - Error/Success
+            if let error = uploadError {
+                Section {
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .font(.subheadline)
+                }
+            }
+
+            // MARK: - Submit
             Section {
                 Button {
-                    createProduct()
-                    navigateToListing = true
+                    guard appStore.userStore.currentUser != nil else {
+                        showLoginSheet = true
+                        return
+                    }
+                    Task { await uploadProduct() }
                 } label: {
-                    Text("List")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.purple.opacity(0.2))
-                        .foregroundStyle(.black)
-                        .cornerRadius(30)
+                    HStack {
+                        Spacer()
+                        if isUploading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                        } else {
+                            Text("List My Outfit")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(.black)
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, 4)
+                    .background(Color.purple.opacity(0.15))
+                    .cornerRadius(30)
                 }
+                .disabled(isUploading || selectedCategoryId.isEmpty || price.isEmpty)
                 .listRowBackground(Color.clear)
             }
         }
         .navigationTitle("Provide Details")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showLoginSheet) {
+            LoginView()
+                .presentationDetents([.fraction(0.85), .large])
+        }
         .navigationDestination(isPresented: $navigateToListing) {
             ListingInfoView()
         }
+        .alert("Outfit Listed! 🎉", isPresented: $uploadSuccess) {
+            Button("View My Listings") { navigateToListing = true }
+            Button("Done") { dismiss() }
+        } message: {
+            Text("Your outfit has been successfully uploaded to Cloudinary and listed on Rent Zone.")
+        }
     }
-    
-    // Create and add product to store
-    private func createProduct() {
-        let categoryId = categories.first(where: { $0.name == selectedCategory })?.id ?? UUID()
-        let userId = appStore.userStore.users.first?.id ?? UUID()
-        
-        let product = Product(
-            name: selectedCategory.isEmpty ? "New Outfit" : selectedCategory,
-            rentPricePerDay: Double(price) ?? 0,
-            securityDeposit: 500,
-            condition: conditionEnum(selectedCondition),
-            size: selectedSize,
-            listedByUserId: userId,
-            categoryId: categoryId,
-            pickupLocation: "Greater Noida",
-            imageURLs: selectedImages
-        )
-        
-        appStore.productStore.addItem(product)
+
+    // MARK: - Upload Flow
+
+    private func uploadProduct() async {
+        guard let priceVal = Double(price) else {
+            uploadError = "Please enter a valid price"
+            return
+        }
+        isUploading = true
+        uploadError = nil
+
+        do {
+            // Step 1: Create product record
+            var description: [String: String] = [:]
+            if !fabricDescription.isEmpty { description["fabric"] = fabricDescription }
+            if !brandDescription.isEmpty { description["brand"] = brandDescription }
+            if !styleDescription.isEmpty { description["style"] = styleDescription }
+            if !fitDescription.isEmpty { description["fitAndComfort"] = fitDescription }
+
+            let product = try await ProductService.shared.createProduct(
+                name: categories.first(where: { $0.id == selectedCategoryId })?.name ?? "Outfit",
+                rentPricePerDay: priceVal,
+                securityDeposit: Double(securityDeposit) ?? 500,
+                condition: selectedCondition,
+                size: selectedSize,
+                categoryId: selectedCategoryId,
+                pickupLocation: pickupLocation.isEmpty ? (appStore.userStore.currentUser?.location ?? "India") : pickupLocation,
+                occasion: selectedOccasion.isEmpty ? nil : selectedOccasion,
+                description: description
+            )
+
+            // Step 2: Upload images to Cloudinary via backend
+            if !selectedImages.isEmpty {
+                let updatedProduct = try await ProductService.shared.uploadImages(
+                    productId: product.id,
+                    images: selectedImages
+                )
+                appStore.productStore.addItem(updatedProduct)
+                uploadedProduct = updatedProduct
+            } else {
+                appStore.productStore.addItem(product)
+                uploadedProduct = product
+            }
+
+            await MainActor.run {
+                self.isUploading = false
+                self.uploadSuccess = true
+            }
+        } catch {
+            await MainActor.run {
+                self.isUploading = false
+                self.uploadError = error.localizedDescription
+            }
+        }
     }
 }
 

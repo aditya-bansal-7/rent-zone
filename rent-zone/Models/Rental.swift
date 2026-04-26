@@ -1,5 +1,15 @@
 import Foundation
 
+struct Rental: Identifiable, Hashable {
+    var id: String
+    let productId: String
+    let rentedByUserId: String
+    let rentedFromUserId: String
+    var startDate: Date
+    var endDate: Date
+    var totalPrice: Double
+    var status: RentalStatus
+}
 
 enum RentalStatus: String, Hashable, CaseIterable {
     case requested
@@ -7,16 +17,4 @@ enum RentalStatus: String, Hashable, CaseIterable {
     case active
     case returned
     case cancelled
-}
-
-
-struct Rental: Identifiable, Hashable {
-    var id: UUID = UUID()
-    let productId: UUID
-    let rentedByUserId: UUID
-    let rentedFromUserId: UUID
-    var startDate: Date
-    var endDate: Date
-    var totalPrice: Double
-    var status: RentalStatus
 }

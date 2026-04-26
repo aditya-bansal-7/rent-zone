@@ -22,7 +22,7 @@ struct CategoryDetailView: View {
     @State private var selectedSizes: Set<ClothingSize> = []
     @State private var selectedOccasions: Set<Occasion> = []
     @State private var selectedDate: Date? = nil
-    @State private var favoriteProductIds: Set<UUID> = []
+    @State private var favoriteProductIds: Set<String> = []
     
     private let columns = [
         GridItem(.flexible(), spacing: 20),

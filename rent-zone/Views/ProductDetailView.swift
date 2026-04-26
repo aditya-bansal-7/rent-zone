@@ -11,22 +11,40 @@ struct ProductDetailView: View {
     @State private var showCalendar = false
     @State private var selectedDate: Date? = nil
     @State private var calendarDisplayedMonth = Date()
-    
+    @State private var isRequestingRent = false
+    @State private var rentError: String? = nil
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-             
+
                 ZStack(alignment: .top) {
-                    // Image Carousel with next image peek
+                    // Image Carousel
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            ForEach(Array(product.imageURLs.enumerated()), id: \.offset) { index, imageName in
-                                Image(imageName)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: UIScreen.main.bounds.width - 40, height: 450)
-                                    .clipped()
-                                    .cornerRadius(20)
+                            ForEach(Array(product.imageURLs.enumerated()), id: \.offset) { index, imageStr in
+                                Group {
+                                    if imageStr.hasPrefix("http"), let url = URL(string: imageStr) {
+                                        AsyncImage(url: url) { phase in
+                                            switch phase {
+                                            case .success(let image):
+                                                image.resizable().scaledToFill()
+                                            case .failure(_), .empty:
+                                                Rectangle().fill(Color(.systemGray4))
+                                                    .overlay(ProgressView())
+                                            @unknown default:
+                                                Rectangle().fill(Color(.systemGray4))
+                                            }
+                                        }
+                                    } else {
+                                        Image(imageStr)
+                                            .resizable()
+                                            .scaledToFill()
+                                    }
+                                }
+                                .frame(width: UIScreen.main.bounds.width - 40, height: 450)
+                                .clipped()
+                                .cornerRadius(20)
                             }
                         }
                         .scrollTargetLayout()
@@ -34,11 +52,9 @@ struct ProductDetailView: View {
                     }
                     .scrollTargetBehavior(.viewAligned)
                     .frame(height: 450)
-        
+
                     HStack(alignment: .top) {
-                        Button(action: {
-                            dismiss()
-                        }) {
+                        Button(action: { dismiss() }) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(.black)
@@ -46,14 +62,12 @@ struct ProductDetailView: View {
                                 .background(.ultraThinMaterial)
                                 .clipShape(Circle())
                         }
-                        
+
                         Spacer()
-                        
+
                         if showMenu {
                             HStack(spacing: 24) {
-                                Button(action: {
-                                    isFavorite.toggle()
-                                }) {
+                                Button(action: { isFavorite.toggle() }) {
                                     VStack(spacing: 4) {
                                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                                             .font(.system(size: 22, weight: .medium))
@@ -63,7 +77,7 @@ struct ProductDetailView: View {
                                             .foregroundColor(.black)
                                     }
                                 }
-                                
+
                                 Button(action: {
                                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                                         showMenu = false
@@ -104,12 +118,12 @@ struct ProductDetailView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
                 }
-            
+
                 // Product Info Card
                 VStack(alignment: .leading, spacing: 16) {
                     Text(product.name)
                         .font(.system(size: 24, weight: .bold))
-                    
+
                     HStack(alignment: .bottom, spacing: 4) {
                         Text("₹\(Int(product.rentPricePerDay))")
                             .font(.system(size: 28, weight: .bold))
@@ -118,18 +132,22 @@ struct ProductDetailView: View {
                             .foregroundColor(.gray)
                             .padding(.bottom, 4)
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 8) {
                         detailRow(title: "Security Deposit:", value: "₹\(Int(product.securityDeposit))")
-                        detailRow(title: "Condition:", value: product.condition.rawValue.capitalized)
-                        detailRow(title: "Size:", value: product.size == "Medium" || product.size == "M" ? "Medium" : product.size)
+                        detailRow(title: "Condition:", value: conditionLabel(product.condition))
+                        detailRow(title: "Size:", value: product.size)
+                        detailRow(title: "Pickup:", value: product.pickupLocation)
+                        if let occasion = product.occasion {
+                            detailRow(title: "Occasion:", value: occasion)
+                        }
                     }
-                    
+
                     Button(action: {}) {
                         HStack(spacing: 12) {
                             Text("👗")
                                 .font(.system(size: 18))
-                            Text("Try on")
+                            Text("Virtual Try On")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.black)
                         }
@@ -149,29 +167,31 @@ struct ProductDetailView: View {
                 .padding(.horizontal, 20)
                 .offset(y: -40)
                 .padding(.bottom, -40)
-                
+
                 // Description Card
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Description")
-                        .font(.system(size: 20, weight: .bold))
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        if let fabric = product.description[.fabric] {
-                            descriptionRow(title: "Fabric:", value: fabric)
-                        }
-                        if let brand = product.description[.brand] {
-                            descriptionRow(title: "Brand:", value: brand)
-                        }
-                        if let style = product.description[.style] {
-                            descriptionRow(title: "Style:", value: style)
-                        }
-                        if let fitAndComfort = product.description[.fitAndComfort] {
-                            descriptionRow(title: "Fit & Comfort:", value: fitAndComfort)
+                if !product.description.isEmpty {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Description")
+                            .font(.system(size: 20, weight: .bold))
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            if let fabric = product.description[.fabric] {
+                                descriptionRow(title: "Fabric:", value: fabric)
+                            }
+                            if let brand = product.description[.brand] {
+                                descriptionRow(title: "Brand:", value: brand)
+                            }
+                            if let style = product.description[.style] {
+                                descriptionRow(title: "Style:", value: style)
+                            }
+                            if let fit = product.description[.fitAndComfort] {
+                                descriptionRow(title: "Fit & Comfort:", value: fit)
+                            }
                         }
                     }
+                    .cardStyle()
+                    .padding(.top, 10)
                 }
-                .cardStyle()
-                .padding(.top, 10)
 
                 // Availability Card
                 VStack(alignment: .leading, spacing: 20) {
@@ -190,7 +210,7 @@ struct ProductDetailView: View {
                                 .foregroundColor(.gray)
                         }
                     }
-                    
+
                     if showCalendar {
                         CalendarPickerView(
                             selectedDate: $selectedDate,
@@ -198,14 +218,20 @@ struct ProductDetailView: View {
                         )
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     } else {
+                        // Show next 5 days as availability preview
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
-                                ForEach(24...28, id: \.self) { day in
-                                    let isCrossed = (day == 26 || day == 27)
+                                ForEach(0..<7, id: \.self) { offset in
+                                    let date = Calendar.current.date(byAdding: .day, value: offset, to: Date())!
+                                    let day = Calendar.current.component(.day, from: date)
+                                    let monthStr = date.formatted(.dateTime.month(.abbreviated)).uppercased()
+                                    let isBooked = product.bookedDates.contains(where: {
+                                        Calendar.current.isDate($0, inSameDayAs: date)
+                                    })
                                     VStack(spacing: 6) {
                                         Text("\(day)")
                                             .font(.system(size: 20, weight: .bold))
-                                        Text("DEC")
+                                        Text(monthStr)
                                             .font(.system(size: 10, weight: .bold))
                                     }
                                     .padding(.vertical, 14)
@@ -218,9 +244,9 @@ struct ProductDetailView: View {
                                     )
                                     .overlay(
                                         DiagonalLineShape()
-                                            .stroke(Color.black.opacity(0.6), lineWidth: isCrossed ? 1 : 0)
+                                            .stroke(Color.black.opacity(0.6), lineWidth: isBooked ? 1 : 0)
                                     )
-                                    .opacity(isCrossed ? 0.35 : 1.0)
+                                    .opacity(isBooked ? 0.35 : 1.0)
                                 }
                             }
                         }
@@ -229,30 +255,46 @@ struct ProductDetailView: View {
                 .cardStyle()
                 .padding(.top, 10)
 
-                // Profile Card
+                // Seller Card
                 HStack(spacing: 14) {
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
+                    if let profileImg = product.listedBy?.profileImage, let url = URL(string: profileImg) {
+                        AsyncImage(url: url) { phase in
+                            if case .success(let image) = phase {
+                                image.resizable().scaledToFill()
+                            } else {
+                                Image(systemName: "person.crop.circle.fill")
+                                    .resizable()
+                                    .foregroundStyle(.gray.opacity(0.5))
+                            }
+                        }
                         .frame(width: 48, height: 48)
-                        .foregroundColor(.gray.opacity(0.5))
-                    
+                        .clipShape(Circle())
+                    } else {
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable()
+                            .frame(width: 48, height: 48)
+                            .foregroundColor(.gray.opacity(0.5))
+                    }
+
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 6) {
-                            Text("Shreya Singh")
+                            Text(product.listedBy?.name ?? "Owner")
                                 .font(.system(size: 16, weight: .bold))
-                            Image(systemName: "checkmark.seal.fill")
-                                .foregroundColor(.blue)
-                                .font(.system(size: 14))
+                            if product.listedBy?.isVerified == true {
+                                Image(systemName: "checkmark.seal.fill")
+                                    .foregroundColor(.blue)
+                                    .font(.system(size: 14))
+                            }
                         }
-                        Text("Verified User")
+                        Text(product.listedBy?.location ?? "India")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.gray)
                     }
-                    
+
                     Spacer()
-                    
+
                     HStack(spacing: 4) {
-                        Text("4.5")
+                        Text(product.rating.formatted(.number.precision(.fractionLength(1))))
                             .font(.system(size: 14, weight: .bold))
                         Image(systemName: "star.fill")
                             .foregroundColor(.yellow)
@@ -261,75 +303,128 @@ struct ProductDetailView: View {
                 }
                 .cardStyle()
                 .padding(.top, 10)
-           
-                // Request to Rent Button
-                Button(action: {
-                    appStore.notificationStore.sendRentalRequest(
-                        product: product,
-                        fromUserName: appStore.userStore.users.first?.name ?? "A User"
-                    )
-                    showRentConfirmation = true
-                }) {
-                    Text("Request to Rent")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                        .background(Color(red: 243/255, green: 236/255, blue: 255/255))
-                        .cornerRadius(30)
+
+                // Request to Rent
+                if let rentError {
+                    Text(rentError)
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
                 }
+
+                Button(action: { Task { await handleRentRequest() } }) {
+                    ZStack {
+                        if isRequestingRent {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                        } else {
+                            Text("Request to Rent")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.black)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(Color(red: 243/255, green: 236/255, blue: 255/255))
+                    .cornerRadius(30)
+                }
+                .disabled(isRequestingRent)
                 .padding(.horizontal, 20)
                 .padding(.top, 24)
-                
+
                 // Reviews Card
                 VStack(alignment: .leading, spacing: 20) {
                     HStack {
                         Text("Reviews")
                             .font(.system(size: 20, weight: .bold))
-                        
+
                         HStack(spacing: 4) {
                             Image(systemName: "star.fill")
                                 .foregroundColor(.yellow)
                                 .font(.system(size: 12))
-                            Text("4.5")
+                            Text(product.rating.formatted(.number.precision(.fractionLength(1))))
                                 .font(.system(size: 14, weight: .bold))
                         }
-                        
+
                         Spacer()
-                        
-                        Text("20 Reviews")
+
+                        Text("\(product.reviews.count) Reviews")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.gray)
                     }
-                    
-                    ReviewItemView(
-                        name: "Shreya Singh",
-                        rating: 5,
-                        text: "Rented for Trip to Jaipur. It looks awsm on me 💕"
-                    )
-                    
-                    ReviewItemView(
-                        name: "Kirtika Kandari",
-                        rating: 4,
-                        text: "Rented for my clg fest performance such a savior at last moment"
-                    )
+
+                    if product.reviews.isEmpty {
+                        Text("No reviews yet. Be the first to rent!")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(product.reviews.prefix(3)) { review in
+                            ReviewItemView(
+                                name: review.userName ?? "User",
+                                rating: review.rating,
+                                text: review.content,
+                                profileImage: review.userImage
+                            )
+                        }
+                    }
                 }
                 .cardStyle()
                 .padding(.top, 24)
                 .padding(.bottom, 40)
-                
             }
         }
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
-        .alert("Request Sent!", isPresented: $showRentConfirmation) {
+        .alert("Request Sent! 🎉", isPresented: $showRentConfirmation) {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Your rental request for \(product.name) has been sent to the owner.")
         }
     }
-    
+
+    // MARK: - Actions
+
+    private func handleRentRequest() async {
+        guard appStore.userStore.currentUser != nil else {
+            rentError = "Please sign in to request a rental"
+            return
+        }
+        isRequestingRent = true
+        rentError = nil
+        do {
+            let startDate = selectedDate ?? Date()
+            let endDate = Calendar.current.date(byAdding: .day, value: 1, to: startDate) ?? Date()
+            let rental = try await RentalService.shared.createRental(
+                productId: product.id,
+                startDate: startDate,
+                endDate: endDate
+            )
+            appStore.rentalStore.addItem(rental)
+            await MainActor.run {
+                self.isRequestingRent = false
+                self.showRentConfirmation = true
+            }
+        } catch {
+            await MainActor.run {
+                self.isRequestingRent = false
+                self.rentError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func conditionLabel(_ cond: ProductCondition) -> String {
+        switch cond {
+        case .new: return "New"
+        case .likeNew: return "Like New"
+        case .good: return "Good"
+        case .worn: return "Worn"
+        }
+    }
+
     private func detailRow(title: String, value: String) -> some View {
         HStack(spacing: 4) {
             Text(title)
@@ -338,7 +433,7 @@ struct ProductDetailView: View {
                 .font(.system(size: 14, weight: .bold))
         }
     }
-    
+
     private func descriptionRow(title: String, value: String) -> some View {
         HStack(alignment: .top, spacing: 4) {
             Text(title)
@@ -350,7 +445,7 @@ struct ProductDetailView: View {
     }
 }
 
-// Consistent card styling modifier
+// MARK: - Card Style Extension
 extension View {
     func if26GlassEffect(cornerRadius: CGFloat = 20) -> some View {
         Group {
@@ -363,7 +458,7 @@ extension View {
             }
         }
     }
-    
+
     func cardStyle() -> some View {
         self
             .padding(24)
@@ -375,6 +470,7 @@ extension View {
     }
 }
 
+// MARK: - Diagonal Line
 struct DiagonalLineShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
@@ -384,58 +480,72 @@ struct DiagonalLineShape: Shape {
     }
 }
 
+// MARK: - Review Item View
 struct ReviewItemView: View {
     let name: String
     let rating: Int
     let text: String
-    
+    var profileImage: String? = nil
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
+                if let img = profileImage, let url = URL(string: img) {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image.resizable().scaledToFill()
+                        } else {
+                            Circle().fill(Color(.systemGray4))
+                        }
+                    }
+                    .frame(width: 28, height: 28)
+                    .clipShape(Circle())
+                } else {
+                    Image(systemName: "person.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.gray)
+                }
+
                 Text(name)
                     .font(.system(size: 14, weight: .bold))
-                Image(systemName: "star.fill")
-                    .foregroundColor(.yellow)
-                    .font(.system(size: 10))
-                Text("\(rating)")
-                    .font(.system(size: 12, weight: .bold))
+
+                HStack(spacing: 2) {
+                    Image(systemName: "star.fill")
+                        .foregroundColor(.yellow)
+                        .font(.system(size: 10))
+                    Text("\(rating)")
+                        .font(.system(size: 12, weight: .bold))
+                }
             }
-            
+
             Text(text)
                 .font(.system(size: 13, weight: .regular))
                 .foregroundColor(.black.opacity(0.8))
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.bottom, 4)
-            
-            HStack(spacing: 12) {
-                ForEach(0..<3, id: \.self) { _ in
-                    Rectangle()
-                        .fill(Color(.systemGray4))
-                        .frame(width: 48, height: 48)
-                        .cornerRadius(6)
-                }
-            }
         }
     }
 }
 
 #Preview {
     ProductDetailView(product: Product(
+        id: "preview",
         name: "Sharara",
         rentPricePerDay: 400,
         securityDeposit: 500,
         condition: .new,
-        size: "Medium",
+        size: "M",
         description: [
             .fabric: "Silk blend With Embroidery",
             .brand: "Biba Inspired",
             .style: "Festive Ethnic",
             .fitAndComfort: "Elegant look with Comfortable Wear"
         ],
-        listedByUserId: UUID(),
-        categoryId: UUID(),
+        listedByUserId: "user1",
+        categoryId: "cat1",
         pickupLocation: "Jaipur",
-        imageURLs: ["sharara_orange", "sharara"],
-        rating: 4.5,
+        imageURLs: ["https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&q=80"],
+        rating: 4.5
     ))
+    .environment(AppStore())
 }

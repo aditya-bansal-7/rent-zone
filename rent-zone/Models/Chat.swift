@@ -1,7 +1,7 @@
 import Foundation
 
 struct ChatConversation: Codable, Identifiable, Hashable {
-    var id: UUID = UUID()
+    var id: String = UUID().uuidString
     let participantName: String
     let participantImage: String?
     var isOnline: Bool = false
@@ -14,7 +14,7 @@ struct ChatConversation: Codable, Identifiable, Hashable {
 }
 
 struct ChatMessage: Codable, Identifiable, Hashable {
-    var id: UUID = UUID()
+    var id: String = UUID().uuidString
     let content: String
     let isFromCurrentUser: Bool
     let timestamp: String

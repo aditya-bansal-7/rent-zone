@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ProductGridView: View {
     let products: [Product]
-    @Binding var favoriteProductIds: Set<UUID>
+    @Binding var favoriteProductIds: Set<String>
     
     let columns = [
         GridItem(.flexible(), spacing: 12),

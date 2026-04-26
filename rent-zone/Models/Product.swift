@@ -1,20 +1,18 @@
 import Foundation
-import UIKit
 
 enum ProductCondition: String, Hashable, CaseIterable {
     case new
-    case likeNew = "Like New"
+    case likeNew
     case good
     case worn
 }
 
-enum DescriptionTypes: String, Hashable, CaseIterable{
+enum DescriptionTypes: String, Hashable, CaseIterable {
     case fabric
     case brand
     case style
     case fitAndComfort
 }
-
 
 enum CategoryType: String, Hashable, CaseIterable {
     case men
@@ -22,24 +20,26 @@ enum CategoryType: String, Hashable, CaseIterable {
 }
 
 struct Product: Identifiable, Hashable {
-    var id: UUID = UUID()
+    var id: String
     var name: String
     var rentPricePerDay: Double
     var securityDeposit: Double
     var condition: ProductCondition
     var size: String
-    var description: [DescriptionTypes:String] = [:]
+    var description: [DescriptionTypes: String] = [:]
     var bookedDates: [Date] = []
-    let listedByUserId: UUID
-    var categoryId: UUID
+    var listedByUserId: String
+    var listedBy: ListedByDTO?
+    var categoryId: String
     var pickupLocation: String
     var imageURLs: [String]
     var reviews: [Review] = []
     var rating: Double = 0.0
+    var occasion: String? = nil
 }
 
 struct Category: Identifiable, Hashable {
-    var id: UUID = UUID()
+    var id: String
     var name: String
     var images: String
     var type: CategoryType
