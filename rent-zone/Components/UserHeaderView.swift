@@ -6,9 +6,11 @@ struct UserHeaderView: View {
     
     var body: some View {
         HStack {
-            
-                Text("Payal Singh")
-                    .font(.system(size: 20, weight: .bold))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Home")
+                    .font(.title)
+                    .bold()
+            }
             
             Spacer()
             
@@ -32,14 +34,33 @@ struct UserHeaderView: View {
                 .frame(width: 44, height: 44)
             }
             
-            Circle()
-                .fill(Color.gray.opacity(0.3))
-                .frame(width: 38, height: 38)
-                .overlay(
-                    Image(systemName: "person.fill")
-                        .foregroundColor(.gray)
-                        .font(.system(size: 16))
-                )
+            if let user = appStore.userStore.currentUser {
+                if let profileImage = user.profileImage {
+                    Image(profileImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 38, height: 38)
+                        .clipShape(Circle())
+                } else {
+                    Circle()
+                        .fill(Color.purple.opacity(0.8))
+                        .frame(width: 38, height: 38)
+                        .overlay(
+                            Text(String(user.name.prefix(1)))
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                        )
+                }
+            } else {
+                Circle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 38, height: 38)
+                    .overlay(
+                        Image(systemName: "person.fill")
+                            .foregroundColor(.gray)
+                            .font(.system(size: 16))
+                    )
+            }
         }
         .padding(.top, 8)
     }

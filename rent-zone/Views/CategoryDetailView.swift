@@ -7,6 +7,7 @@ import SwiftUI
 
 struct CategoryDetailView: View {
     @Environment(AppStore.self) var appStore
+    @Environment(\.dismiss) private var dismiss
     
     let categoryTitle: String
     
@@ -83,6 +84,7 @@ struct CategoryDetailView: View {
         }
         .background(Color.white)
         .navigationBarHidden(true)
+        .toolbar(.hidden, for: .tabBar)
         .overlay {
             if showSortSheet {
                 Color.black.opacity(0.01)
@@ -122,7 +124,7 @@ struct CategoryDetailView: View {
     private var navBar: some View {
         HStack {
             Button(action: {
-                // Back action
+                dismiss()
             }) {
                 Image(systemName: "chevron.left")
                     .font(.title3.weight(.semibold))

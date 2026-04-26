@@ -51,15 +51,7 @@ struct ChatListView: View {
         NavigationStack{
             
    
-        VStack(spacing: 0) {
-            // Header
-            Text("Chat")
-                .font(.system(size: 22, weight: .bold))
-                .padding(.vertical, 16)
-                .frame(maxWidth: .infinity)
-            
-            Divider().opacity(0.3)
-            
+        VStack( spacing: 0) {
             // Chat list
             List {
                 ForEach(conversations) { conversation in
@@ -98,7 +90,7 @@ struct ChatListView: View {
             .listStyle(.plain)
         }
             .background(Color(white: 0.97))
-            .navigationBarHidden(true)
+            .navigationTitle("Chat")
             .navigationDestination(for: ChatConversation.self) { conversation in
                 PersonalChatView(conversation: conversation)
             }

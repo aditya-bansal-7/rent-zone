@@ -437,6 +437,5 @@ struct ReviewItemView: View {
         pickupLocation: "Jaipur",
         imageURLs: ["sharara_orange", "sharara"],
         rating: 4.5,
-        isPopular: true
     ))
 }

@@ -12,6 +12,7 @@ struct User: Identifiable, Hashable {
     var location: String
     var isVerified: Bool = false
     var favouriteProducts: [UUID] = []
+    var profileImage: String? = nil
 }
 
 struct Account: Identifiable, Hashable {

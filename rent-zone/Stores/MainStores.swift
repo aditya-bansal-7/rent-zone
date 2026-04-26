@@ -4,10 +4,11 @@ import Observation
 @Observable
 class UserStore {
     var users: [User] = []
+    var currentUser: User? = nil
     
     func fetchItems() {
         self.users = [
-            User(name: "Payal Singh", location: "Mumbai", isVerified: true)
+            User(name: "Payal Singh", location: "Mumbai", isVerified: true, profileImage: "payal")
         ]
     }
 
@@ -51,8 +52,7 @@ class ProductStore {
                 categoryId: dummyCategoryId,
                 pickupLocation: "Mumbai",
                 imageURLs: ["rajasthani_poshak"],
-                rating: 4.5,
-                isPopular: true
+                rating: 4.5
             ),
             Product(
                 name: "Sharara",
@@ -71,7 +71,6 @@ class ProductStore {
                 pickupLocation: "Delhi",
                 imageURLs: ["sharara"],
                 rating: 4.5,
-                isPopular: true
             ),
             Product(
                 name: "Tuxedo Black",
@@ -90,7 +89,7 @@ class ProductStore {
                 pickupLocation: "Bangalore",
                 imageURLs: ["tuxedo_black"],
                 rating: 4.0,
-                isPopular: true
+             
             ),
             Product(
                 name: "Sharara",
@@ -109,7 +108,7 @@ class ProductStore {
                 pickupLocation: "Jaipur",
                 imageURLs: ["sharara_orange", "sharara"],
                 rating: 5.0,
-                isPopular: true
+        
             ),
             Product(
                 name: "Modern Lehenga",
@@ -128,7 +127,7 @@ class ProductStore {
                 pickupLocation: "Pune",
                 imageURLs: ["modern_lehenga"],
                 rating: 4.5,
-                isPopular: false
+             
             ),
             Product(
                 name: "Garba Dress",
@@ -147,7 +146,7 @@ class ProductStore {
                 pickupLocation: "Ahmedabad",
                 imageURLs: ["garba_dress"],
                 rating: 4.3,
-                isPopular: false
+              
             )
         ]
     }
@@ -218,10 +217,20 @@ class CategoryStore {
     
     func fetchItems() {
         self.categories = [
-            Category(name: "All Items", images: "square.grid.2x2", type: .women),
-            Category(name: "Dress", images: "tshirt", type: .women),
-            Category(name: "Tuxedo", images: "figure.stand", type: .men),
-            Category(name: "Jacket", images: "jacket", type: .men)
+            // Women
+            Category(name: "Dresses", images: "Dress", type: .women),
+            Category(name: "Suits", images: "Suits", type: .women),
+            Category(name: "Saree", images: "Saree", type: .women),
+            Category(name: "Lehanga", images: "Lehanga", type: .women),
+            Category(name: "Formals", images: "Formal", type: .women),
+            Category(name: "Sharara", images: "Sharara", type: .women),
+            
+            // Men
+            Category(name: "Tuxedos", images: "Tuxedo", type: .men),
+            Category(name: "Jackets", images: "Jackets", type: .men),
+            Category(name: "Blazers", images: "Blazers", type: .men),
+            Category(name: "Formals", images: "Formals", type: .men),
+            Category(name: "Kurta", images: "Kurta", type: .men)
         ]
     }
     

@@ -5,7 +5,7 @@ struct UploadView: View {
     @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) var dismiss
     
-    var selectedImages: [UIImage] = []
+    var selectedImages: [String] = []
     
     var categories: [Category] {
         appStore.categoryStore.categories
@@ -147,8 +147,7 @@ struct UploadView: View {
             listedByUserId: userId,
             categoryId: categoryId,
             pickupLocation: "Greater Noida",
-            imageURLs: [],
-            uploadedImages: selectedImages
+            imageURLs: selectedImages
         )
         
         appStore.productStore.addItem(product)

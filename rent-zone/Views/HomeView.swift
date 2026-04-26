@@ -7,13 +7,14 @@ struct HomeView: View {
     @State private var favoriteProductIds: Set<UUID> = []
     @State private var isLoginSheetPresented = false
     @State private var showNotifications = false
+    @State private var isProfileSheet = false
     
     var popularProducts: [Product] {
-        appStore.productStore.products.filter { $0.isPopular }
+        appStore.productStore.products.filter { $0.rating >= 4.5 }
     }
     
     var recentProducts: [Product] {
-        appStore.productStore.products.filter { !$0.isPopular }
+        appStore.productStore.products.filter { $0.bookedDates.isEmpty }
     }
     
     var body: some View {
@@ -25,7 +26,11 @@ struct HomeView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         UserHeaderView(showNotifications: $showNotifications)
                             .onTapGesture {
-                                isLoginSheetPresented = true
+                                if appStore.userStore.currentUser == nil {
+                                    isLoginSheetPresented = true
+                                } else {
+                                    isProfileSheet = true
+                                }
                             }
                         SearchBarView(searchText: $searchText)
                         
@@ -45,6 +50,9 @@ struct HomeView: View {
                 .sheet(isPresented: $isLoginSheetPresented) {
                     LoginView()
                 }
+                .sheet(isPresented: $isProfileSheet) {
+                    ProfileView()
+                }
                 
                 // Notification overlay
                 if showNotifications {
@@ -60,6 +68,9 @@ struct HomeView: View {
                         .padding(.top, 60)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
+                
+                
+                
             }
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showNotifications)
             .navigationDestination(for: Product.self) { product in

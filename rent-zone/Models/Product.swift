@@ -34,10 +34,8 @@ struct Product: Identifiable, Hashable {
     var categoryId: UUID
     var pickupLocation: String
     var imageURLs: [String]
-    var uploadedImages: [UIImage] = []
     var reviews: [Review] = []
     var rating: Double = 0.0
-    var isPopular: Bool = false
 }
 
 struct Category: Identifiable, Hashable {
@@ -46,4 +44,3 @@ struct Category: Identifiable, Hashable {
     var images: String
     var type: CategoryType
 }
-
