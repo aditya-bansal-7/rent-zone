@@ -2,70 +2,143 @@ import SwiftUI
 
 struct ProductCardView: View {
     let product: Product
-    @Binding var favoriteProductIds: Set<UUID>
-    
+    @Binding var favoriteProductIds: Set<String>
+
+    var isFavorite: Bool {
+        favoriteProductIds.contains(product.id)
+    }
+
+    var imageURL: String? {
+        product.imageURLs.first
+    }
+
+    // Responsive card width for 2-column grid
+    private var cardWidth: CGFloat {
+        UIScreen.main.bounds.width / 2 - 24
+    }
+
     var body: some View {
-        let isFavorite = favoriteProductIds.contains(product.id)
-        return NavigationLink(value: product) {
-            VStack(alignment: .leading, spacing: 6) {
-                // Image area
-            ZStack(alignment: .topTrailing) {
-                Image(product.imageURLs.first ?? "")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, minHeight: 220, maxHeight: 220)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemGray5))
-                    )
-                
-                // Favorite button
-                Button(action: {
-                    if isFavorite {
-                        favoriteProductIds.remove(product.id)
+        NavigationLink(value: product) {
+            VStack(alignment: .leading, spacing: 8) {
+
+                // MARK: - Image Section
+                ZStack(alignment: .topTrailing) {
+
+                    if let urlStr = imageURL,
+                       let url = URL(string: urlStr),
+                       urlStr.hasPrefix("http") {
+
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: cardWidth, height: 220)
+                                    .clipped()
+                                    .clipShape(
+                                        RoundedRectangle(cornerRadius: 12)
+                                    )
+
+                            case .failure(_), .empty:
+                                placeholderView
+
+                            @unknown default:
+                                placeholderView
+                            }
+                        }
+
+                    } else if let localName = imageURL {
+
+                        Image(localName)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: cardWidth, height: 220)
+                            .clipped()
+                            .clipShape(
+                                RoundedRectangle(cornerRadius: 12)
+                            )
+
                     } else {
-                        favoriteProductIds.insert(product.id)
+                        placeholderView
                     }
-                }) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 28, height: 28)
-                            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-                        
-                        Image(systemName: isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 13))
-                            .foregroundColor(isFavorite ? .red : .gray)
+
+                    // MARK: - Favorite Button
+                    Button {
+                        toggleFavorite()
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 30, height: 30)
+                                .shadow(
+                                    color: .black.opacity(0.12),
+                                    radius: 3,
+                                    x: 0,
+                                    y: 2
+                                )
+
+                            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(isFavorite ? .red : .gray)
+                        }
                     }
+                    .padding(8)
                 }
-                .padding(8)
-            }
-            
-            // Product name
-            Text(product.name)
-                .font(.system(size: 14, weight: .medium))
-                .lineLimit(1)
-            
-            // Price and rating
-            HStack {
-                Text("₹ \(Int(product.rentPricePerDay))/day")
-                    .font(.system(size: 12, weight: .semibold))
-                
-                Spacer()
-                
-                HStack(spacing: 2) {
-                    Image(systemName: "star.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(.orange)
-                    
-                    Text(product.rating.formatted(.number.precision(.fractionLength(0...1))))
+
+                // MARK: - Product Name
+                Text(product.name)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+
+                // MARK: - Price + Rating
+                HStack {
+                    Text("₹ \(Int(product.rentPricePerDay))/day")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.primary)
+
+                    Spacer()
+
+                    HStack(spacing: 3) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.orange)
+
+                        Text(
+                            product.rating.formatted(
+                                .number.precision(.fractionLength(0...1))
+                            )
+                        )
                         .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.primary)
+                    }
                 }
             }
-            }
+            .frame(width: cardWidth, alignment: .leading)
         }
         .buttonStyle(.plain)
     }
-}
 
+    // MARK: - Placeholder View
+    private var placeholderView: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color(.systemGray5))
+            .frame(width: cardWidth, height: 220)
+            .overlay(
+                Image(systemName: "photo")
+                    .font(.system(size: 24))
+                    .foregroundColor(.gray)
+            )
+    }
+
+    // MARK: - Favorite Toggle
+    private func toggleFavorite() {
+        if isFavorite {
+            favoriteProductIds.remove(product.id)
+        } else {
+            favoriteProductIds.insert(product.id)
+        }
+    }
+}

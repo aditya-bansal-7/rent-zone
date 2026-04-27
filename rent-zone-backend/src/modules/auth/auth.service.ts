@@ -13,7 +13,10 @@ export const registerUser = async (
   name: string,
   email: string,
   password: string,
-  location: string
+  location: string,
+  university?: string,
+  phoneNumber?: string,
+  preferredCategory?: CategoryType
 ) => {
   const existing = await prisma.account.findUnique({ where: { email } });
   if (existing) throw new Error('Email already in use');
@@ -24,6 +27,9 @@ export const registerUser = async (
     data: {
       name,
       location,
+      university,
+      phoneNumber,
+      preferredCategory,
       account: { create: { provider: 'email', email, passwordHash } },
     },
     include: { account: { select: { provider: true, email: true } } },

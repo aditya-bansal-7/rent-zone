@@ -44,11 +44,23 @@ struct RentalRequestDetailView: View {
             // Product info card
             HStack(spacing: 14) {
                 if let imageName = notification.productImageName {
-                    Image(imageName)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 70, height: 80)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    Group {
+                        if imageName.hasPrefix("http"), let url = URL(string: imageName) {
+                            AsyncImage(url: url) { phase in
+                                if case .success(let image) = phase {
+                                    image.resizable().scaledToFill()
+                                } else {
+                                    Rectangle().fill(Color.gray.opacity(0.2))
+                                }
+                            }
+                        } else {
+                            Image(imageName)
+                                .resizable()
+                                .scaledToFill()
+                        }
+                    }
+                    .frame(width: 70, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 
                 VStack(alignment: .leading, spacing: 6) {

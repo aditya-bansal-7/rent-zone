@@ -1,170 +1,113 @@
 import Foundation
 import Observation
 
+// MARK: - User Store
 @Observable
 class UserStore {
     var users: [User] = []
     var currentUser: User? = nil
-    
-    func fetchItems() {
-        self.users = [
-            User(name: "Payal Singh", location: "Mumbai", isVerified: true, profileImage: "payal")
-        ]
+    var isLoading: Bool = false
+    var error: String? = nil
+
+    func fetchCurrentUser() async {
+        guard TokenStorage.isLoggedIn else { return }
+        isLoading = true
+        do {
+            let dto = try await AuthService.shared.getCurrentUser()
+            await MainActor.run {
+                self.currentUser = dto.toUser()
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.error = error.localizedDescription
+                self.isLoading = false
+            }
+        }
     }
 
-    func addItem(_ user: User) {
-        users.append(user)
+    func login(email: String, password: String) async throws -> User {
+        let dto = try await AuthService.shared.login(email: email, password: password)
+        let user = dto.toUser()
+        await MainActor.run {
+            self.currentUser = user
+        }
+        return user
     }
-    
-    func removeItem(id: UUID) {
-        users.removeAll { $0.id == id }
+
+    func register(name: String, email: String, password: String, location: String, university: String? = nil, phoneNumber: String? = nil, preferredCategory: String? = nil) async throws -> User {
+        let dto = try await AuthService.shared.register(
+            name: name,
+            email: email,
+            password: password,
+            location: location,
+            university: university,
+            phoneNumber: phoneNumber,
+            preferredCategory: preferredCategory
+        )
+        let user = dto.toUser()
+        await MainActor.run {
+            self.currentUser = user
+        }
+        return user
     }
-    
-    func updateItem(_ user: User) {
-        if let index = users.firstIndex(where: { $0.id == user.id }) {
-            users[index] = user
+
+    func logout() async {
+        try? await AuthService.shared.logout()
+        await MainActor.run {
+            self.currentUser = nil
+            TokenStorage.clear()
         }
     }
 }
 
+// MARK: - Product Store
 @Observable
 class ProductStore {
     var products: [Product] = []
-    
-    func fetchItems() {
-        let dummyUserId = UUID()
-        let dummyCategoryId = UUID()
-        
-        self.products = [
-            Product(
-                name: "Rajasthani Poshak",
-                rentPricePerDay: 520,
-                securityDeposit: 1000,
-                condition: .good,
-                size: "M",
-                description: [
-                    .fabric: "Cotton with Mirror Work",
-                    .brand: "Traditional Rajasthani",
-                    .style: "Festive Ethnic",
-                    .fitAndComfort: "Comfortable traditional fit"
-                ],
-                listedByUserId: dummyUserId,
-                categoryId: dummyCategoryId,
-                pickupLocation: "Mumbai",
-                imageURLs: ["rajasthani_poshak", "rajasthani_poshak_2"],
-                rating: 4.5
-            ),
-            Product(
-                name: "Sharara",
-                rentPricePerDay: 349,
-                securityDeposit: 800,
-                condition: .likeNew,
-                size: "S",
-                description: [
-                    .fabric: "Georgette with Sequin Work",
-                    .brand: "W Inspired",
-                    .style: "Party Wear",
-                    .fitAndComfort: "Flowy and lightweight"
-                ],
-                listedByUserId: dummyUserId,
-                categoryId: dummyCategoryId,
-                pickupLocation: "Delhi",
-                imageURLs: ["sharara", "sharara_2"],
-                rating: 4.5,
-            ),
-            Product(
-                name: "Tuxedo Black",
-                rentPricePerDay: 500,
-                securityDeposit: 1200,
-                condition: .new,
-                size: "L",
-                description: [
-                    .fabric: "Premium Wool Blend",
-                    .brand: "Raymond Style",
-                    .style: "Formal Western",
-                    .fitAndComfort: "Slim fit with stretch"
-                ],
-                listedByUserId: dummyUserId,
-                categoryId: dummyCategoryId,
-                pickupLocation: "Bangalore",
-                imageURLs: ["tuxedo_black", "tuxedo_black_2"],
-                rating: 4.0,
-             
-            ),
-            Product(
-                name: "Sharara",
-                rentPricePerDay: 400,
-                securityDeposit: 900,
-                condition: .good,
-                size: "M",
-                description: [
-                    .fabric: "Silk blend With Embroidery",
-                    .brand: "Biba Inspired",
-                    .style: "Festive Ethnic",
-                    .fitAndComfort: "Elegant look with Comfortable Wear"
-                ],
-                listedByUserId: dummyUserId,
-                categoryId: dummyCategoryId,
-                pickupLocation: "Jaipur",
-                imageURLs: ["sharara_orange", "sharara_orange_2"],
-                rating: 5.0,
-        
-            ),
-            Product(
-                name: "Modern Lehenga",
-                rentPricePerDay: 249,
-                securityDeposit: 700,
-                condition: .likeNew,
-                size: "S",
-                description: [
-                    .fabric: "Net with Thread Work",
-                    .brand: "Meena Bazaar Style",
-                    .style: "Indo Western",
-                    .fitAndComfort: "Semi-fitted comfortable drape"
-                ],
-                listedByUserId: dummyUserId,
-                categoryId: dummyCategoryId,
-                pickupLocation: "Pune",
-                imageURLs: ["modern_lehenga"],
-                rating: 4.5,
-             
-            ),
-            Product(
-                name: "Garba Dress",
-                rentPricePerDay: 249,
-                securityDeposit: 600,
-                condition: .good,
-                size: "M",
-                description: [
-                    .fabric: "Chaniya Choli Cotton",
-                    .brand: "Gujarati Traditional",
-                    .style: "Navratri Special",
-                    .fitAndComfort: "Free-flowing garba-ready comfort"
-                ],
-                listedByUserId: dummyUserId,
-                categoryId: dummyCategoryId,
-                pickupLocation: "Ahmedabad",
-                imageURLs: ["garba_dress"],
-                rating: 4.3,
-              
-            )
-        ]
+    var isLoading: Bool = false
+    var error: String? = nil
+
+    func fetchItems() async {
+        isLoading = true
+        error = nil
+        do {
+            let fetched = try await ProductService.shared.getProducts(limit: 50)
+            await MainActor.run {
+                self.products = fetched
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.error = error.localizedDescription
+                self.isLoading = false
+                // Fallback to empty (no hardcoded data)
+            }
+        }
     }
-    
+
+    func fetchProductsByCategory(categoryId: String) async -> [Product] {
+        do {
+            return try await ProductService.shared.getProducts(categoryId: categoryId, limit: 50)
+        } catch {
+            return []
+        }
+    }
+
     func addItem(_ product: Product) {
         products.insert(product, at: 0)
     }
-    
-    func removeItem(id: UUID) {
+
+    func removeItem(id: String) {
         products.removeAll { $0.id == id }
     }
-    
+
     func updateItem(_ product: Product) {
         if let index = products.firstIndex(where: { $0.id == product.id }) {
             products[index] = product
         }
     }
-    
+
     func sortedAndFiltered(
         sortOption: SortOption?,
         priceRange: ClosedRange<Double>,
@@ -173,17 +116,25 @@ class ProductStore {
         selectedDate: Date?
     ) -> [Product] {
         var result = products
-        
+
         // Filter by price range
         result = result.filter { priceRange.contains($0.rentPricePerDay) }
-        
+
         // Filter by size
         if !selectedSizes.isEmpty {
             result = result.filter { product in
                 selectedSizes.contains(where: { $0.rawValue == product.size })
             }
         }
-        
+
+        // Filter by occasion
+        if !selectedOccasions.isEmpty {
+            result = result.filter { product in
+                guard let occasion = product.occasion else { return false }
+                return selectedOccasions.contains(where: { $0.rawValue == occasion })
+            }
+        }
+
         // Filter by date availability
         if let date = selectedDate {
             result = result.filter { product in
@@ -192,7 +143,7 @@ class ProductStore {
                 })
             }
         }
-        
+
         // Sort
         if let sortOption = sortOption {
             switch sortOption {
@@ -203,48 +154,50 @@ class ProductStore {
             case .ratingHighToLow:
                 result.sort { $0.rating > $1.rating }
             case .newest:
-                break // No creation date to sort by currently
+                break
             }
         }
-        
+
         return result
     }
 }
 
+// MARK: - Category Store
 @Observable
 class CategoryStore {
     var categories: [Category] = []
-    
-    func fetchItems() {
-        self.categories = [
-            // Women
-            Category(name: "Dresses", images: "Dress", type: .women),
-            Category(name: "Suits", images: "Suits", type: .women),
-            Category(name: "Saree", images: "Saree", type: .women),
-            Category(name: "Lehanga", images: "Lehanga", type: .women),
-            Category(name: "Formals", images: "Formal", type: .women),
-            Category(name: "Sharara", images: "sharara_category", type: .women),
-            
-            // Men
-            Category(name: "Tuxedos", images: "Tuxedo", type: .men),
-            Category(name: "Jackets", images: "Jackets", type: .men),
-            Category(name: "Blazers", images: "Blazers", type: .men),
-            Category(name: "Formals", images: "Formals", type: .men),
-            Category(name: "Kurta", images: "Kurta", type: .men)
-        ]
-    }
-    
-    func addItem(_ category: Category) {
-        categories.append(category)
-    }
-    
-    func removeItem(id: UUID) {
-        categories.removeAll { $0.id == id }
-    }
-    
-    func updateItem(_ category: Category) {
-        if let index = categories.firstIndex(where: { $0.id == category.id }) {
-            categories[index] = category
+    var isLoading: Bool = false
+
+    func fetchItems() async {
+        isLoading = true
+        do {
+            let fetched = try await CategoryService.shared.getCategories()
+            await MainActor.run {
+                self.categories = fetched
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                // Fallback to local defaults if API fails
+                self.categories = Self.defaultCategories()
+                self.isLoading = false
+            }
         }
+    }
+
+    private static func defaultCategories() -> [Category] {
+        [
+            Category(id: "women-dresses", name: "Dresses", images: "Dress", type: .women),
+            Category(id: "women-suits", name: "Suits", images: "Suits", type: .women),
+            Category(id: "women-saree", name: "Saree", images: "Saree", type: .women),
+            Category(id: "women-lehenga", name: "Lehenga", images: "Lehanga", type: .women),
+            Category(id: "women-formals", name: "Formals", images: "Formal", type: .women),
+            Category(id: "women-sharara", name: "Sharara", images: "Sharara", type: .women),
+            Category(id: "men-tuxedos", name: "Tuxedos", images: "Tuxedo", type: .men),
+            Category(id: "men-jackets", name: "Jackets", images: "Jackets", type: .men),
+            Category(id: "men-blazers", name: "Blazers", images: "Blazers", type: .men),
+            Category(id: "men-formals", name: "Formals", images: "Formals", type: .men),
+            Category(id: "men-kurta", name: "Kurta", images: "Kurta", type: .men),
+        ]
     }
 }

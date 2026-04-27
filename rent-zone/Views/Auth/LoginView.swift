@@ -1,0 +1,326 @@
+import SwiftUI
+import AuthenticationServices
+
+struct LoginView: View {
+    @State private var step: LoginStep = .enterEmailOrMobile
+    @State private var emailOrMobile = ""
+    @State private var password = ""
+    @State private var name = ""
+    @State private var location = ""
+    @State private var university = ""
+    @State private var phoneNumber = ""
+    @State private var selectedCategory: CategoryType = .women
+    @State private var isLoading = false
+    @State private var errorMessage: String? = nil
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(AppStore.self) private var appStore
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    subtitle
+                    
+                    VStack(spacing: 16) {
+                        inputsArea
+                        
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .font(.system(size: 14))
+                                .foregroundColor(.red)
+                                .padding(.horizontal, 4)
+                        }
+                        
+                        actionsArea
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 8)
+                    
+                    Spacer()
+                    TermsFooter()
+                }
+            }
+        }
+        .background(Color.white.edgesIgnoringSafeArea(.all))
+        .animation(.easeInOut(duration: 0.3), value: step)
+    }
+
+    // MARK: - Subviews
+    
+    private var header: some View {
+        HStack {
+            Text(headerTitle)
+                .font(.system(size: 24, weight: .bold))
+            Spacer()
+            Button(action: { dismiss() }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(Color(white: 0.8))
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 32)
+        .padding(.bottom, 8)
+    }
+    
+    private var subtitle: some View {
+        Text(headerSubtitle)
+            .font(.system(size: 15, weight: .regular))
+            .foregroundColor(.gray)
+            .lineSpacing(4)
+            .padding(.horizontal, 24)
+            .padding(.top, 4)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+    
+    @ViewBuilder
+    private var inputsArea: some View {
+        if step != .onboardingExtra {
+            AuthInputField(
+                placeholder: "Email address",
+                text: $emailOrMobile,
+                keyboardType: .emailAddress,
+                isDisabled: step != .enterEmailOrMobile,
+                isSuccess: step != .enterEmailOrMobile
+            )
+        }
+        
+        if step == .enterPassword || step == .registerDetails {
+            AuthInputField(placeholder: "Password", text: $password, isSecure: true)
+                .transition(.move(edge: .top).combined(with: .opacity))
+        }
+        
+        if step == .registerDetails {
+            AuthInputField(placeholder: "Full Name", text: $name)
+                .transition(.move(edge: .top).combined(with: .opacity))
+        }
+        
+        if step == .onboardingExtra {
+            AuthOnboardingStepView(
+                location: $location,
+                university: $university,
+                phoneNumber: $phoneNumber,
+                selectedCategory: $selectedCategory
+            )
+            .transition(.move(edge: .trailing).combined(with: .opacity))
+        }
+    }
+    
+    @ViewBuilder
+    private var actionsArea: some View {
+        VStack(spacing: 16) {
+            PrimaryAuthButton(
+                title: primaryButtonTitle,
+                action: handlePrimaryAction,
+                isLoading: isLoading,
+                isDisabled: isPrimaryButtonDisabled
+            )
+            
+            if step == .enterEmailOrMobile {
+                SocialAuthButtons(
+                    onAppleCompletion: handleAppleSignIn,
+                    onGoogleAction: handleGoogleSignIn
+                )
+                
+                Button(action: { withAnimation { step = .registerDetails } }) {
+                    HStack(spacing: 4) {
+                        Text("New to RentZone?")
+                            .foregroundColor(.gray)
+                        Text("Create Account")
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
+                    }
+                    .font(.system(size: 14))
+                }
+                .padding(.top, 8)
+            } else {
+                Button(action: handleGoBack) {
+                    Text("Go Back")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.gray)
+                        .underline()
+                }
+                .padding(.top, 4)
+            }
+        }
+    }
+
+    // MARK: - Logic Handlers
+    
+    private func handleGoBack() {
+        if step == .onboardingExtra {
+            step = .registerDetails
+        } else {
+            step = .enterEmailOrMobile
+        }
+        errorMessage = nil
+    }
+
+    private func handlePrimaryAction() {
+        errorMessage = nil
+        switch step {
+        case .enterEmailOrMobile:
+            guard emailOrMobile.contains("@") && emailOrMobile.count > 5 else {
+                errorMessage = "Please enter a valid email address"
+                return
+            }
+            step = .enterPassword
+        case .enterPassword:
+            Task { await performLogin() }
+        case .registerDetails:
+            guard !name.isEmpty else {
+                errorMessage = "Please enter your full name"
+                return
+            }
+            withAnimation { step = .onboardingExtra }
+        case .onboardingExtra:
+            Task { await performRegister() }
+        }
+    }
+
+    private func performLogin() async {
+        isLoading = true
+        do {
+            _ = try await appStore.userStore.login(email: emailOrMobile, password: password)
+            await appStore.refreshAfterLogin()
+            await MainActor.run {
+                self.isLoading = false
+                dismiss()
+            }
+        } catch let error as APIError {
+            await MainActor.run {
+                self.isLoading = false
+                if case .serverError(let msg) = error {
+                    if msg.lowercased().contains("invalid") {
+                        self.errorMessage = "\(msg). New here? Fill in your details to register."
+                        withAnimation { self.step = .registerDetails }
+                    } else {
+                        self.errorMessage = msg
+                    }
+                } else {
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func performRegister() async {
+        isLoading = true
+        do {
+            _ = try await appStore.userStore.register(
+                name: name,
+                email: emailOrMobile,
+                password: password,
+                location: location.isEmpty ? "Unknown" : location,
+                university: university,
+                phoneNumber: phoneNumber,
+                preferredCategory: selectedCategory.rawValue
+            )
+            await appStore.refreshAfterLogin()
+            await MainActor.run {
+                self.isLoading = false
+                dismiss()
+            }
+        } catch let error as APIError {
+            await MainActor.run {
+                self.isLoading = false
+                if case .serverError(let msg) = error as? APIError {
+                    self.errorMessage = msg
+                } else {
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func handleGoogleSignIn() {
+        errorMessage = "Google Sign In coming soon! Use Apple or Email for now."
+    }
+
+    private func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authResult):
+            guard let appleIDCredential = authResult.credential as? ASAuthorizationAppleIDCredential else { return }
+            let email = appleIDCredential.email ?? "\(appleIDCredential.user)@privaterelay.appleid.com"
+            let name = [appleIDCredential.fullName?.givenName, appleIDCredential.fullName?.familyName]
+                .compactMap { $0 }
+                .joined(separator: " ")
+            Task {
+                isLoading = true
+                do {
+                    let result: AuthResponse = try await APIClient.shared.request(
+                        endpoint: "/auth/oauth",
+                        method: "POST",
+                        body: ["name": name.isEmpty ? "Apple User" : name, "email": email, "provider": "apple"]
+                    )
+                    TokenStorage.accessToken = result.accessToken
+                    TokenStorage.refreshToken = result.refreshToken
+                    TokenStorage.userId = result.user.id
+                    await appStore.refreshAfterLogin()
+                    await MainActor.run {
+                        self.isLoading = false
+                        dismiss()
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.isLoading = false
+                        self.errorMessage = error.localizedDescription
+                    }
+                }
+            }
+        case .failure(let error):
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Computed Props
+    
+    private var primaryButtonTitle: String {
+        switch step {
+        case .enterEmailOrMobile: return "Continue"
+        case .enterPassword: return "Sign In"
+        case .registerDetails: return "Continue"
+        case .onboardingExtra: return "Create Account"
+        }
+    }
+
+    private var isPrimaryButtonDisabled: Bool {
+        switch step {
+        case .enterEmailOrMobile: return emailOrMobile.isEmpty
+        case .enterPassword: return password.isEmpty
+        case .registerDetails: return name.isEmpty
+        case .onboardingExtra: return location.isEmpty || university.isEmpty
+        }
+    }
+
+    private var headerTitle: String {
+        switch step {
+        case .enterEmailOrMobile: return "Sign In"
+        case .enterPassword: return "Welcome Back"
+        case .registerDetails: return "Create Account"
+        case .onboardingExtra: return "Final Touches"
+        }
+    }
+
+    private var headerSubtitle: String {
+        switch step {
+        case .enterEmailOrMobile: return "Enter your email to sign in or create an account."
+        case .enterPassword: return "Enter the password for \(emailOrMobile)."
+        case .registerDetails: return "Enter your name and password to create an account."
+        case .onboardingExtra: return "Tell us a bit more about yourself to personalize your experience."
+        }
+    }
+}

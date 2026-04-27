@@ -2,31 +2,20 @@ import SwiftUI
 import PhotosUI
 
 struct UploadViewCamera: View {
-    
+
     @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) var dismiss
-    
+
     @State private var selectedItems: [PhotosPickerItem] = []
-    @State private var selectedImages: [String] = []
+    @State private var selectedImages: [UIImage] = []
     @State private var currentPage = 0
-    
-    private func saveImageToTempDirectory(_ image: UIImage) -> String? {
-        guard let data = image.jpegData(compressionQuality: 0.9) else { return nil }
-        let filename = UUID().uuidString + ".jpg"
-        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(filename)
-        do {
-            try data.write(to: url, options: [.atomic])
-            return url.path
-        } catch {
-            return nil
-        }
-    }
-    
+    @State private var isLoggedInRequired = false
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 Spacer()
-                
+
                 // Show selected images in slider or default illustration
                 if selectedImages.isEmpty {
                     Image("upload_photo_illustration")
@@ -37,30 +26,22 @@ struct UploadViewCamera: View {
                 } else {
                     TabView(selection: $currentPage) {
                         ForEach(selectedImages.indices, id: \.self) { index in
-                            if let uiImage = UIImage(contentsOfFile: selectedImages[index]) {
-                                Image(uiImage: uiImage)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(maxWidth: 320, maxHeight: 400)
-                                    .clipped()
-                                    .cornerRadius(16)
-                                    .tag(index)
-                            } else {
-                                Color.gray.opacity(0.1)
-                                    .frame(maxWidth: 320, maxHeight: 400)
-                                    .cornerRadius(16)
-                                    .tag(index)
-                            }
+                            Image(uiImage: selectedImages[index])
+                                .resizable()
+                                .scaledToFill()
+                                .frame(maxWidth: 320, maxHeight: 400)
+                                .clipped()
+                                .cornerRadius(16)
+                                .tag(index)
                         }
                     }
                     .tabViewStyle(.page(indexDisplayMode: .always))
                     .frame(height: 420)
                     .padding(.horizontal, 16)
                 }
-                
-                Spacer()
-                    .frame(height: 30)
-                
+
+                Spacer().frame(height: 30)
+
                 // Upload Photo button
                 PhotosPicker(selection: $selectedItems, matching: .images) {
                     HStack(spacing: 8) {
@@ -77,52 +58,47 @@ struct UploadViewCamera: View {
                             .stroke(Color.gray.opacity(0.4), lineWidth: 2)
                     )
                 }
-                
-                Spacer()
-                    .frame(height: 20)
-                
-                // Description text
+
+                Spacer().frame(height: 20)
+
                 Text("Upload clear, attractive photos\nof your outfit to attract renters.")
                     .font(.system(size: 15))
                     .foregroundStyle(.gray)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
-                
-                Spacer()
-                    .frame(height: 30)
-                
-                // Next button navigates to UploadView with selected images
+
+                Spacer().frame(height: 30)
+
+                // Next button
                 NavigationLink(destination: UploadView(selectedImages: selectedImages)) {
                     Text("Next")
                         .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.black)
+                        .foregroundStyle(selectedImages.isEmpty ? .gray : .black)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color.purple.opacity(0.15))
+                        .background(selectedImages.isEmpty ? Color.gray.opacity(0.1) : Color.purple.opacity(0.15))
                         .cornerRadius(30)
                 }
+                .disabled(selectedImages.isEmpty)
                 .padding(.horizontal, 40)
-                
-                Spacer()
-                    .frame(height: 40)
+
+                Spacer().frame(height: 40)
             }
             .navigationTitle("Upload Photos")
-            
+            .sheet(isPresented: $isLoggedInRequired) {
+                LoginView()
+                    .presentationDetents([.fraction(0.85), .large])
+            }
             .onChange(of: selectedItems) { _, newItems in
                 Task {
-                    var paths: [String] = []
+                    var images: [UIImage] = []
                     for item in newItems {
-                        do {
-                            if let data = try await item.loadTransferable(type: Data.self),
-                               let uiImage = UIImage(data: data),
-                               let path = saveImageToTempDirectory(uiImage) {
-                                paths.append(path)
-                            }
-                        } catch {
-                            // Ignore individual failures and continue
+                        if let data = try? await item.loadTransferable(type: Data.self),
+                           let image = UIImage(data: data) {
+                            images.append(image)
                         }
                     }
-                    selectedImages = paths
+                    selectedImages = images
                     currentPage = 0
                 }
             }

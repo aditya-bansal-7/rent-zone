@@ -52,6 +52,9 @@ model User {
   id                  String            @id @default(auto()) @map("_id") @db.ObjectId
   name                String
   location            String
+  university          String?
+  phoneNumber         String?
+  preferredCategory   CategoryType?
   isVerified          Boolean           @default(false)
   favouriteProductIds String[]          @db.ObjectId
   profileImage        String?
