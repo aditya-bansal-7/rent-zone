@@ -289,13 +289,14 @@ struct ProductDetailEditView: View {
 #Preview {
     ProductDetailEditView(
         product: Product(
+            id: "abcabc",
             name: "Sharara",
             rentPricePerDay: 300,
             securityDeposit: 800,
             condition: .new,
             size: "L",
-            listedByUserId: UUID(),
-            categoryId: UUID(),
+            listedByUserId: "user1",
+            categoryId: "cat1",
             pickupLocation: "Greater Noida",
             imageURLs: ["sharara", "sharara_orange"]
         )

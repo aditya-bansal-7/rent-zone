@@ -9,17 +9,32 @@ class AppStore {
     var rentalStore = RentalStore()
     var reviewStore = ReviewStore()
     var notificationStore = NotificationStore()
-    
+
     init() {
-        fetchInitialData()
+        // Kick off async fetch on init
+        Task {
+            await fetchInitialData()
+        }
     }
-    
-    func fetchInitialData() {
-        userStore.fetchItems()
-        productStore.fetchItems()
-        categoryStore.fetchItems()
-        rentalStore.fetchItems()
-        reviewStore.fetchItems()
-        notificationStore.fetchItems()
+
+    func fetchInitialData() async {
+        // Fetch in parallel
+        async let cats: () = categoryStore.fetchItems()
+        async let prods: () = productStore.fetchItems()
+        _ = await (cats, prods)
+
+        // Only fetch authenticated data if logged in
+        if TokenStorage.isLoggedIn {
+            await userStore.fetchCurrentUser()
+            async let notifs: () = notificationStore.fetchItems()
+            async let rentals: () = rentalStore.fetchItems()
+            _ = await (notifs, rentals)
+        }
+    }
+
+    func refreshAfterLogin() async {
+        await userStore.fetchCurrentUser()
+        await notificationStore.fetchItems()
+        await rentalStore.fetchItems()
     }
 }

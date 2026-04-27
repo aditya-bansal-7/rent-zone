@@ -61,7 +61,6 @@ export const createProduct = async (req: Request, res: Response) => {
       description: data.description ?? {},
       imageURLs: [],
       category: { connect: { id: data.categoryId } },
-      listedBy: { connect: { id: req.user!.userId } },
     });
     sendSuccess(res, product, 201, 'Product created');
   } catch (err: any) {

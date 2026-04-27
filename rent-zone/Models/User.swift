@@ -7,17 +7,18 @@ enum AccountProvider: String, Hashable, CaseIterable {
 }
 
 struct User: Identifiable, Hashable {
-    var id: UUID = UUID()
+    var id: String
     var name: String
     var location: String
     var isVerified: Bool = false
-    var favouriteProducts: [UUID] = []
+    var favouriteProducts: [String] = []
     var profileImage: String? = nil
+    var email: String? = nil
 }
 
 struct Account: Identifiable, Hashable {
-    var id: UUID = UUID()
-    let userId: UUID
+    var id: String
+    let userId: String
     var provider: AccountProvider
     var email: String
     var passwordHash: String?

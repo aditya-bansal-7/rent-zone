@@ -12,8 +12,8 @@ enum NotificationStatus: String, Hashable {
 }
 
 struct AppNotification: Identifiable, Hashable {
-    var id: UUID = UUID()
-    let userId: UUID
+    var id: String
+    let userId: String
     var title: String
     var content: String
     var icon: String
@@ -21,8 +21,8 @@ struct AppNotification: Identifiable, Hashable {
     var isRead: Bool
     var type: NotificationType = .general
     var status: NotificationStatus = .pending
-    var productId: UUID?
-    var fromUserId: UUID?
+    var productId: String?
+    var fromUserId: String?
     var rentalDate: Date?
     var totalPrice: Double?
     var productImageName: String?

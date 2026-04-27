@@ -1,9 +1,9 @@
 import Foundation
 
 struct Report: Identifiable, Hashable {
-    var id: UUID = UUID()
-    let reportedByUserId: UUID
-    let reportedUserId: UUID
+    var id: String = UUID().uuidString
+    let reportedByUserId: String
+    let reportedUserId: String
     var reason: String
     var description: String
     var isValid: Bool

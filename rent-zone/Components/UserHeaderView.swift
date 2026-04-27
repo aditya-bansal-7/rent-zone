@@ -35,12 +35,22 @@ struct UserHeaderView: View {
             }
             
             if let user = appStore.userStore.currentUser {
-                if let profileImage = user.profileImage {
-                    Image(profileImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 38, height: 38)
-                        .clipShape(Circle())
+                if let profileImage = user.profileImage, let url = URL(string: profileImage) {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image.resizable().scaledToFill()
+                        } else {
+                            Circle()
+                                .fill(Color.purple.opacity(0.8))
+                                .overlay(
+                                    Text(String(user.name.prefix(1)))
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.white)
+                                )
+                        }
+                    }
+                    .frame(width: 38, height: 38)
+                    .clipShape(Circle())
                 } else {
                     Circle()
                         .fill(Color.purple.opacity(0.8))

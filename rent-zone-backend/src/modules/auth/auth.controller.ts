@@ -9,6 +9,9 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   location: z.string().optional().default(''),
+  university: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  preferredCategory: z.enum(['men', 'women']).optional(),
 });
 
 const loginSchema = z.object({
@@ -19,7 +22,15 @@ const loginSchema = z.object({
 export const register = async (req: Request, res: Response) => {
   try {
     const data = registerSchema.parse(req.body);
-    const result = await authService.registerUser(data.name, data.email, data.password, data.location);
+    const result = await authService.registerUser(
+      data.name,
+      data.email,
+      data.password,
+      data.location,
+      data.university,
+      data.phoneNumber,
+      data.preferredCategory
+    );
     sendSuccess(res, result, 201, 'User registered successfully');
   } catch (err: any) {
     const status = err.message?.includes('already') ? 409 : 400;
