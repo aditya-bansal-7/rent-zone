@@ -52,6 +52,21 @@ class UserStore {
         return user
     }
 
+    func updateProfile(name: String, location: String, university: String? = nil, phoneNumber: String? = nil, preferredCategory: String? = nil) async throws -> User {
+        let dto = try await AuthService.shared.updateProfile(
+            name: name,
+            location: location,
+            university: university,
+            phoneNumber: phoneNumber,
+            preferredCategory: preferredCategory
+        )
+        let user = dto.toUser()
+        await MainActor.run {
+            self.currentUser = user
+        }
+        return user
+    }
+
     func logout() async {
         try? await AuthService.shared.logout()
         await MainActor.run {

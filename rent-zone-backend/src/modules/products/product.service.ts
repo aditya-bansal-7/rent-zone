@@ -67,9 +67,9 @@ export const getProductById = (id: string) =>
     },
   });
 
-export const createProduct = (userId: string, data: Prisma.ProductCreateInput) =>
+export const createProduct = (userId: string, data: Omit<Prisma.ProductCreateInput, 'listedBy'>) =>
   prisma.product.create({
-    data: { ...data, listedBy: { connect: { id: userId } } },
+    data: { ...data, listedBy: { connect: { id: userId } } } as Prisma.ProductCreateInput,
     include: { category: true },
   });
 

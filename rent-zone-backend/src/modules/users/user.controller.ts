@@ -15,8 +15,14 @@ export const getUser = async (req: Request, res: Response) => {
 
 export const updateMe = async (req: Request, res: Response) => {
   try {
-    const { name, location } = req.body;
-    const user = await userService.updateUser(req.user!.userId, { name, location });
+    const { name, location, university, phoneNumber, preferredCategory } = req.body;
+    const user = await userService.updateUser(req.user!.userId, {
+      name,
+      location,
+      university,
+      phoneNumber,
+      preferredCategory,
+    });
     sendSuccess(res, user, 200, 'Profile updated');
   } catch (err: any) {
     sendError(res, err.message);

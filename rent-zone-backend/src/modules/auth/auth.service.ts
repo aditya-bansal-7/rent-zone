@@ -1,5 +1,7 @@
 import bcrypt from 'bcryptjs';
-import { AccountProvider } from '@prisma/client';
+import { OAuth2Client } from 'google-auth-library';
+import appleSignin from 'apple-signin-auth';
+import { AccountProvider, CategoryType } from '@prisma/client';
 import prisma from '../../config/db';
 import {
   signAccessToken,
@@ -66,22 +68,56 @@ export const loginUser = async (email: string, password: string) => {
   return { user: account.user, accessToken, refreshToken };
 };
 
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+async function verifyGoogleToken(idToken: string) {
+  const ticket = await googleClient.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  return ticket.getPayload();
+}
+
+async function verifyAppleToken(identityToken: string) {
+  return appleSignin.verifyIdToken(identityToken, {
+    audience: process.env.APPLE_BUNDLE_ID,
+  });
+}
+
 // ── OAuth Login ───────────────────────────────────────────────────────────────
 export const oauthLogin = async (
-  name: string,
-  email: string,
   provider: AccountProvider,
+  idToken: string,
+  name?: string, // Fallback if not in token
   location = ''
 ) => {
+  let email: string | undefined;
+  let verifiedName: string | undefined = name;
+
+  if (provider === 'google') {
+    const payload = await verifyGoogleToken(idToken);
+    email = payload?.email;
+    verifiedName = payload?.name || name;
+  } else if (provider === 'apple') {
+    const payload = await verifyAppleToken(idToken);
+    email = payload.email;
+    // Apple only sends name on first login, so we might need the fallback
+  }
+
+  if (!email) throw new Error('Invalid token: email not found');
+
+  let isNewUser = false;
   let account = await prisma.account.findUnique({
     where: { email },
     include: { user: true },
   });
 
   if (!account) {
+    isNewUser = true;
     await prisma.user.create({
       data: {
-        name,
+        name: verifiedName || 'User',
         location,
         account: { create: { provider, email } },
       },
@@ -100,7 +136,7 @@ export const oauthLogin = async (
 
   await prisma.account.update({ where: { email }, data: { refreshToken } });
 
-  return { user: (account as any).user, accessToken, refreshToken };
+  return { user: (account as any).user, accessToken, refreshToken, isNewUser };
 };
 
 // ── Refresh Tokens ────────────────────────────────────────────────────────────

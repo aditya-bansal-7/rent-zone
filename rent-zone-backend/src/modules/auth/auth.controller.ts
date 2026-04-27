@@ -50,11 +50,11 @@ export const login = async (req: Request, res: Response) => {
 
 export const oauthLogin = async (req: Request, res: Response) => {
   try {
-    const { name, email, provider, location } = req.body;
-    if (!name || !email || !provider) {
-      return sendError(res, 'name, email, and provider are required', 400);
+    const { name, provider, location, idToken } = req.body;
+    if (!provider || !idToken) {
+      return sendError(res, 'provider and idToken are required', 400);
     }
-    const result = await authService.oauthLogin(name, email, provider as AccountProvider, location);
+    const result = await authService.oauthLogin(provider as AccountProvider, idToken, name, location);
     sendSuccess(res, result, 200, 'OAuth login successful');
   } catch (err: any) {
     sendError(res, err.message, 400);

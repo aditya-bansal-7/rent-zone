@@ -1,6 +1,9 @@
 import SwiftUI
 import AuthenticationServices
 
+import GoogleSignIn
+
+
 struct LoginView: View {
     @State private var step: LoginStep = .enterEmailOrMobile
     @State private var emailOrMobile = ""
@@ -215,15 +218,25 @@ struct LoginView: View {
     private func performRegister() async {
         isLoading = true
         do {
-            _ = try await appStore.userStore.register(
-                name: name,
-                email: emailOrMobile,
-                password: password,
-                location: location.isEmpty ? "Unknown" : location,
-                university: university,
-                phoneNumber: phoneNumber,
-                preferredCategory: selectedCategory.rawValue
-            )
+            if TokenStorage.isLoggedIn {
+                _ = try await appStore.userStore.updateProfile(
+                    name: name,
+                    location: location.isEmpty ? "Unknown" : location,
+                    university: university,
+                    phoneNumber: phoneNumber,
+                    preferredCategory: selectedCategory.rawValue
+                )
+            } else {
+                _ = try await appStore.userStore.register(
+                    name: name,
+                    email: emailOrMobile,
+                    password: password,
+                    location: location.isEmpty ? "Unknown" : location,
+                    university: university,
+                    phoneNumber: phoneNumber,
+                    preferredCategory: selectedCategory.rawValue
+                )
+            }
             await appStore.refreshAfterLogin()
             await MainActor.run {
                 self.isLoading = false
@@ -247,32 +260,91 @@ struct LoginView: View {
     }
 
     private func handleGoogleSignIn() {
-        errorMessage = "Google Sign In coming soon! Use Apple or Email for now."
+        Task {
+            isLoading = true
+            do {
+                let result = try await GoogleSignInHelper.shared.signIn()
+                guard let idToken = result.user.idToken?.tokenString else {
+                    errorMessage = "Failed to get ID token from Google"
+                    isLoading = false
+                    return
+                }
+                
+                let authResult = try await AuthService.shared.oauthLogin(
+                    name: result.user.profile?.name,
+                    provider: "google",
+                    idToken: idToken
+                )
+                
+                
+                await appStore.refreshAfterLogin()
+                
+                await MainActor.run {
+                    self.isLoading = false
+                    self.name = result.user.profile?.name ?? "User"
+                    self.emailOrMobile = result.user.profile?.email ?? ""
+                    self.password = UUID().uuidString.prefix(8).description
+                    let needsOnboarding = authResult.isNewUser || 
+                                         authResult.user.location.isEmpty || 
+                                         (authResult.user.university ?? "").isEmpty
+                    
+                    if needsOnboarding {
+                        withAnimation {
+                            self.step = .onboardingExtra
+                        }
+                    } else {
+                        dismiss()
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        }
     }
+
 
     private func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let authResult):
             guard let appleIDCredential = authResult.credential as? ASAuthorizationAppleIDCredential else { return }
-            let email = appleIDCredential.email ?? "\(appleIDCredential.user)@privaterelay.appleid.com"
+            
             let name = [appleIDCredential.fullName?.givenName, appleIDCredential.fullName?.familyName]
                 .compactMap { $0 }
                 .joined(separator: " ")
+            
+            guard let identityToken = appleIDCredential.identityToken,
+                  let tokenString = String(data: identityToken, encoding: .utf8) else {
+                errorMessage = "Failed to get identity token from Apple"
+                return
+            }
+            
             Task {
                 isLoading = true
                 do {
-                    let result: AuthResponse = try await APIClient.shared.request(
-                        endpoint: "/auth/oauth",
-                        method: "POST",
-                        body: ["name": name.isEmpty ? "Apple User" : name, "email": email, "provider": "apple"]
+                    let result = try await AuthService.shared.oauthLogin(
+                        name: name.isEmpty ? nil : name,
+                        provider: "apple",
+                        idToken: tokenString
                     )
-                    TokenStorage.accessToken = result.accessToken
-                    TokenStorage.refreshToken = result.refreshToken
-                    TokenStorage.userId = result.user.id
+                    
                     await appStore.refreshAfterLogin()
+                    
                     await MainActor.run {
                         self.isLoading = false
-                        dismiss()
+                        let needsOnboarding = result.isNewUser || 
+                                             result.user.location.isEmpty || 
+                                             (result.user.university ?? "").isEmpty
+                        
+                        if needsOnboarding {
+                            withAnimation {
+                                self.step = .onboardingExtra
+                            }
+                        } else {
+                            dismiss()
+                        }
                     }
                 } catch {
                     await MainActor.run {
