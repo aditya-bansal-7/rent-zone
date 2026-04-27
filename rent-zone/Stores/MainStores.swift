@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import UIKit
 
 // MARK: - User Store
 @Observable
@@ -67,6 +68,14 @@ class UserStore {
         return user
     }
 
+    func uploadProfileImage(image: UIImage) async throws {
+        let dto = try await AuthService.shared.uploadProfileImage(image: image)
+        let user = dto.toUser()
+        await MainActor.run {
+            self.currentUser = user
+        }
+    }
+
     func logout() async {
         try? await AuthService.shared.logout()
         await MainActor.run {
@@ -80,6 +89,8 @@ class UserStore {
 @Observable
 class ProductStore {
     var products: [Product] = []
+    var myProducts: [Product] = []
+    var favoriteProducts: [Product] = []
     var isLoading: Bool = false
     var error: String? = nil
 
@@ -96,8 +107,60 @@ class ProductStore {
             await MainActor.run {
                 self.error = error.localizedDescription
                 self.isLoading = false
-                // Fallback to empty (no hardcoded data)
             }
+        }
+    }
+
+    func fetchMyItems() async {
+        isLoading = true
+        error = nil
+        do {
+            let fetched = try await ProductService.shared.getMyProducts()
+            await MainActor.run {
+                self.myProducts = fetched
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.error = error.localizedDescription
+                self.isLoading = false
+            }
+        }
+    }
+
+    func fetchFavorites() async {
+        isLoading = true
+        error = nil
+        do {
+            let fetched = try await ProductService.shared.getFavoriteProducts()
+            await MainActor.run {
+                self.favoriteProducts = fetched
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.error = error.localizedDescription
+                self.isLoading = false
+            }
+        }
+    }
+
+    func toggleFavorite(productId: String, userStore: UserStore) async {
+        do {
+            let result = try await ProductService.shared.toggleFavorite(productId: productId)
+            await MainActor.run {
+                if var user = userStore.currentUser {
+                    user.favouriteProducts = result.favoriteIds
+                    userStore.currentUser = user
+                }
+                
+                // Refresh favorites list if we are on favorites page
+                if !result.isFavorited {
+                    self.favoriteProducts.removeAll { $0.id == productId }
+                }
+            }
+        } catch {
+            print("Error toggling favorite: \(error)")
         }
     }
 
@@ -115,11 +178,15 @@ class ProductStore {
 
     func removeItem(id: String) {
         products.removeAll { $0.id == id }
+        myProducts.removeAll { $0.id == id }
     }
 
     func updateItem(_ product: Product) {
         if let index = products.firstIndex(where: { $0.id == product.id }) {
             products[index] = product
+        }
+        if let index = myProducts.firstIndex(where: { $0.id == product.id }) {
+            myProducts[index] = product
         }
     }
 

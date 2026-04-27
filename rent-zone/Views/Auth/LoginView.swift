@@ -13,6 +13,7 @@ struct LoginView: View {
     @State private var university = ""
     @State private var phoneNumber = ""
     @State private var selectedCategory: CategoryType = .women
+    @State private var otpCode = ""
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
 
@@ -89,6 +90,23 @@ struct LoginView: View {
                 isDisabled: step != .enterEmailOrMobile,
                 isSuccess: step != .enterEmailOrMobile
             )
+        }
+        
+        if step == .verifyOtp {
+            AuthInputField(
+                placeholder: "Verification Code",
+                text: $otpCode,
+                keyboardType: .numberPad
+            )
+            .transition(.move(edge: .top).combined(with: .opacity))
+            
+            Button(action: { Task { await performSendOtp() } }) {
+                Text("Resend Code")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.blue)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.top, -8)
         }
         
         if step == .enterPassword || step == .registerDetails {
@@ -170,7 +188,13 @@ struct LoginView: View {
                 errorMessage = "Please enter a valid email address"
                 return
             }
-            step = .enterPassword
+            Task { await performSendOtp() }
+        case .verifyOtp:
+            guard otpCode.count == 6 else {
+                errorMessage = "Please enter the 6-digit code"
+                return
+            }
+            Task { await performVerifyOtp() }
         case .enterPassword:
             Task { await performLogin() }
         case .registerDetails:
@@ -181,6 +205,45 @@ struct LoginView: View {
             withAnimation { step = .onboardingExtra }
         case .onboardingExtra:
             Task { await performRegister() }
+        }
+    }
+
+    private func performSendOtp() async {
+        isLoading = true
+        do {
+            try await AuthService.shared.sendOtp(email: emailOrMobile)
+            await MainActor.run {
+                self.isLoading = false
+                withAnimation { self.step = .verifyOtp }
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func performVerifyOtp() async {
+        isLoading = true
+        do {
+            let result = try await AuthService.shared.verifyOtp(email: emailOrMobile, code: otpCode)
+            await MainActor.run {
+                self.isLoading = false
+                if result.isNewUser == true {
+                    withAnimation { self.step = .registerDetails }
+                } else {
+                    Task {
+                        await appStore.refreshAfterLogin()
+                        await MainActor.run { dismiss() }
+                    }
+                }
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -363,6 +426,7 @@ struct LoginView: View {
     private var primaryButtonTitle: String {
         switch step {
         case .enterEmailOrMobile: return "Continue"
+        case .verifyOtp: return "Verify Code"
         case .enterPassword: return "Sign In"
         case .registerDetails: return "Continue"
         case .onboardingExtra: return "Create Account"
@@ -372,6 +436,7 @@ struct LoginView: View {
     private var isPrimaryButtonDisabled: Bool {
         switch step {
         case .enterEmailOrMobile: return emailOrMobile.isEmpty
+        case .verifyOtp: return otpCode.count < 6
         case .enterPassword: return password.isEmpty
         case .registerDetails: return name.isEmpty
         case .onboardingExtra: return location.isEmpty || university.isEmpty
@@ -381,6 +446,7 @@ struct LoginView: View {
     private var headerTitle: String {
         switch step {
         case .enterEmailOrMobile: return "Sign In"
+        case .verifyOtp: return "Verify Email"
         case .enterPassword: return "Welcome Back"
         case .registerDetails: return "Create Account"
         case .onboardingExtra: return "Final Touches"
@@ -390,6 +456,7 @@ struct LoginView: View {
     private var headerSubtitle: String {
         switch step {
         case .enterEmailOrMobile: return "Enter your email to sign in or create an account."
+        case .verifyOtp: return "We've sent a 6-digit code to \(emailOrMobile)."
         case .enterPassword: return "Enter the password for \(emailOrMobile)."
         case .registerDetails: return "Enter your name and password to create an account."
         case .onboardingExtra: return "Tell us a bit more about yourself to personalize your experience."

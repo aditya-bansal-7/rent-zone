@@ -23,7 +23,10 @@ struct UserDTO: Decodable, Identifiable {
             id: id,
             name: name,
             location: location,
+            university: university,
+            phoneNumber: phoneNumber,
             isVerified: isVerified,
+            favouriteProducts: favouriteProductIds,
             profileImage: profileImage,
             email: email
         )

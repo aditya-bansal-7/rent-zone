@@ -10,6 +10,8 @@ struct User: Identifiable, Hashable {
     var id: String
     var name: String
     var location: String
+    var university: String?
+    var phoneNumber: String?
     var isVerified: Bool = false
     var favouriteProducts: [String] = []
     var profileImage: String? = nil

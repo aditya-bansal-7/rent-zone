@@ -19,12 +19,13 @@ const createSchema = z.object({
 
 export const listProducts = async (req: Request, res: Response) => {
   try {
-    const { categoryId, size, condition, occasion, minPrice, maxPrice, sort, page, limit } = req.query;
+    const { categoryId, size, condition, occasion, listedByUserId, minPrice, maxPrice, sort, page, limit } = req.query;
     const result = await productService.getProducts({
       categoryId: categoryId as string,
       size: size as string,
       condition: condition as ProductCondition,
       occasion: occasion as string,
+      listedByUserId: listedByUserId as string,
       minPrice: minPrice ? Number(minPrice) : undefined,
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
       sort: sort as any,
@@ -32,6 +33,18 @@ export const listProducts = async (req: Request, res: Response) => {
       limit: limit ? Number(limit) : 20,
     });
     sendSuccess(res, result);
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};
+
+export const getMyProducts = async (req: Request, res: Response) => {
+  try {
+    const result = await productService.getProducts({
+      listedByUserId: req.user!.userId,
+      limit: 100,
+    });
+    sendSuccess(res, result.products);
   } catch (err: any) {
     sendError(res, err.message);
   }
@@ -81,7 +94,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
     await productService.deleteProduct(req.params.id, req.user!.userId);
-    sendSuccess(res, null, 200, 'Product deleted');
+    sendSuccess(res, {}, 200, 'Product deleted');
   } catch (err: any) {
     const status = err.message === 'Forbidden' ? 403 : err.message === 'Product not found' ? 404 : 400;
     sendError(res, err.message, status);
@@ -106,6 +119,24 @@ export const getBookedDates = async (req: Request, res: Response) => {
   try {
     const dates = await productService.getBookedDates(req.params.id);
     sendSuccess(res, dates);
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};
+
+export const toggleFavorite = async (req: Request, res: Response) => {
+  try {
+    const result = await productService.toggleFavorite(req.user!.userId, req.params.id);
+    sendSuccess(res, result);
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};
+
+export const getFavorites = async (req: Request, res: Response) => {
+  try {
+    const products = await productService.getFavorites(req.user!.userId);
+    sendSuccess(res, products);
   } catch (err: any) {
     sendError(res, err.message);
   }

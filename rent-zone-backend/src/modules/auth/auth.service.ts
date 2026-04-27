@@ -9,6 +9,7 @@ import {
   verifyRefreshToken,
   JwtPayload,
 } from '../../utils/jwt.utils';
+import { sendOtpEmail } from '../../utils/mailer.utils';
 
 // ── Register ──────────────────────────────────────────────────────────────────
 export const registerUser = async (
@@ -168,4 +169,66 @@ export const getCurrentUser = async (userId: string) => {
     where: { id: userId },
     include: { account: { select: { provider: true, email: true } } },
   });
+};
+
+export const updateProfile = async (
+  userId: string,
+  data: {
+    name?: string;
+    location?: string;
+    university?: string;
+    phoneNumber?: string;
+    profileImage?: string;
+    preferredCategory?: CategoryType;
+  }
+) => {
+  return prisma.user.update({
+    where: { id: userId },
+    data,
+    include: { account: { select: { provider: true, email: true } } },
+  });
+};
+// ── OTP Logic ───────────────────────────────────────────────────────────────
+export const sendOtp = async (email: string) => {
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  await prisma.oTP.upsert({
+    where: { email },
+    update: { code: otp, expiresAt },
+    create: { email, code: otp, expiresAt },
+  });
+
+  await sendOtpEmail(email, otp);
+};
+
+export const verifyOtp = async (email: string, code: string) => {
+  const otpEntry = await prisma.oTP.findUnique({ where: { email } });
+
+  if (!otpEntry || otpEntry.code !== code) {
+    throw new Error('Invalid verification code');
+  }
+
+  if (new Date() > otpEntry.expiresAt) {
+    throw new Error('Verification code has expired');
+  }
+
+  // Delete the OTP after successful verification
+  await prisma.oTP.delete({ where: { email } });
+
+  // Check if user already exists
+  const account = await prisma.account.findUnique({
+    where: { email },
+    include: { user: true },
+  });
+
+  if (account) {
+    const payload: JwtPayload = { userId: account.userId, email };
+    const accessToken = signAccessToken(payload);
+    const refreshToken = signRefreshToken(payload);
+    await prisma.account.update({ where: { id: account.id }, data: { refreshToken } });
+    return { user: account.user, accessToken, refreshToken, isNewUser: false };
+  }
+
+  return { email, isNewUser: true };
 };

@@ -69,7 +69,14 @@ struct ProductDetailView: View {
 
                         if showMenu {
                             HStack(spacing: 24) {
-                                Button(action: { isFavorite.toggle() }) {
+                                Button(action: {
+                                    Task {
+                                        await appStore.productStore.toggleFavorite(productId: product.id, userStore: appStore.userStore)
+                                        await MainActor.run {
+                                            isFavorite = appStore.userStore.currentUser?.favouriteProducts.contains(product.id) ?? false
+                                        }
+                                    }
+                                }) {
                                     VStack(spacing: 4) {
                                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                                             .font(.system(size: 22, weight: .medium))
@@ -383,6 +390,9 @@ struct ProductDetailView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Your rental request for \(product.name) has been sent to the owner.")
+        }
+        .task {
+            isFavorite = appStore.userStore.currentUser?.favouriteProducts.contains(product.id) ?? false
         }
     }
 

@@ -7,13 +7,20 @@ struct ProductDetailEditView: View {
     
     let product: Product
     
-    @State private var selectedCategory: String
+    @State private var name: String
     @State private var selectedCondition: ProductCondition
     @State private var selectedSize: String
     @State private var pricePerDay: String
-    @State private var descriptionText: String
     @State private var pickupLocation: String
-    @State private var imageURLs: [String]
+    
+    // Description fields
+    @State private var fabricDescription: String
+    @State private var brandDescription: String
+    @State private var styleDescription: String
+    @State private var fitDescription: String
+    
+    @State private var isLoading = false
+    @State private var errorMessage: String? = nil
     
     // Map camera position for pickup location
     @State private var mapPosition = MapCameraPosition.region(
@@ -25,172 +32,139 @@ struct ProductDetailEditView: View {
     
     init(product: Product) {
         self.product = product
-        _selectedCategory = State(initialValue: "Lehenga")
+        _name = State(initialValue: product.name)
         _selectedCondition = State(initialValue: product.condition)
         _selectedSize = State(initialValue: product.size)
         _pricePerDay = State(initialValue: "\(Int(product.rentPricePerDay))")
-        _descriptionText = State(initialValue: "Rust-orange embroidered ethnic outfit available for rent.")
         _pickupLocation = State(initialValue: product.pickupLocation)
-        _imageURLs = State(initialValue: product.imageURLs)
+        
+        // Map dictionary to separate fields
+        _fabricDescription = State(initialValue: product.description[.fabric] ?? "")
+        _brandDescription = State(initialValue: product.description[.brand] ?? "")
+        _styleDescription = State(initialValue: product.description[.style] ?? "")
+        _fitDescription = State(initialValue: product.description[.fitAndComfort] ?? "")
     }
     
     var body: some View {
         NavigationStack {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 24) {
-                    // MARK: - Photo Grid
-                    photoGrid
-                    
-                    // MARK: - Category
-                    dropdownField(
-                        title: "Category",
-                        icon: "figure.stand",
-                        value: selectedCategory
-                    )
-                    
-                    // MARK: - Condition
-                    dropdownField(
-                        title: "Condition",
-                        icon: "star.fill",
-                        value: selectedCondition.rawValue.capitalized
-                    )
-                    
-                    // MARK: - Size
-                    dropdownField(
-                        title: "Size",
-                        icon: "figure.stand",
-                        value: sizeDisplayName(selectedSize)
-                    )
-                    
-                    // MARK: - Price
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Price")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.primary)
+            ZStack {
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 24) {
+                        // MARK: - Photo Grid
+                        photoGrid
                         
-                        HStack(spacing: 8) {
-                            Text("₹")
-                                .font(.system(size: 16))
-                                .foregroundColor(.secondary)
-                            
-                            TextField("0", text: $pricePerDay)
-                                .font(.system(size: 16))
-                                .keyboardType(.numberPad)
-                            
-                            Text("/day")
-                                .font(.system(size: 16))
-                                .foregroundColor(.secondary)
+                        // MARK: - Name
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Product Name")
+                                .font(.system(size: 18, weight: .bold))
+                            TextField("Name", text: $name)
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .cornerRadius(12)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemGray6))
-                        )
-                    }
-                    
-                    // MARK: - Description
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Description")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.primary)
                         
-                        TextEditor(text: $descriptionText)
-                            .font(.system(size: 15))
-                            .foregroundColor(.primary)
-                            .frame(minHeight: 100)
-                            .padding(12)
-                            .scrollContentBackground(.hidden)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.systemGray6))
-                            )
-                    }
-                    
-                    // MARK: - Pick-Up Location
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Pick-Up Location")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.primary)
-                        
-                        Map(position: $mapPosition) {
-                            Marker(
-                                "Payal Singh (You)",
-                                systemImage: "car.fill",
-                                coordinate: CLLocationCoordinate2D(latitude: 28.4744, longitude: 77.5040)
-                            )
-                            .tint(.red)
-                        }
-                        .frame(height: 180)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .overlay(
-                            VStack {
-                                HStack {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "car.fill")
-                                            .font(.system(size: 12))
-                                            .foregroundColor(.green)
-                                            .padding(4)
-                                            .background(Color.white)
-                                            .clipShape(Circle())
-                                        
-                                        Text("Payal Singh (You)")
-                                            .font(.system(size: 12, weight: .medium))
+                        // MARK: - Condition & Size
+                        HStack(spacing: 16) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Condition")
+                                    .font(.system(size: 16, weight: .bold))
+                                Picker("Condition", selection: $selectedCondition) {
+                                    ForEach(ProductCondition.allCases, id: \.self) { condition in
+                                        Text(condition.rawValue.capitalized).tag(condition)
                                     }
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
-                                    .background(
-                                        Capsule()
-                                            .fill(Color.white)
-                                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-                                    )
-                                    Spacer()
                                 }
-                                .padding(12)
-                                Spacer()
+                                .pickerStyle(.menu)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(12)
                             }
-                        )
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Size")
+                                    .font(.system(size: 16, weight: .bold))
+                                Picker("Size", selection: $selectedSize) {
+                                    ForEach(["XS", "S", "M", "L", "XL", "XXL"], id: \.self) { size in
+                                        Text(size).tag(size)
+                                    }
+                                }
+                                .pickerStyle(.menu)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(12)
+                            }
+                        }
+                        
+                        // MARK: - Price
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Price")
+                                .font(.system(size: 18, weight: .bold))
+                            
+                            HStack(spacing: 8) {
+                                Text("₹")
+                                    .foregroundColor(.secondary)
+                                TextField("0", text: $pricePerDay)
+                                    .keyboardType(.numberPad)
+                                Text("/day")
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                        }
+                        
+                        // MARK: - Descriptions
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Outfit Details")
+                                .font(.system(size: 18, weight: .bold))
+                            
+                            descriptionField(title: "Fabric", text: $fabricDescription)
+                            descriptionField(title: "Brand", text: $brandDescription)
+                            descriptionField(title: "Style", text: $styleDescription)
+                            descriptionField(title: "Fit & Comfort", text: $fitDescription)
+                        }
+                        
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                                .font(.caption)
+                        }
+                        
+                        // MARK: - Update Button
+                        Button(action: handleUpdate) {
+                            if isLoading {
+                                ProgressView().tint(.white)
+                            } else {
+                                Text("Update Product")
+                                    .fontWeight(.bold)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.black)
+                        .foregroundColor(.white)
+                        .cornerRadius(30)
+                        .disabled(isLoading)
                     }
-                    
-                    // MARK: - Update Button
-                    Button(action: {
-                        dismiss()
-                    }) {
-                        Text("Update")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                Capsule()
-                                    .fill(Color.purple.opacity(0.15))
-                            )
-                    }
-                    .padding(.top, 4)
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 30)
-            }
-            .background(Color(.systemBackground))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Update Details")
-                        .font(.system(size: 18, weight: .semibold))
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 30)
                 }
                 
+                if isLoading {
+                    Color.black.opacity(0.1).ignoresSafeArea()
+                }
+            }
+            .navigationTitle("Edit Listing")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.primary)
-                    }
+                    Button("Cancel") { dismiss() }
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {}) {
+                    Button(action: handleDelete) {
                         Image(systemName: "trash")
-                            .font(.system(size: 16))
                             .foregroundColor(.red)
                     }
                 }
@@ -198,108 +172,92 @@ struct ProductDetailEditView: View {
         }
     }
     
-    // MARK: - Photo Grid
+    private func descriptionField(title: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+            TextField(title, text: text)
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+        }
+    }
+    
     private var photoGrid: some View {
-        let columns = [
-            GridItem(.flexible(), spacing: 10),
-            GridItem(.flexible(), spacing: 10),
-            GridItem(.flexible(), spacing: 10)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(product.imageURLs, id: \.self) { url in
+                    AsyncImage(url: URL(string: url)) { phase in
+                        if let image = phase.image {
+                            image.resizable().scaledToFill()
+                        } else {
+                            Color.gray.opacity(0.2)
+                        }
+                    }
+                    .frame(width: 120, height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+            }
+        }
+    }
+    
+    private func handleUpdate() {
+        guard let price = Double(pricePerDay) else {
+            errorMessage = "Invalid price"
+            return
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        var description: [String: String] = [:]
+        if !fabricDescription.isEmpty { description["fabric"] = fabricDescription }
+        if !brandDescription.isEmpty { description["brand"] = brandDescription }
+        if !styleDescription.isEmpty { description["style"] = styleDescription }
+        if !fitDescription.isEmpty { description["fitAndComfort"] = fitDescription }
+        
+        let body: [String: Any] = [
+            "name": name,
+            "condition": selectedCondition.rawValue,
+            "size": selectedSize,
+            "rentPricePerDay": price,
+            "description": description
         ]
         
-        return LazyVGrid(columns: columns, spacing: 10) {
-            ForEach(imageURLs, id: \.self) { imageURL in
-                Image(imageURL)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemGray5))
-                    )
-            }
-            
-            // Add photo button
-            Button(action: {}) {
-                VStack(spacing: 6) {
-                    Image(systemName: "camera")
-                        .font(.system(size: 22))
-                        .foregroundColor(.secondary)
-                    Text("Add")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.secondary)
+        Task {
+            do {
+                let updated = try await ProductService.shared.updateProduct(id: product.id, body: body)
+                await MainActor.run {
+                    appStore.productStore.updateItem(updated)
+                    isLoading = false
+                    dismiss()
                 }
-                .frame(maxWidth: .infinity, minHeight: 120, maxHeight: 120)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(.systemGray6))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6]))
-                        .foregroundColor(Color(.systemGray3))
-                )
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = error.localizedDescription
+                }
             }
         }
     }
     
-    // MARK: - Dropdown Field
-    private func dropdownField(title: String, icon: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.primary)
-            
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                    .foregroundColor(.secondary)
-                
-                Text(value)
-                    .font(.system(size: 16))
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
+    private func handleDelete() {
+        isLoading = true
+        Task {
+            do {
+                try await ProductService.shared.deleteProduct(id: product.id)
+                await MainActor.run {
+                    appStore.productStore.removeItem(id: product.id)
+                    isLoading = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    errorMessage = error.localizedDescription
+                }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
-            )
         }
     }
-    
-    private func sizeDisplayName(_ size: String) -> String {
-        switch size {
-        case "XS": return "Extra Small"
-        case "S": return "Small"
-        case "M": return "Medium"
-        case "L": return "Large"
-        case "XL": return "Extra Large"
-        default: return size
-        }
-    }
-}
-
-#Preview {
-    ProductDetailEditView(
-        product: Product(
-            id: "abcabc",
-            name: "Sharara",
-            rentPricePerDay: 300,
-            securityDeposit: 800,
-            condition: .new,
-            size: "L",
-            listedByUserId: "user1",
-            categoryId: "cat1",
-            pickupLocation: "Greater Noida",
-            imageURLs: ["sharara", "sharara_orange"]
-        )
-    )
-    .environment(AppStore())
 }
