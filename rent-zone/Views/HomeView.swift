@@ -10,11 +10,11 @@ struct HomeView: View {
     @State private var isProfileSheet = false
     
     var popularProducts: [Product] {
-        appStore.productStore.products.filter { $0.isPopular }
+        appStore.productStore.products.filter { $0.rating >= 4.5 }
     }
     
     var recentProducts: [Product] {
-        appStore.productStore.products.filter { !$0.isPopular }
+        appStore.productStore.products.filter { $0.bookedDates.isEmpty }
     }
     
     var body: some View {
@@ -34,7 +34,6 @@ struct HomeView: View {
                             }
                         SearchBarView(searchText: $searchText)
                         
-                        CategoryChipsView(selectedCategory: $selectedCategory)
                         
                         // Popular Outfits
                         SectionHeaderView(title: "POPULAR OUTFITS")

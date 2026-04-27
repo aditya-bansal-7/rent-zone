@@ -6,9 +6,14 @@ struct ReportUserView: View {
     
     @State private var selectedReason = "Choose report reasons"
     @State private var description = ""
+    @State private var showSuccess = false
     @Environment(\.dismiss) private var dismiss
     
     let reasons = ["Choose report reasons", "Fraud", "Spam", "Fake Profile", "Abusive Behaviour"]
+    
+    var isFormValid: Bool {
+        selectedReason != "Choose report reasons" && !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
     
     var body: some View {
         NavigationStack {
@@ -88,15 +93,16 @@ struct ReportUserView: View {
                         
                         // Submit Button
                         Button {
-                            print("Report Submitted")
+                            showSuccess = true
                         } label: {
                             Text("Submit Report")
-                                .foregroundColor(.black)
+                                .foregroundColor(isFormValid ? .black : .gray)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color(red: 243/255, green: 236/255, blue: 255/255))
+                                .background(isFormValid ? Color(red: 243/255, green: 236/255, blue: 255/255) : Color(.systemGray5))
                                 .cornerRadius(30)
                         }
+                        .disabled(!isFormValid)
                     }
                     .padding()
                     .background(Color(.systemGray6))
@@ -107,6 +113,13 @@ struct ReportUserView: View {
             }
             .background(Color(.systemGray6))
             .navigationBarTitleDisplayMode(.inline)
+            .alert("Report Submitted Successfully", isPresented: $showSuccess) {
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
+                Text("Thank you for reporting. We will review the report and take appropriate action.")
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {

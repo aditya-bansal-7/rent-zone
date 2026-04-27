@@ -7,8 +7,20 @@ struct UploadViewCamera: View {
     @Environment(\.dismiss) var dismiss
     
     @State private var selectedItems: [PhotosPickerItem] = []
-    @State private var selectedImages: [UIImage] = []
+    @State private var selectedImages: [String] = []
     @State private var currentPage = 0
+    
+    private func saveImageToTempDirectory(_ image: UIImage) -> String? {
+        guard let data = image.jpegData(compressionQuality: 0.9) else { return nil }
+        let filename = UUID().uuidString + ".jpg"
+        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(filename)
+        do {
+            try data.write(to: url, options: [.atomic])
+            return url.path
+        } catch {
+            return nil
+        }
+    }
     
     var body: some View {
         NavigationStack {
@@ -25,13 +37,20 @@ struct UploadViewCamera: View {
                 } else {
                     TabView(selection: $currentPage) {
                         ForEach(selectedImages.indices, id: \.self) { index in
-                            Image(uiImage: selectedImages[index])
-                                .resizable()
-                                .scaledToFill()
-                                .frame(maxWidth: 320, maxHeight: 400)
-                                .clipped()
-                                .cornerRadius(16)
-                                .tag(index)
+                            if let uiImage = UIImage(contentsOfFile: selectedImages[index]) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(maxWidth: 320, maxHeight: 400)
+                                    .clipped()
+                                    .cornerRadius(16)
+                                    .tag(index)
+                            } else {
+                                Color.gray.opacity(0.1)
+                                    .frame(maxWidth: 320, maxHeight: 400)
+                                    .cornerRadius(16)
+                                    .tag(index)
+                            }
                         }
                     }
                     .tabViewStyle(.page(indexDisplayMode: .always))
@@ -91,14 +110,19 @@ struct UploadViewCamera: View {
             
             .onChange(of: selectedItems) { _, newItems in
                 Task {
-                    var images: [UIImage] = []
+                    var paths: [String] = []
                     for item in newItems {
-                        if let data = try? await item.loadTransferable(type: Data.self),
-                           let image = UIImage(data: data) {
-                            images.append(image)
+                        do {
+                            if let data = try await item.loadTransferable(type: Data.self),
+                               let uiImage = UIImage(data: data),
+                               let path = saveImageToTempDirectory(uiImage) {
+                                paths.append(path)
+                            }
+                        } catch {
+                            // Ignore individual failures and continue
                         }
                     }
-                    selectedImages = images
+                    selectedImages = paths
                     currentPage = 0
                 }
             }
