@@ -51,7 +51,7 @@ class ProductStore {
                 listedByUserId: dummyUserId,
                 categoryId: dummyCategoryId,
                 pickupLocation: "Mumbai",
-                imageURLs: ["rajasthani_poshak"],
+                imageURLs: ["rajasthani_poshak", "rajasthani_poshak_2"],
                 rating: 4.5
             ),
             Product(
@@ -69,7 +69,7 @@ class ProductStore {
                 listedByUserId: dummyUserId,
                 categoryId: dummyCategoryId,
                 pickupLocation: "Delhi",
-                imageURLs: ["sharara"],
+                imageURLs: ["sharara", "sharara_2"],
                 rating: 4.5,
             ),
             Product(
@@ -87,7 +87,7 @@ class ProductStore {
                 listedByUserId: dummyUserId,
                 categoryId: dummyCategoryId,
                 pickupLocation: "Bangalore",
-                imageURLs: ["tuxedo_black"],
+                imageURLs: ["tuxedo_black", "tuxedo_black_2"],
                 rating: 4.0,
              
             ),
@@ -106,7 +106,7 @@ class ProductStore {
                 listedByUserId: dummyUserId,
                 categoryId: dummyCategoryId,
                 pickupLocation: "Jaipur",
-                imageURLs: ["sharara_orange", "sharara"],
+                imageURLs: ["sharara_orange", "sharara_orange_2"],
                 rating: 5.0,
         
             ),
@@ -223,7 +223,7 @@ class CategoryStore {
             Category(name: "Saree", images: "Saree", type: .women),
             Category(name: "Lehanga", images: "Lehanga", type: .women),
             Category(name: "Formals", images: "Formal", type: .women),
-            Category(name: "Sharara", images: "Sharara", type: .women),
+            Category(name: "Sharara", images: "sharara_category", type: .women),
             
             // Men
             Category(name: "Tuxedos", images: "Tuxedo", type: .men),

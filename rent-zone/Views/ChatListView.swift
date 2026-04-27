@@ -46,6 +46,8 @@ struct ChatListView: View {
         )
     ]
     
+    @State private var selectedConversation: ChatConversation? = nil
+    
     var body: some View {
         
         NavigationStack{
@@ -55,7 +57,14 @@ struct ChatListView: View {
             // Chat list
             List {
                 ForEach(conversations) { conversation in
-                    NavigationLink(value: conversation) {
+                    Button {
+                        // Mark as read and navigate
+                        if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
+                            conversations[index].hasUnread = false
+                            conversations[index].isOnline = false
+                            selectedConversation = conversations[index]
+                        }
+                    } label: {
                         ChatRowView(conversation: conversation)
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -79,19 +88,13 @@ struct ChatListView: View {
                         }
                         .tint(.blue)
                     }
-                    .simultaneousGesture(TapGesture().onEnded {
-                        if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
-                            conversations[index].hasUnread = false
-                            conversations[index].isOnline = false
-                        }
-                    })
                 }
             }
             .listStyle(.plain)
         }
             .background(Color(white: 0.97))
             .navigationTitle("Chat")
-            .navigationDestination(for: ChatConversation.self) { conversation in
+            .navigationDestination(item: $selectedConversation) { conversation in
                 PersonalChatView(conversation: conversation)
             }
         }
@@ -141,6 +144,10 @@ struct ChatRowView: View {
             }
             
             Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.gray.opacity(0.5))
         }
         .padding(.vertical, 8)
         .background(Color.clear)

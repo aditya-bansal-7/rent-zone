@@ -34,7 +34,6 @@ struct HomeView: View {
                             }
                         SearchBarView(searchText: $searchText)
                         
-                        CategoryChipsView(selectedCategory: $selectedCategory)
                         
                         // Popular Outfits
                         SectionHeaderView(title: "POPULAR OUTFITS")
