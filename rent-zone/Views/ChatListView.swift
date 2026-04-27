@@ -3,7 +3,7 @@ import SwiftUI
 struct ChatListView: View {
     @Environment(\.dismiss) private var dismiss
     
-    let conversations: [ChatConversation] = [
+    @State private var conversations: [ChatConversation] = [
         ChatConversation(
             participantName: "Shreya",
             participantImage: "sharara_orange",
@@ -46,6 +46,8 @@ struct ChatListView: View {
         )
     ]
     
+    @State private var selectedConversation: ChatConversation? = nil
+    
     var body: some View {
         
         NavigationStack{
@@ -53,21 +55,46 @@ struct ChatListView: View {
    
         VStack( spacing: 0) {
             // Chat list
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 12) {
-                    ForEach(conversations) { conversation in
-                        NavigationLink(value: conversation) {
-                            ChatRowView(conversation: conversation)
+            List {
+                ForEach(conversations) { conversation in
+                    Button {
+                        // Mark as read and navigate
+                        if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
+                            conversations[index].hasUnread = false
+                            conversations[index].isOnline = false
+                            selectedConversation = conversations[index]
                         }
+                    } label: {
+                        ChatRowView(conversation: conversation)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            withAnimation {
+                                conversations.removeAll(where: { $0.id == conversation.id })
+                            }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                        
+                        Button {
+                            if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
+                                conversations[index].hasUnread.toggle()
+                                if !conversations[index].hasUnread {
+                                    conversations[index].isOnline = false
+                                }
+                            }
+                        } label: {
+                            Label(conversation.hasUnread ? "Mark Read" : "Mark Unread", systemImage: conversation.hasUnread ? "envelope.open" : "envelope.badge")
+                        }
+                        .tint(.blue)
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
             }
+            .listStyle(.plain)
         }
             .background(Color(white: 0.97))
             .navigationTitle("Chat")
-            .navigationDestination(for: ChatConversation.self) { conversation in
+            .navigationDestination(item: $selectedConversation) { conversation in
                 PersonalChatView(conversation: conversation)
             }
         }
@@ -118,19 +145,12 @@ struct ChatRowView: View {
             
             Spacer()
             
-            // 3-dot menu
-            Button(action: {}) {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.gray)
-                    .rotationEffect(.degrees(90))
-            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.gray.opacity(0.5))
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .background(Color.white)
-        .cornerRadius(20)
-        .shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 2)
+        .padding(.vertical, 8)
+        .background(Color.clear)
     }
     
 }

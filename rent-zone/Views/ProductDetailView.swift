@@ -5,7 +5,7 @@ struct ProductDetailView: View {
     @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) private var dismiss
     @State private var showMenu = false
-    @State private var currentImageIndex = 0
+    @State private var currentImageIndex: Int? = 0
     @State private var isFavorite = false
     @State private var showRentConfirmation = false
     @State private var showCalendar = false
@@ -46,9 +46,11 @@ struct ProductDetailView: View {
                                 .clipped()
                                 .cornerRadius(20)
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Capsule().fill(Color.black.opacity(0.3)))
+                            .padding(.bottom, 16)
                         }
-                        .scrollTargetLayout()
-                        .padding(.horizontal, 16)
                     }
                     .scrollTargetBehavior(.viewAligned)
                     .frame(height: 450)
