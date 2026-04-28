@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+dotenv.config();
 
 import { errorHandler } from './middleware/error.middleware';
 
@@ -14,8 +15,6 @@ import chatRoutes from './modules/chats/chat.routes';
 import notificationRoutes from './modules/notifications/notification.routes';
 import reportRoutes from './modules/reports/report.routes';
 import tryonRoutes from './modules/virtual-tryon/tryon.routes';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,10 +45,18 @@ app.use((_req, res) => res.status(404).json({ success: false, message: 'Route no
 // ── Error handler ──────────────────────────────────────────────────────────────
 app.use(errorHandler);
 
+import http from 'http';
+import { setupWebSocket } from './socket';
+
 // ── Start ──────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+const server = http.createServer(app);
+
+setupWebSocket(server);
+
+server.listen(PORT, () => {
   console.log(`🚀 Rent Zone API running on http://localhost:${PORT}`);
   console.log(`📋 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔌 WebSocket server attached`);
 });
 
 export default app;

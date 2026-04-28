@@ -2,67 +2,24 @@ import SwiftUI
 
 struct ChatListView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppStore.self) private var appStore
     
-    @State private var conversations: [ChatConversation] = [
-        ChatConversation(
-            participantName: "Shreya",
-            participantImage: "sharara_orange",
-            isOnline: true,
-            isVerified: true,
-            hasUnread: false,
-            lastMessageTime: "Just Now",
-            messages: [
-                ChatMessage(content: "Hi! I'm interested in renting your floral dress", isFromCurrentUser: true, timestamp: "10:28 AM"),
-                ChatMessage(content: "Sure! It's available this weekend", isFromCurrentUser: false, timestamp: "10:30 AM"),
-                ChatMessage(content: "Perfect! Where can I pick it up?", isFromCurrentUser: true, timestamp: "10:32 AM")
-            ],
-            productContext: ChatProductContext(
-                productName: "Rajasthani Poshak",
-                productImage: "rajasthani_poshak",
-                pricePerDay: 520,
-                needDate: "23 Dec"
-            )
-        ),
-        ChatConversation(
-            participantName: "Yash",
-            participantImage: nil,
-            hasUnread: true,
-            lastMessageTime: "3h ago"
-        ),
-        ChatConversation(
-            participantName: "Kirtika",
-            participantImage: nil,
-            lastMessageTime: "5h ago"
-        ),
-        ChatConversation(
-            participantName: "Vansh",
-            participantImage: nil,
-            lastMessageTime: "3h ago"
-        ),
-        ChatConversation(
-            participantName: "Aditya Bansal",
-            participantImage: nil,
-            lastMessageTime: "3h ago"
-        )
-    ]
-    
-    @State private var selectedConversation: ChatConversation? = nil
+    @StateObject private var chatService = ChatService.shared
     
     var body: some View {
+        @Bindable var bindableAppStore = appStore
         
         NavigationStack{
-            
-   
         VStack( spacing: 0) {
             // Chat list
             List {
-                ForEach(conversations) { conversation in
+                ForEach(chatService.conversations) { conversation in
                     Button {
                         // Mark as read and navigate
-                        if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
-                            conversations[index].hasUnread = false
-                            conversations[index].isOnline = false
-                            selectedConversation = conversations[index]
+                        if let index = chatService.conversations.firstIndex(where: { $0.id == conversation.id }) {
+                            chatService.conversations[index].hasUnread = false
+                            chatService.conversations[index].isOnline = false
+                            appStore.selectedChatConversation = chatService.conversations[index]
                         }
                     } label: {
                         ChatRowView(conversation: conversation)
@@ -70,17 +27,17 @@ struct ChatListView: View {
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
                             withAnimation {
-                                conversations.removeAll(where: { $0.id == conversation.id })
+                                chatService.conversations.removeAll(where: { $0.id == conversation.id })
                             }
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
                         
                         Button {
-                            if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
-                                conversations[index].hasUnread.toggle()
-                                if !conversations[index].hasUnread {
-                                    conversations[index].isOnline = false
+                            if let index = chatService.conversations.firstIndex(where: { $0.id == conversation.id }) {
+                                chatService.conversations[index].hasUnread.toggle()
+                                if !chatService.conversations[index].hasUnread {
+                                    chatService.conversations[index].isOnline = false
                                 }
                             }
                         } label: {
@@ -94,8 +51,14 @@ struct ChatListView: View {
         }
             .background(Color(white: 0.97))
             .navigationTitle("Chat")
-            .navigationDestination(item: $selectedConversation) { conversation in
+            .navigationDestination(item: $bindableAppStore.selectedChatConversation) { conversation in
                 PersonalChatView(conversation: conversation)
+            }
+            .onAppear {
+                Task {
+                    await chatService.fetchConversations()
+                    chatService.startWebSocket()
+                }
             }
         }
     }
@@ -108,7 +71,17 @@ struct ChatRowView: View {
         HStack(spacing: 14) {
             // Avatar with online indicator
             ZStack(alignment: .topTrailing) {
-                if let imageName = conversation.participantImage {
+                if let imageName = conversation.participantImage, imageName.hasPrefix("http"), let url = URL(string: imageName) {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image.resizable().scaledToFill()
+                        } else {
+                            Image(systemName: "person.crop.circle.fill").resizable().foregroundColor(.gray.opacity(0.4))
+                        }
+                    }
+                    .frame(width: 50, height: 50)
+                    .clipShape(Circle())
+                } else if let imageName = conversation.participantImage {
                     Image(imageName)
                         .resizable()
                         .scaledToFill()

@@ -3,6 +3,7 @@ import SwiftUI
 struct PersonalChatView: View {
     let conversation: ChatConversation
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var chatService = ChatService.shared
     @State private var messageText = ""
     @State private var showReport = false
     @State private var showAttachmentMenu = false
@@ -22,7 +23,17 @@ struct PersonalChatView: View {
                 }
                 
                 // Avatar
-                if let imageName = conversation.participantImage {
+                if let imageName = conversation.participantImage, imageName.hasPrefix("http"), let url = URL(string: imageName) {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image.resizable().scaledToFill()
+                        } else {
+                            Image(systemName: "person.crop.circle.fill").resizable().foregroundColor(.gray.opacity(0.4))
+                        }
+                    }
+                    .frame(width: 40, height: 40)
+                    .clipShape(Circle())
+                } else if let imageName = conversation.participantImage {
                     Image(imageName)
                         .resizable()
                         .scaledToFill()
@@ -107,7 +118,7 @@ struct PersonalChatView: View {
                     }
                     
                     // Chat messages
-                    ForEach(conversation.messages) { message in
+                    ForEach(chatService.activeConversationMessages) { message in
                         ChatBubbleView(message: message)
                     }
                 }
@@ -158,11 +169,15 @@ struct PersonalChatView: View {
                     .background(Color(white: 0.95))
                     .cornerRadius(20)
                 
-                Button(action: {}) {
+                Button(action: {
+                    chatService.sendMessage(messageText, conversationId: conversation.id)
+                    messageText = ""
+                }) {
                     Image(systemName: "paperplane.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.gray)
+                        .foregroundColor(messageText.isEmpty ? .gray : .blue)
                 }
+                .disabled(messageText.isEmpty)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
@@ -173,8 +188,16 @@ struct PersonalChatView: View {
         .toolbar(.hidden, for: .tabBar)
         .background(Color(white: 0.97))
         .sheet(isPresented: $showReport) {
-            ReportUserView()
+            ReportUserView(reportedUserName: conversation.participantName, reportedUserImage: conversation.participantImage, reportedUserLocation: nil)
                 .environment(AppStore())
+        }
+        .onAppear {
+            Task {
+                await chatService.fetchMessages(for: conversation.id)
+            }
+        }
+        .onDisappear {
+            chatService.activeConversationId = nil
         }
     }
 }

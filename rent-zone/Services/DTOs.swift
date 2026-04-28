@@ -273,3 +273,65 @@ struct PaginatedProducts: Decodable {
     let limit: Int
     let totalPages: Int
 }
+
+// MARK: - Chat DTOs
+struct ChatConversationDTO: Decodable, Identifiable {
+    let id: String
+    let productId: String?
+    let updatedAt: String?
+    let participants: [ChatParticipantDTO]?
+    let messages: [ChatMessageDTO]?
+    
+    func toChatConversation(currentUserId: String) -> ChatConversation {
+        let otherParticipant = participants?.first(where: { $0.userId != currentUserId })?.user
+        let latestMsg = messages?.last
+        
+        let fmt = ISO8601DateFormatter()
+        let date = updatedAt.flatMap { fmt.date(from: $0) } ?? Date()
+        let displayFormatter = DateFormatter()
+        displayFormatter.dateFormat = "h:mm a"
+        let timeString = displayFormatter.string(from: date)
+        
+        return ChatConversation(
+            id: id,
+            participantName: otherParticipant?.name ?? "Unknown",
+            participantImage: otherParticipant?.profileImage,
+            isOnline: false,
+            isVerified: otherParticipant?.isVerified ?? false,
+            hasUnread: false,
+            lastMessageTime: timeString,
+            messages: messages?.map { $0.toChatMessage(currentUserId: currentUserId) } ?? [],
+            productContext: nil // Can be populated if needed
+        )
+    }
+}
+
+struct ChatParticipantDTO: Decodable, Identifiable {
+    let id: String
+    let userId: String
+    let user: ListedByDTO?
+}
+
+struct ChatMessageDTO: Decodable, Identifiable {
+    let id: String
+    let conversationId: String
+    let senderId: String
+    let content: String
+    let createdAt: String?
+    
+    func toChatMessage(currentUserId: String) -> ChatMessage {
+        let fmt = ISO8601DateFormatter()
+        let date = createdAt.flatMap { fmt.date(from: $0) } ?? Date()
+        let displayFormatter = DateFormatter()
+        displayFormatter.dateFormat = "h:mm a"
+        let timeString = displayFormatter.string(from: date)
+        
+        return ChatMessage(
+            id: id,
+            content: content,
+            isFromCurrentUser: senderId == currentUserId,
+            timestamp: timeString
+        )
+    }
+}
+

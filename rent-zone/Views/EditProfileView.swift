@@ -90,7 +90,9 @@ struct EditProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark")
+                    }
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -98,8 +100,7 @@ struct EditProfileView: View {
                         if isLoading {
                             ProgressView()
                         } else {
-                            Text("Save")
-                                .fontWeight(.bold)
+                            Image(systemName: "checkmark")
                         }
                     }
                     .disabled(isLoading)

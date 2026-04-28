@@ -4,23 +4,25 @@ struct ContentView: View {
     @Environment(AppStore.self) var appStore
     
     var body: some View {
-            TabView {
-                Tab("Home", systemImage: "house.fill") {
-                    HomeView()
-                }
-                
-                Tab("Categories", systemImage: "square.grid.2x2") {
-                    CategoriesView()
-                }
-                
-                Tab("Chat", systemImage: "message.fill") {
-                    ChatListView()
-                }
-                
-                Tab("Rent", systemImage: "plus") {
-                    UploadViewCamera()
-                }
+        @Bindable var bindableAppStore = appStore
+        
+        TabView(selection: $bindableAppStore.activeTab) {
+            Tab("Home", systemImage: "house.fill", value: 0) {
+                HomeView()
             }
+            
+            Tab("Categories", systemImage: "square.grid.2x2", value: 1) {
+                CategoriesView()
+            }
+            
+            Tab("Chat", systemImage: "message.fill", value: 2) {
+                ChatListView()
+            }
+            
+            Tab("Rent", systemImage: "plus", value: 3) {
+                UploadViewCamera()
+            }
+        }
     }
 }
 

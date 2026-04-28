@@ -14,6 +14,7 @@ struct ProductDetailView: View {
     @State private var isRequestingRent = false
     @State private var rentError: String? = nil
     @State private var showVirtualTryOn = false
+    @State private var selectedConversation: ChatConversation? = nil
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -269,7 +270,17 @@ struct ProductDetailView: View {
                 .padding(.top, 10)
 
                 // Seller Card
-                HStack(spacing: 14) {
+                Group {
+                    if let listedBy = product.listedBy {
+                        let mappedUser = User(
+                            id: listedBy.id,
+                            name: listedBy.name,
+                            location: listedBy.location ?? "Unknown",
+                            isVerified: listedBy.isVerified ?? false,
+                            profileImage: listedBy.profileImage
+                        )
+                        NavigationLink(destination: OtherUserProfileView(user: mappedUser, userId: product.listedByUserId).environment(appStore)) {
+                            HStack(spacing: 14) {
                     if let profileImg = product.listedBy?.profileImage, let url = URL(string: profileImg) {
                         AsyncImage(url: url) { phase in
                             if case .success(let image) = phase {
@@ -313,9 +324,28 @@ struct ProductDetailView: View {
                             .foregroundColor(.yellow)
                             .font(.system(size: 12))
                     }
+                    }
+                    .cardStyle()
+                    .padding(.top, 10)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                    HStack(spacing: 14) {
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable()
+                            .frame(width: 48, height: 48)
+                            .foregroundColor(.gray.opacity(0.5))
+                            
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Owner")
+                                .font(.system(size: 16, weight: .bold))
+                        }
+                        Spacer()
+                    }
+                    .cardStyle()
+                    .padding(.top, 10)
                 }
-                .cardStyle()
-                .padding(.top, 10)
+            }
 
                 // Request to Rent
                 if let rentError {
@@ -387,16 +417,26 @@ struct ProductDetailView: View {
                 .padding(.bottom, 40)
             }
         }
+        .simultaneousGesture(TapGesture().onEnded {
+            if showMenu {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                    showMenu = false
+                }
+            }
+        })
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
-        .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
-        .alert("Request Sent! 🎉", isPresented: $showRentConfirmation) {
+        .background(Color(white: 0.98))
+        .alert("Request Sent", isPresented: $showRentConfirmation) {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Your rental request for \(product.name) has been sent to the owner.")
         }
         .fullScreenCover(isPresented: $showVirtualTryOn) {
             VirtualTryOnView(product: product)
+        }
+        .navigationDestination(item: $selectedConversation) { conversation in
+            PersonalChatView(conversation: conversation)
         }
     }
 

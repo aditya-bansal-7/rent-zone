@@ -12,17 +12,17 @@ struct RentalRequestDetailView: View {
                 .frame(width: 40, height: 5)
                 .padding(.top, 12)
             
-            Text("Rental Request")
+            Text(notification.type == .general ? notification.title : "Rental Request")
                 .font(.system(size: 18, weight: .bold))
                 .padding(.top, 20)
                 .padding(.bottom, 24)
             
             // Requester profile
             HStack(spacing: 12) {
-                Image(systemName: "person.crop.circle.fill")
-                    .resizable()
-                    .frame(width: 50, height: 50)
-                    .foregroundColor(.gray.opacity(0.5))
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .frame(width: 50, height: 50)
+                        .foregroundColor(.gray.opacity(0.5))
                 
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
@@ -81,7 +81,7 @@ struct RentalRequestDetailView: View {
                         }
                     }
                     
-                    Text("Please confirm availability for these dates.")
+                    Text(notification.type == .general ? notification.content : "Please confirm availability for these dates.")
                         .font(.system(size: 12, weight: .regular))
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
@@ -97,37 +97,84 @@ struct RentalRequestDetailView: View {
             Spacer()
             
             // Action buttons
-            HStack(spacing: 16) {
-                Button(action: {
-                    appStore.notificationStore.rejectRequest(id: notification.id)
-                    dismiss()
-                }) {
-                    Text("Reject")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.red)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 30)
-                                .stroke(Color.red.opacity(0.4), lineWidth: 1.5)
-                        )
+            if notification.type == .rentalRequest {
+                HStack(spacing: 16) {
+                    Button(action: {
+                        appStore.notificationStore.rejectRequest(id: notification.id)
+                        dismiss()
+                    }) {
+                        Text("Reject")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.red)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 30)
+                                    .stroke(Color.red.opacity(0.4), lineWidth: 1.5)
+                            )
+                    }
+                    
+                    Button(action: {
+                        appStore.notificationStore.acceptRequest(id: notification.id)
+                        dismiss()
+                    }) {
+                        Text("Accept")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.black)
+                            .cornerRadius(30)
+                    }
                 }
+                .padding(.horizontal, 24)
+            }
                 
                 Button(action: {
-                    appStore.notificationStore.acceptRequest(id: notification.id)
-                    dismiss()
+                    Task {
+                        var targetUserId = notification.fromUserId
+                        if targetUserId == nil, let productId = notification.productId {
+                            do {
+                                let product = try await ProductService.shared.getProduct(id: productId)
+                                targetUserId = product.listedByUserId
+                            } catch {
+                                print("Fallback product fetch failed: \(error)")
+                            }
+                        }
+                        
+                        if let otherUserId = targetUserId, let productId = notification.productId {
+                            do {
+                                let conv = try await ChatService.shared.startConversation(otherUserId: otherUserId, productId: productId)
+                                await MainActor.run {
+                                    appStore.selectedChatConversation = conv
+                                    appStore.activeTab = 2 // Switch to Chat tab
+                                    dismiss()
+                                    NotificationCenter.default.post(name: NSNotification.Name("DismissNotificationCenter"), object: nil)
+                                }
+                            } catch {
+                                print("Error starting chat: \(error)")
+                            }
+                        } else {
+                            print("Cannot start chat: missing fromUserId (\(String(describing: targetUserId))) or productId (\(String(describing: notification.productId)))")
+                        }
+                    }
                 }) {
-                    Text("Accept")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.black)
-                        .cornerRadius(30)
+                    HStack(spacing: 8) {
+                        Image(systemName: "message.fill")
+                        Text("Chat")
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 30)
+                            .stroke(Color.black.opacity(0.1), lineWidth: 1.5)
+                    )
                 }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 36)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 36)
+                .padding(.top, 10)
         }
         .background(.ultraThickMaterial)
         .presentationDetents([.medium])

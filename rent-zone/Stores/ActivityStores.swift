@@ -68,6 +68,14 @@ class NotificationStore {
     var notifications: [AppNotification] = []
     var isLoading: Bool = false
 
+    init() {
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("NewAppNotification"), object: nil, queue: .main) { [weak self] notification in
+            if let appNotif = notification.object as? AppNotification {
+                self?.addItem(appNotif)
+            }
+        }
+    }
+
     var unreadNotifications: [AppNotification] {
         notifications.filter { !$0.isRead }
     }
