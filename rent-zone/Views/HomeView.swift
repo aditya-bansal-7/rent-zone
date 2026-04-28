@@ -3,7 +3,6 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppStore.self) var appStore
     @State private var searchText = ""
-    @State private var selectedCategory = "All Items"
     @State private var favoriteProductIds: Set<String> = []
     @State private var isLoginSheetPresented = false
     @State private var showNotifications = false
@@ -56,7 +55,6 @@ struct HomeView: View {
                                 ProductGridView(products: filteredProducts, favoriteProductIds: $favoriteProductIds)
                             }
                         } else {
-                            CategoryChipsView(selectedCategory: $selectedCategory)
 
                             if appStore.productStore.isLoading {
                                 VStack(spacing: 16) {

@@ -19,6 +19,30 @@ struct ProfileView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
+                    // Close button
+                    HStack {
+                        Button(action: { dismiss() }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.primary)
+                                .frame(width: 44, height: 44)
+                                .background {
+                                    Group {
+                                        if #available(iOS 26.0, *) {
+                                            Color.clear
+                                        } else {
+                                            Circle()
+                                                .fill(.ultraThinMaterial)
+                                        }
+                                    }
+                                }
+                                .if26GlassEffect(cornerRadius: 22)
+                                .clipShape(Circle())
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
                     // MARK: - Profile Header
                     VStack(spacing: 12) {
                         // Profile Image

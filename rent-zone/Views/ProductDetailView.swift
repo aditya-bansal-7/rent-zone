@@ -13,6 +13,7 @@ struct ProductDetailView: View {
     @State private var calendarDisplayedMonth = Date()
     @State private var isRequestingRent = false
     @State private var rentError: String? = nil
+    @State private var showVirtualTryOn = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -84,6 +85,7 @@ struct ProductDetailView: View {
                                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                                         showMenu = false
                                     }
+                                    shareProduct()
                                 }) {
                                     VStack(spacing: 4) {
                                         Image(systemName: "square.and.arrow.up")
@@ -96,8 +98,17 @@ struct ProductDetailView: View {
                             }
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
-                            .background(.ultraThinMaterial)
-                            .cornerRadius(16)
+                            .background {
+                                Group {
+                                    if #available(iOS 26.0, *) {
+                                        Color.clear
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .fill(.ultraThinMaterial)
+                                    }
+                                }
+                            }
+                            .if26GlassEffect(cornerRadius: 16)
                             .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 4)
                             .transition(.scale(scale: 0.3, anchor: .topTrailing).combined(with: .opacity))
                         } else {
@@ -145,7 +156,7 @@ struct ProductDetailView: View {
                         }
                     }
 
-                    Button(action: {}) {
+                    Button(action: { showVirtualTryOn = true }) {
                         HStack(spacing: 12) {
                             Text("👗")
                                 .font(.system(size: 18))
@@ -384,9 +395,35 @@ struct ProductDetailView: View {
         } message: {
             Text("Your rental request for \(product.name) has been sent to the owner.")
         }
+        .fullScreenCover(isPresented: $showVirtualTryOn) {
+            VirtualTryOnView(product: product)
+        }
     }
 
     // MARK: - Actions
+
+    private func shareProduct() {
+        let shareText = "Check out \(product.name) on RentZone! ₹\(Int(product.rentPricePerDay))/day"
+        var items: [Any] = [shareText]
+        if let firstImage = product.imageURLs.first, let url = URL(string: firstImage) {
+            items.append(url)
+        }
+
+        let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        activityVC.excludedActivityTypes = [] // Show all available share options
+
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            // Find the topmost presented view controller
+            var topVC = rootVC
+            while let presented = topVC.presentedViewController {
+                topVC = presented
+            }
+            activityVC.popoverPresentationController?.sourceView = topVC.view
+            activityVC.popoverPresentationController?.sourceRect = CGRect(x: topVC.view.bounds.midX, y: 0, width: 0, height: 0)
+            topVC.present(activityVC, animated: true)
+        }
+    }
 
     private func handleRentRequest() async {
         guard appStore.userStore.currentUser != nil else {
