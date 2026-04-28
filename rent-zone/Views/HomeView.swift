@@ -7,6 +7,7 @@ struct HomeView: View {
     @State private var isLoginSheetPresented = false
     @State private var showNotifications = false
     @State private var isProfileSheet = false
+    @State private var navigateToSearch = false
 
     var allProducts: [Product] {
         appStore.productStore.products
@@ -44,11 +45,15 @@ struct HomeView: View {
                                 }
                             }
 
-                        SearchBarView(searchText: $searchText)
+                        SearchBarView(searchText: $searchText) {
+                            if !searchText.isEmpty {
+                                navigateToSearch = true
+                            }
+                        }
 
                         if !searchText.isEmpty {
                             // Search results
-                            SectionHeaderView(title: "SEARCH RESULTS (\(filteredProducts.count))")
+                            SectionHeaderView(title: "SEARCH RESULTS (\(filteredProducts.count))", showViewAll: false)
                             if filteredProducts.isEmpty {
                                 Text("No outfits match \"\(searchText)\"")
                                     .foregroundStyle(.secondary)
@@ -82,18 +87,26 @@ struct HomeView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 40)
                             } else {
-                                // Popular Outfits
-                                SectionHeaderView(title: "POPULAR OUTFITS")
+                                SectionHeaderView(
+                                    title: "POPULAR OUTFITS",
+                                    destination: ProductListView(title: "Popular Outfits", initialProducts: allProducts.sorted { $0.rating > $1.rating })
+                                )
                                 ProductGridView(products: popularProducts, favoriteProductIds: $favoriteProductIds)
 
                                 // Recent Outfits
-                                SectionHeaderView(title: "RECENT OUTFITS")
+                                SectionHeaderView(
+                                    title: "RECENT OUTFITS",
+                                    destination: ProductListView(title: "Recent Outfits", initialProducts: allProducts)
+                                )
                                 ProductGridView(products: recentProducts, favoriteProductIds: $favoriteProductIds)
                             }
                         }
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 20)
+                }
+                .navigationDestination(isPresented: $navigateToSearch) {
+                    ProductListView(title: "Search Results", searchText: searchText)
                 }
                 .sheet(isPresented: $isLoginSheetPresented) {
                     LoginView()

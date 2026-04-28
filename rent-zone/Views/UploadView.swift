@@ -6,12 +6,13 @@ struct UploadView: View {
     @Environment(\.dismiss) var dismiss
 
     // Passed in from UploadViewCamera
-    var selectedImages: [UIImage] = []
+    @State var selectedImages: [UIImage] = []
 
     var categories: [Category] {
         appStore.categoryStore.categories
     }
 
+    @State private var name = ""
     @State private var selectedCategoryId = ""
     @State private var selectedCondition = "good"
     @State private var selectedSize = "M"
@@ -39,6 +40,12 @@ struct UploadView: View {
         Form {
             // MARK: - Basic Info
             Section("Basic Info") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Product Name")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    TextField("e.g. Elegant Silk Saree", text: $name)
+                }
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Category")
                         .font(.subheadline).foregroundStyle(.secondary)
@@ -154,8 +161,13 @@ struct UploadView: View {
                     HStack {
                         Spacer()
                         if isUploading {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                            HStack(spacing: 12) {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                                Text("Uploading Outfit...")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(.black)
+                            }
                         } else {
                             Text("List My Outfit")
                                 .font(.system(size: 17, weight: .semibold))
@@ -163,11 +175,11 @@ struct UploadView: View {
                         }
                         Spacer()
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 10)
                     .background(Color.purple.opacity(0.15))
                     .cornerRadius(30)
                 }
-                .disabled(isUploading || selectedCategoryId.isEmpty || price.isEmpty)
+                .disabled(isUploading || name.isEmpty || selectedCategoryId.isEmpty || price.isEmpty)
                 .listRowBackground(Color.clear)
             }
         }
@@ -207,7 +219,7 @@ struct UploadView: View {
             if !fitDescription.isEmpty { description["fitAndComfort"] = fitDescription }
 
             let product = try await ProductService.shared.createProduct(
-                name: categories.first(where: { $0.id == selectedCategoryId })?.name ?? "Outfit",
+                name: name,
                 rentPricePerDay: priceVal,
                 securityDeposit: Double(securityDeposit) ?? 500,
                 condition: selectedCondition,
@@ -234,6 +246,7 @@ struct UploadView: View {
             await MainActor.run {
                 self.isUploading = false
                 self.uploadSuccess = true
+                self.clearForm()
             }
         } catch {
             await MainActor.run {
@@ -241,6 +254,22 @@ struct UploadView: View {
                 self.uploadError = error.localizedDescription
             }
         }
+    }
+
+    private func clearForm() {
+        name = ""
+        selectedCategoryId = ""
+        selectedCondition = "good"
+        selectedSize = "M"
+        price = ""
+        securityDeposit = ""
+        pickupLocation = ""
+        selectedOccasion = ""
+        fabricDescription = ""
+        brandDescription = ""
+        styleDescription = ""
+        fitDescription = ""
+        selectedImages = []
     }
 }
 

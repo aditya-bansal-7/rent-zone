@@ -9,7 +9,8 @@ struct ProductDetailView: View {
     @State private var isFavorite = false
     @State private var showRentConfirmation = false
     @State private var showCalendar = false
-    @State private var selectedDate: Date? = nil
+    @State private var startDate: Date? = nil
+    @State private var endDate: Date? = nil
     @State private var calendarDisplayedMonth = Date()
     @State private var isRequestingRent = false
     @State private var rentError: String? = nil
@@ -55,7 +56,6 @@ struct ProductDetailView: View {
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
-                            .background(Capsule().fill(Color.black.opacity(0.3)))
                             .padding(.bottom, 16)
                         }
                     }
@@ -214,61 +214,132 @@ struct ProductDetailView: View {
 
                 // Availability Card
                 VStack(alignment: .leading, spacing: 20) {
-                    HStack {
-                        Text("Availability")
-                            .font(.system(size: 20, weight: .bold))
-                        Spacer()
-                        Button(action: {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                                showCalendar.toggle()
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Availability")
+                                .font(.system(size: 20, weight: .bold))
+                            Spacer()
+                            
+                            if startDate != nil {
+                                Button(action: {
+                                    withAnimation {
+                                        startDate = nil
+                                        endDate = nil
+                                    }
+                                }) {
+                                    Text("Clear")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(.red.opacity(0.8))
+                                }
+                                .padding(.trailing, 8)
                             }
-                        }) {
-                            Text("Select Date")
+
+                            Button(action: {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                                    showCalendar.toggle()
+                                }
+                            }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: showCalendar ? "list.bullet" : "calendar")
+                                    Text(showCalendar ? "Show Chips" : "Calendar")
+                                }
                                 .font(.system(size: 12, weight: .medium))
-                                .underline()
-                                .foregroundColor(.gray)
+                                .foregroundColor(.black)
+                            }
                         }
+                        
+                        Text(selectionInstruction)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.gray)
                     }
 
                     if showCalendar {
                         CalendarPickerView(
-                            selectedDate: $selectedDate,
-                            displayedMonth: $calendarDisplayedMonth
+                            startDate: $startDate,
+                            endDate: $endDate,
+                            displayedMonth: $calendarDisplayedMonth,
+                            bookedDates: product.bookedDates
                         )
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     } else {
-                        // Show next 5 days as availability preview
+                        // Show chips whenever calendar is closed
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
-                                ForEach(0..<7, id: \.self) { offset in
-                                    let date = Calendar.current.date(byAdding: .day, value: offset, to: Date())!
+                                ForEach(0..<14, id: \.self) { offset in
+                                    let date = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: offset, to: Date())!)
                                     let day = Calendar.current.component(.day, from: date)
                                     let monthStr = date.formatted(.dateTime.month(.abbreviated)).uppercased()
-                                    let isBooked = product.bookedDates.contains(where: {
-                                        Calendar.current.isDate($0, inSameDayAs: date)
-                                    })
-                                    VStack(spacing: 6) {
-                                        Text("\(day)")
-                                            .font(.system(size: 20, weight: .bold))
-                                        Text(monthStr)
-                                            .font(.system(size: 10, weight: .bold))
+                                    
+                                    let isBooked = product.bookedDates.contains { Calendar.current.isDate($0, inSameDayAs: date) }
+                                    let isSelected = (startDate != nil && Calendar.current.isDate(startDate!, inSameDayAs: date)) || (endDate != nil && Calendar.current.isDate(endDate!, inSameDayAs: date))
+                                    let inRange = startDate != nil && endDate != nil && date > startDate! && date < endDate!
+                                    
+                                    Button(action: { handleDateSelection(date) }) {
+                                        VStack(spacing: 4) {
+                                            Text("\(day)")
+                                                .font(.system(size: 22, weight: .bold))
+                                            Text(monthStr)
+                                                .font(.system(size: 10, weight: .bold))
+                                        }
+                                        .foregroundColor(.black)
+                                        .frame(width: 55, height: 65)
+                                        .background(isSelected ? Color(red: 230/255, green: 210/255, blue: 255/255) : (inRange ? Color(red: 243/255, green: 236/255, blue: 255/255) : Color.white))
+                                        .cornerRadius(10)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(Color.black, lineWidth: 1.5)
+                                        )
+                                        .overlay(
+                                            DiagonalLineShape()
+                                                .stroke(Color.black, lineWidth: isBooked ? 1.5 : 0)
+                                        )
+                                        .opacity(isBooked ? 0.4 : 1.0)
                                     }
-                                    .padding(.vertical, 14)
-                                    .padding(.horizontal, 16)
-                                    .background(Color.white)
-                                    .cornerRadius(10)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color.black.opacity(0.15), lineWidth: 1)
-                                    )
-                                    .overlay(
-                                        DiagonalLineShape()
-                                            .stroke(Color.black.opacity(0.6), lineWidth: isBooked ? 1 : 0)
-                                    )
-                                    .opacity(isBooked ? 0.35 : 1.0)
+                                    .disabled(isBooked)
                                 }
                             }
+                            .padding(.horizontal, 2)
+                            .padding(.vertical, 4)
                         }
+                    }
+                    
+                    // Guided date display & Cost Breakdown
+                    if let start = startDate {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack(spacing: 20) {
+                                dateBlock(title: "PICKUP", date: start, icon: "shippingbox.fill")
+                                
+                                Image(systemName: "arrow.right")
+                                    .foregroundColor(.gray.opacity(0.5))
+                                    .font(.system(size: 20, weight: .bold))
+                                
+                                if let end = endDate {
+                                    dateBlock(title: "RETURN", date: end, icon: "arrow.uturn.backward.circle.fill")
+                                } else {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("RETURN")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundColor(.gray)
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.gray.opacity(0.2), style: StrokeStyle(lineWidth: 1, dash: [4]))
+                                            .frame(width: 80, height: 45)
+                                            .overlay(
+                                                Text("Select")
+                                                    .font(.system(size: 12, weight: .bold))
+                                                    .foregroundColor(.gray.opacity(0.5))
+                                            )
+                                    }
+                                }
+                            }
+                            
+                            if let end = endDate {
+                                let days = Int(end.timeIntervalSince(start) / 86400) + 1
+                                costBreakdownView(days: days)
+                                    .padding(.top, 4)
+                            }
+                        }
+                        .padding(.top, 8)
+                        .transition(.asymmetric(insertion: .push(from: .bottom), removal: .opacity))
                     }
                 }
                 .cardStyle()
@@ -338,17 +409,17 @@ struct ProductDetailView: View {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .black))
                         } else {
-                            Text("Request to Rent")
+                            Text(rentButtonText)
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.black)
                         }
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
-                    .background(Color(red: 243/255, green: 236/255, blue: 255/255))
+                    .background(startDate != nil && endDate != nil ? Color(red: 243/255, green: 236/255, blue: 255/255) : Color.gray.opacity(0.1))
                     .cornerRadius(30)
                 }
-                .disabled(isRequestingRent)
+                .disabled(isRequestingRent || startDate == nil || endDate == nil)
                 .padding(.horizontal, 20)
                 .padding(.top, 24)
 
@@ -385,7 +456,7 @@ struct ProductDetailView: View {
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(.gray)
                         }
-                        .foregroundColor(Color(red: 130/255, green: 90/255, blue: 210/255))
+                        .foregroundColor(.black)
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 14)
@@ -441,8 +512,27 @@ struct ProductDetailView: View {
 
     // MARK: - Computed
 
+    private var selectionInstruction: String {
+        if startDate == nil {
+            return "Step 1: Select your pickup date"
+        } else if endDate == nil {
+            return "Step 2: Select your return date"
+        } else {
+            return "Review your rental duration"
+        }
+    }
+
     private var displayReviews: [Review] {
         didInitReviews ? localReviews : product.reviews
+    }
+
+    private var rentButtonText: String {
+        if let start = startDate, let end = endDate {
+            let days = Int(end.timeIntervalSince(start) / 86400) + 1
+            let total = Int(product.rentPricePerDay) * days + Int(product.securityDeposit)
+            return "Request to Rent • ₹\(total)"
+        }
+        return startDate == nil ? "Select Dates" : "Select End Date"
     }
 
     // MARK: - Actions
@@ -470,20 +560,53 @@ struct ProductDetailView: View {
         }
     }
 
+    private func handleDateSelection(_ date: Date) {
+        let calendar = Calendar.current
+        if startDate == nil || (startDate != nil && endDate != nil) {
+            startDate = date
+            endDate = nil
+        } else if let start = startDate {
+            if date < start {
+                startDate = date
+                endDate = nil
+            } else if calendar.isDate(date, inSameDayAs: start) {
+                // Allow 1-day rental if clicking start date again
+                endDate = date
+            } else {
+                // Check if any booked dates are in between
+                let hasBookedInRange = product.bookedDates.contains { bookedDate in
+                    bookedDate > start && bookedDate < date
+                }
+                if !hasBookedInRange {
+                    endDate = date
+                } else {
+                    startDate = date
+                    endDate = nil
+                }
+            }
+        }
+    }
+
     private func handleRentRequest() async {
+        guard let start = startDate, let end = endDate else {
+            rentError = "Please select rental dates"
+            return
+        }
+        
         guard appStore.userStore.currentUser != nil else {
             rentError = "Please sign in to request a rental"
             return
         }
+        
         isRequestingRent = true
         rentError = nil
         do {
-            let startDate = selectedDate ?? Date()
-            let endDate = Calendar.current.date(byAdding: .day, value: 1, to: startDate) ?? Date()
+            let days = max(1, Int(end.timeIntervalSince(start) / 86400) + 1)
             let rental = try await RentalService.shared.createRental(
                 productId: product.id,
-                startDate: startDate,
-                endDate: endDate
+                startDate: start,
+                endDate: end,
+                totalPrice: product.rentPricePerDay * Double(days)
             )
             appStore.rentalStore.addItem(rental)
             await MainActor.run {
@@ -516,6 +639,85 @@ struct ProductDetailView: View {
             Text(value)
                 .font(.system(size: 14, weight: .bold))
         }
+    }
+
+    private func dateBlock(title: String, date: Date, icon: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 10))
+                }
+                Text(title)
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .foregroundColor(.gray)
+            
+            HStack(spacing: 8) {
+                let day = Calendar.current.component(.day, from: date)
+                let monthStr = date.formatted(.dateTime.month(.abbreviated)).uppercased()
+                
+                Text("\(day)")
+                    .font(.system(size: 20, weight: .bold))
+                Text(monthStr)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.black)
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(Color.white)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
+            )
+        }
+    }
+
+    private func costBreakdownView(days: Int) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Duration:")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+                Spacer()
+                Text("\(days) days")
+                    .font(.system(size: 14, weight: .bold))
+            }
+            
+            HStack {
+                Text("Rental Price (₹\(Int(product.rentPricePerDay)) x \(days)):")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+                Spacer()
+                Text("₹\(Int(product.rentPricePerDay) * days)")
+                    .font(.system(size: 14, weight: .bold))
+            }
+            
+            HStack {
+                Text("Security Deposit (Refundable):")
+                    .font(.system(size: 14))
+                    .foregroundColor(.gray)
+                Spacer()
+                Text("₹\(Int(product.securityDeposit))")
+                    .font(.system(size: 14, weight: .bold))
+            }
+            
+            Divider()
+                .padding(.vertical, 4)
+            
+            HStack {
+                Text("Total to Pay:")
+                    .font(.system(size: 16, weight: .bold))
+                Spacer()
+                Text("₹\(Int(product.rentPricePerDay) * days + Int(product.securityDeposit))")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.black)
+            }
+        }
+        .padding(16)
+        .background(Color.gray.opacity(0.05))
+        .cornerRadius(16)
     }
 
     private func descriptionRow(title: String, value: String) -> some View {

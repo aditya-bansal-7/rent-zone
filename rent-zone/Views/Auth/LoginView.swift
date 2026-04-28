@@ -146,6 +146,19 @@ struct LoginView: View {
                     onGoogleAction: handleGoogleSignIn
                 )
                 
+                Button(action: { 
+                    if emailOrMobile.contains("@") && emailOrMobile.count > 5 {
+                        withAnimation { step = .enterPassword }
+                    } else {
+                        errorMessage = "Please enter your email first to login with password"
+                    }
+                }) {
+                    Text("Login with Password")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.blue)
+                }
+                .padding(.top, 4)
+                
                 Button(action: { withAnimation { step = .registerDetails } }) {
                     HStack(spacing: 4) {
                         Text("New to RentZone?")
@@ -165,6 +178,24 @@ struct LoginView: View {
                         .underline()
                 }
                 .padding(.top, 4)
+                
+                if step == .verifyOtp {
+                    Button(action: { withAnimation { step = .enterPassword } }) {
+                        Text("Use Password instead")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.top, 4)
+                }
+                
+                if step == .enterPassword {
+                    Button(action: { Task { await performSendOtp() } }) {
+                        Text("Use OTP instead")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.blue)
+                    }
+                    .padding(.top, 4)
+                }
             }
         }
     }

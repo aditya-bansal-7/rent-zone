@@ -6,6 +6,9 @@ struct ProfileView: View {
     @State private var isListingSheetPresented = false
     @State private var isEditProfilePresented = false
     @State private var isFavoritesPresented = false
+    @State private var isSettingsPresented = false
+    @State private var isHelpPresented = false
+    @State private var isLanguagePresented = false
     @State private var isSigningOut = false
 
     private var user: User? { appStore.userStore.currentUser }
@@ -131,6 +134,15 @@ struct ProfileView: View {
         .sheet(isPresented: $isFavoritesPresented) {
             FavoritesView()
         }
+        .sheet(isPresented: $isSettingsPresented) {
+            SettingsView()
+        }
+        .sheet(isPresented: $isHelpPresented) {
+            HelpAndSupportView()
+        }
+        .sheet(isPresented: $isLanguagePresented) {
+            LanguageSettingsView()
+        }
     }
 
     @ViewBuilder
@@ -140,9 +152,9 @@ struct ProfileView: View {
                 VStack(spacing: 12) {
                     ProfileMenuRow(icon: "doc.text", title: "My Listing", action: { isListingSheetPresented = true })
                     ProfileMenuRow(icon: "heart", title: "Favourites", action: { isFavoritesPresented = true })
-                    ProfileMenuRow(icon: "gearshape", title: "Settings")
-                    ProfileMenuRow(icon: "questionmark.circle", title: "Help & Support")
-                    ProfileMenuRow(icon: "textformat.size", title: "Language")
+                    ProfileMenuRow(icon: "gearshape", title: "Settings", action: { isSettingsPresented = true })
+                    ProfileMenuRow(icon: "questionmark.circle", title: "Help & Support", action: { isHelpPresented = true })
+                    ProfileMenuRow(icon: "textformat.size", title: "Language", action: { isLanguagePresented = true })
 
                     Button(action: handleSignOut) {
                         HStack {
@@ -169,9 +181,9 @@ struct ProfileView: View {
             VStack(spacing: 12) {
                 ProfileMenuRowLegacy(icon: "doc.text", title: "My Listing", action: { isListingSheetPresented = true })
                 ProfileMenuRowLegacy(icon: "heart", title: "Favourites", action: { isFavoritesPresented = true })
-                ProfileMenuRowLegacy(icon: "gearshape", title: "Settings")
-                ProfileMenuRowLegacy(icon: "questionmark.circle", title: "Help & Support")
-                ProfileMenuRowLegacy(icon: "textformat.size", title: "Language")
+                ProfileMenuRowLegacy(icon: "gearshape", title: "Settings", action: { isSettingsPresented = true })
+                ProfileMenuRowLegacy(icon: "questionmark.circle", title: "Help & Support", action: { isHelpPresented = true })
+                ProfileMenuRowLegacy(icon: "textformat.size", title: "Language", action: { isLanguagePresented = true })
 
                 Button(action: handleSignOut) {
                     HStack {
