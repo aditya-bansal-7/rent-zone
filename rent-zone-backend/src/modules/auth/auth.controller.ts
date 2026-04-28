@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AccountProvider } from '@prisma/client';
 import * as authService from './auth.service';
 import { sendSuccess, sendError } from '../../utils/response.utils';
+import { uploadToCloudinary } from '../../utils/cloudinary.utils';
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -17,6 +18,15 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+});
+
+const updateProfileSchema = z.object({
+  name: z.string().min(2).optional(),
+  location: z.string().optional(),
+  university: z.string().optional().nullable(),
+  phoneNumber: z.string().optional().nullable(),
+  profileImage: z.string().optional().nullable(),
+  preferredCategory: z.enum(['men', 'women']).optional().nullable(),
 });
 
 export const register = async (req: Request, res: Response) => {
@@ -50,11 +60,11 @@ export const login = async (req: Request, res: Response) => {
 
 export const oauthLogin = async (req: Request, res: Response) => {
   try {
-    const { name, email, provider, location } = req.body;
-    if (!name || !email || !provider) {
-      return sendError(res, 'name, email, and provider are required', 400);
+    const { name, provider, location, idToken } = req.body;
+    if (!provider || !idToken) {
+      return sendError(res, 'provider and idToken are required', 400);
     }
-    const result = await authService.oauthLogin(name, email, provider as AccountProvider, location);
+    const result = await authService.oauthLogin(provider as AccountProvider, idToken, name, location);
     sendSuccess(res, result, 200, 'OAuth login successful');
   } catch (err: any) {
     sendError(res, err.message, 400);
@@ -75,7 +85,7 @@ export const refresh = async (req: Request, res: Response) => {
 export const logout = async (req: Request, res: Response) => {
   try {
     await authService.logoutUser(req.user!.userId);
-    sendSuccess(res, null, 200, 'Logged out successfully');
+    sendSuccess(res, {}, 200, 'Logged out successfully');
   } catch (err: any) {
     sendError(res, err.message);
   }
@@ -86,6 +96,50 @@ export const getMe = async (req: Request, res: Response) => {
     const user = await authService.getCurrentUser(req.user!.userId);
     if (!user) return sendError(res, 'User not found', 404);
     sendSuccess(res, user);
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response) => {
+  try {
+    const data = updateProfileSchema.parse(req.body);
+    const user = await authService.updateProfile(req.user!.userId, data);
+    sendSuccess(res, user, 200, 'Profile updated successfully');
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};
+
+export const sendOtp = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    if (!email) return sendError(res, 'Email is required', 400);
+    await authService.sendOtp(email);
+    sendSuccess(res, {}, 200, 'OTP sent successfully');
+  } catch (err: any) {
+    sendError(res, err.message, 500);
+  }
+};
+
+export const verifyOtp = async (req: Request, res: Response) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return sendError(res, 'Email and code are required', 400);
+    const result = await authService.verifyOtp(email, code);
+    sendSuccess(res, result, 200, 'OTP verified successfully');
+  } catch (err: any) {
+    sendError(res, err.message, 400);
+  }
+};
+
+export const uploadProfileImage = async (req: Request, res: Response) => {
+  try {
+    const file = req.file;
+    if (!file) return sendError(res, 'No file uploaded', 400);
+    const url = await uploadToCloudinary(file.buffer, 'rentzone/profiles');
+    const user = await authService.updateProfile(req.user!.userId, { profileImage: url });
+    sendSuccess(res, user, 200, 'Profile image uploaded');
   } catch (err: any) {
     sendError(res, err.message);
   }

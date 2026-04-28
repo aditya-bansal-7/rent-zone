@@ -226,3 +226,11 @@ model VirtualTryOn {
   user           User     @relation(fields: [userId], references: [id])
   product        Product  @relation(fields: [productId], references: [id])
 }
+
+model OTP {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  code      String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}

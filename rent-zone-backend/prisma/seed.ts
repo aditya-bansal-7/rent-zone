@@ -183,7 +183,7 @@ async function main() {
         },
         pickupLocation: 'Bangalore',
         imageURLs: [
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+          'yash.png',
         ],
         rating: 4.0,
         occasion: 'Formal',

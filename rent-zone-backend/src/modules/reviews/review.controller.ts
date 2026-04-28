@@ -39,7 +39,7 @@ export const getProductReviews = async (req: Request, res: Response) => {
 export const deleteReview = async (req: Request, res: Response) => {
   try {
     await reviewService.deleteReview(req.params.id, req.user!.userId);
-    sendSuccess(res, null, 200, 'Review deleted');
+    sendSuccess(res, {}, 200, 'Review deleted');
   } catch (err: any) {
     const code = err.message === 'Forbidden' ? 403 : err.message === 'Review not found' ? 404 : 400;
     sendError(res, err.message, code);

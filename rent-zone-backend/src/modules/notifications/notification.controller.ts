@@ -24,7 +24,7 @@ export const markRead = async (req: Request, res: Response) => {
 export const markAllRead = async (req: Request, res: Response) => {
   try {
     await notifService.markAllAsRead(req.user!.userId);
-    sendSuccess(res, null, 200, 'All notifications marked as read');
+    sendSuccess(res, {}, 200, 'All notifications marked as read');
   } catch (err: any) {
     sendError(res, err.message);
   }
