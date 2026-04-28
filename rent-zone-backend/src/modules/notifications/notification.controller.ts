@@ -29,3 +29,13 @@ export const markAllRead = async (req: Request, res: Response) => {
     sendError(res, err.message);
   }
 };
+
+export const respondToRequest = async (req: Request, res: Response) => {
+  try {
+    const { action } = req.params;
+    await notifService.respondToRequest(req.params.id, req.user!.userId, action === 'accept');
+    sendSuccess(res, {}, 200, `Request ${action}ed`);
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};

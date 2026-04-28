@@ -26,11 +26,11 @@ export const createRental = async (
   });
 
   // Notify owner
-  await prisma.notification.create({
+  const newNotif = await prisma.notification.create({
     data: {
       userId: product.listedByUserId,
       title: 'New Rental Request',
-      content: `Someone wants to rent "${product.name}"`,
+      content: `${rental.rentedBy.name} wants to rent "${product.name}"`,
       icon: 'tag.fill',
       type: 'rentalRequest',
       productId,
@@ -39,8 +39,13 @@ export const createRental = async (
       totalPrice,
       productName: product.name,
       productImageName: product.imageURLs[0] ?? '',
+      requesterName: rental.rentedBy.name,
+      requesterProfileImage: rental.rentedBy.profileImage ?? '',
     },
   });
+
+  const { sendNotificationToUser } = require('../../socket');
+  sendNotificationToUser(product.listedByUserId, newNotif);
 
   return rental;
 };

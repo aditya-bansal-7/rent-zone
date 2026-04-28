@@ -9,6 +9,9 @@ class AppStore {
     var rentalStore = RentalStore()
     var reviewStore = ReviewStore()
     var notificationStore = NotificationStore()
+    
+    var activeTab: Int = 0
+    var selectedChatConversation: ChatConversation? = nil
 
     init() {
         // Kick off async fetch on init

@@ -12,6 +12,7 @@ class ProductService {
         size: String? = nil,
         condition: String? = nil,
         occasion: String? = nil,
+        listedByUserId: String? = nil,
         minPrice: Double? = nil,
         maxPrice: Double? = nil,
         sort: String? = nil,
@@ -26,6 +27,7 @@ class ProductService {
         if let size { queryItems.append(URLQueryItem(name: "size", value: size)) }
         if let condition { queryItems.append(URLQueryItem(name: "condition", value: condition)) }
         if let occasion { queryItems.append(URLQueryItem(name: "occasion", value: occasion)) }
+        if let listedByUserId { queryItems.append(URLQueryItem(name: "listedByUserId", value: listedByUserId)) }
         if let minPrice { queryItems.append(URLQueryItem(name: "minPrice", value: "\(minPrice)")) }
         if let maxPrice { queryItems.append(URLQueryItem(name: "maxPrice", value: "\(maxPrice)")) }
         if let sort { queryItems.append(URLQueryItem(name: "sort", value: sort)) }
