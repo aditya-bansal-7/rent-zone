@@ -435,10 +435,16 @@ struct ProductDetailView: View {
         do {
             let startDate = selectedDate ?? Date()
             let endDate = Calendar.current.date(byAdding: .day, value: 1, to: startDate) ?? Date()
+            
+            let components = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: startDate), to: Calendar.current.startOfDay(for: endDate))
+            let days = max(1, components.day ?? 1)
+            let totalPrice = Double(days) * product.rentPricePerDay
+            
             let rental = try await RentalService.shared.createRental(
                 productId: product.id,
                 startDate: startDate,
-                endDate: endDate
+                endDate: endDate,
+                totalPrice: totalPrice
             )
             appStore.rentalStore.addItem(rental)
             await MainActor.run {
