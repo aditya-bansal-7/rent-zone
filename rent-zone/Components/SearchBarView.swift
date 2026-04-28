@@ -13,11 +13,7 @@ struct SearchBarView: View {
             
             Spacer()
             
-            Button(action: {}) {
-                Image(systemName: "slider.horizontal.3")
-                    .foregroundColor(.gray)
-                    .font(.system(size: 16))
-            }
+            
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)

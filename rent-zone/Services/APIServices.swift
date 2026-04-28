@@ -193,12 +193,13 @@ class RentalService {
     static let shared = RentalService()
     private init() {}
 
-    func createRental(productId: String, startDate: Date, endDate: Date) async throws -> Rental {
+    func createRental(productId: String, startDate: Date, endDate: Date, totalPrice: Double) async throws -> Rental {
         let formatter = ISO8601DateFormatter()
         let body: [String: Any] = [
             "productId": productId,
             "startDate": formatter.string(from: startDate),
-            "endDate": formatter.string(from: endDate)
+            "endDate": formatter.string(from: endDate),
+            "totalPrice": totalPrice
         ]
         let dto: RentalDTO = try await APIClient.shared.request(
             endpoint: "/rentals",
