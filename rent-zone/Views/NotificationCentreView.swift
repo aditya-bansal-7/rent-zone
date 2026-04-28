@@ -71,6 +71,11 @@ struct NotificationCentreView: View {
             RentalRequestDetailView(notification: notification)
                 .environment(appStore)
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("DismissNotificationCenter"))) { _ in
+            withAnimation(.easeOut(duration: 0.25)) {
+                isPresented = false
+            }
+        }
     }
     
     private func tabButton(title: String, index: Int) -> some View {

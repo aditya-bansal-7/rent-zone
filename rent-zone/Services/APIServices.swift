@@ -12,6 +12,7 @@ class ProductService {
         size: String? = nil,
         condition: String? = nil,
         occasion: String? = nil,
+        listedByUserId: String? = nil,
         minPrice: Double? = nil,
         maxPrice: Double? = nil,
         sort: String? = nil,
@@ -26,6 +27,7 @@ class ProductService {
         if let size { queryItems.append(URLQueryItem(name: "size", value: size)) }
         if let condition { queryItems.append(URLQueryItem(name: "condition", value: condition)) }
         if let occasion { queryItems.append(URLQueryItem(name: "occasion", value: occasion)) }
+        if let listedByUserId { queryItems.append(URLQueryItem(name: "listedByUserId", value: listedByUserId)) }
         if let minPrice { queryItems.append(URLQueryItem(name: "minPrice", value: "\(minPrice)")) }
         if let maxPrice { queryItems.append(URLQueryItem(name: "maxPrice", value: "\(maxPrice)")) }
         if let sort { queryItems.append(URLQueryItem(name: "sort", value: sort)) }
@@ -193,12 +195,13 @@ class RentalService {
     static let shared = RentalService()
     private init() {}
 
-    func createRental(productId: String, startDate: Date, endDate: Date) async throws -> Rental {
+    func createRental(productId: String, startDate: Date, endDate: Date, totalPrice: Double) async throws -> Rental {
         let formatter = ISO8601DateFormatter()
         let body: [String: Any] = [
             "productId": productId,
             "startDate": formatter.string(from: startDate),
-            "endDate": formatter.string(from: endDate)
+            "endDate": formatter.string(from: endDate),
+            "totalPrice": totalPrice
         ]
         let dto: RentalDTO = try await APIClient.shared.request(
             endpoint: "/rentals",

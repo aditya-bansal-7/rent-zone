@@ -4,6 +4,10 @@ struct ReportUserView: View {
     
     @Environment(AppStore.self) var appStore
     
+    let reportedUserName: String
+    let reportedUserImage: String?
+    let reportedUserLocation: String?
+    
     @State private var selectedReason = "Choose report reasons"
     @State private var description = ""
     @State private var showSuccess = false
@@ -21,25 +25,43 @@ struct ReportUserView: View {
                 VStack(spacing: 20) {
                     
                     // Profile Image
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .scaledToFill()
+                    if let imgStr = reportedUserImage, let url = URL(string: imgStr), imgStr.hasPrefix("http") {
+                        AsyncImage(url: url) { phase in
+                            if case .success(let image) = phase {
+                                image.resizable().scaledToFill()
+                            } else {
+                                Image(systemName: "person.crop.circle.fill").foregroundColor(.gray.opacity(0.5))
+                            }
+                        }
                         .frame(width: 140, height: 140)
-                        .foregroundColor(.gray.opacity(0.5))
                         .clipShape(Circle())
-                        .overlay(
-                            Circle()
-                                .stroke(Color.gray.opacity(0.4), lineWidth: 1)
-                        )
+                        .overlay(Circle().stroke(Color.gray.opacity(0.4), lineWidth: 1))
+                    } else if let imgStr = reportedUserImage {
+                        Image(imgStr)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 140, height: 140)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.gray.opacity(0.4), lineWidth: 1))
+                    } else {
+                        Image(systemName: "person.crop.circle.fill")
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 140, height: 140)
+                            .foregroundColor(.gray.opacity(0.5))
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.gray.opacity(0.4), lineWidth: 1))
+                    }
                     
                     // Name
-                    Text("Shreya Singh")
+                    Text(reportedUserName)
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    Text("Greater Noida")
-                        .foregroundColor(.gray)
-                    
+                    if let location = reportedUserLocation {
+                        Text(location)
+                            .foregroundColor(.gray)
+                    }
                     
                     VStack(alignment: .leading, spacing: 20) {
                         
@@ -142,6 +164,6 @@ struct ReportUserView: View {
 }
 
 #Preview {
-    ReportUserView()
+    ReportUserView(reportedUserName: "Aditya Bansal", reportedUserImage: nil, reportedUserLocation: "New Delhi")
         .environment(AppStore())
 }
