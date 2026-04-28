@@ -227,6 +227,94 @@ class RentalService {
     }
 }
 
+// MARK: - Review Service
+class ReviewService {
+    static let shared = ReviewService()
+    private init() {}
+
+    /// Create a review with optional images (multipart form data)
+    func createReview(
+        productId: String,
+        rating: Int,
+        content: String,
+        images: [UIImage] = []
+    ) async throws -> Review {
+        guard let url = URL(string: API.baseURL + "/reviews") else {
+            throw APIError.invalidURL
+        }
+
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        if let token = TokenStorage.accessToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        } else {
+            throw APIError.unauthorized
+        }
+
+        var bodyData = Data()
+
+        // Add productId field
+        bodyData.append("--\(boundary)\r\n".data(using: .utf8)!)
+        bodyData.append("Content-Disposition: form-data; name=\"productId\"\r\n\r\n".data(using: .utf8)!)
+        bodyData.append("\(productId)\r\n".data(using: .utf8)!)
+
+        // Add rating field
+        bodyData.append("--\(boundary)\r\n".data(using: .utf8)!)
+        bodyData.append("Content-Disposition: form-data; name=\"rating\"\r\n\r\n".data(using: .utf8)!)
+        bodyData.append("\(rating)\r\n".data(using: .utf8)!)
+
+        // Add content field
+        bodyData.append("--\(boundary)\r\n".data(using: .utf8)!)
+        bodyData.append("Content-Disposition: form-data; name=\"content\"\r\n\r\n".data(using: .utf8)!)
+        bodyData.append("\(content)\r\n".data(using: .utf8)!)
+
+        // Add image files
+        let imageDatas = images.compactMap { $0.jpegData(compressionQuality: 0.8) }
+        for (index, imageData) in imageDatas.enumerated() {
+            bodyData.append("--\(boundary)\r\n".data(using: .utf8)!)
+            bodyData.append("Content-Disposition: form-data; name=\"images\"; filename=\"review\(index).jpg\"\r\n".data(using: .utf8)!)
+            bodyData.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+            bodyData.append(imageData)
+            bodyData.append("\r\n".data(using: .utf8)!)
+        }
+
+        bodyData.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = bodyData
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let wrapper = try decoder.decode(APIResponse<ReviewDTO>.self, from: data)
+
+        guard wrapper.success, let dto = wrapper.data else {
+            throw APIError.serverError(wrapper.message ?? "Failed to submit review")
+        }
+
+        return dto.toReview()
+    }
+
+    /// Get all reviews for a product
+    func getProductReviews(productId: String) async throws -> [Review] {
+        let dtos: [ReviewDTO] = try await APIClient.shared.request(
+            endpoint: "/reviews/product/\(productId)"
+        )
+        return dtos.map { $0.toReview() }
+    }
+
+    /// Delete a review
+    func deleteReview(id: String) async throws {
+        let _: EmptyResponse = try await APIClient.shared.request(
+            endpoint: "/reviews/\(id)",
+            method: "DELETE",
+            authenticated: true
+        )
+    }
+}
+
 // MARK: - Notification Service
 class NotificationService {
     static let shared = NotificationService()
