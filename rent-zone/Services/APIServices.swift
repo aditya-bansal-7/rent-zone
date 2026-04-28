@@ -44,6 +44,14 @@ class ProductService {
         return dto.toProduct()
     }
 
+    func getMyProducts() async throws -> [Product] {
+        let result: [ProductDTO] = try await APIClient.shared.request(
+            endpoint: "/products/mine/all",
+            authenticated: true
+        )
+        return result.map { $0.toProduct() }
+    }
+
     // MARK: Create Product
     func createProduct(
         name: String,
@@ -75,6 +83,24 @@ class ProductService {
             authenticated: true
         )
         return dto.toProduct()
+    }
+
+    func updateProduct(id: String, body: [String: Any]) async throws -> Product {
+        let dto: ProductDTO = try await APIClient.shared.request(
+            endpoint: "/products/\(id)",
+            method: "PATCH",
+            body: body,
+            authenticated: true
+        )
+        return dto.toProduct()
+    }
+
+    func deleteProduct(id: String) async throws {
+        let _: EmptyResponse = try await APIClient.shared.request(
+            endpoint: "/products/\(id)",
+            method: "DELETE",
+            authenticated: true
+        )
     }
 
     // MARK: Upload Images to product
@@ -124,6 +150,28 @@ class ProductService {
         let dateStrings: [String] = try await APIClient.shared.request(endpoint: "/products/\(productId)/booked-dates")
         let formatter = ISO8601DateFormatter()
         return dateStrings.compactMap { formatter.date(from: $0) }
+    }
+
+    func toggleFavorite(productId: String) async throws -> (isFavorited: Bool, favoriteIds: [String]) {
+        struct FavoriteResponse: Decodable {
+            let isFavorited: Bool
+            let favoriteIds: [String]
+        }
+        
+        let result: FavoriteResponse = try await APIClient.shared.request(
+            endpoint: "/products/\(productId)/favorite",
+            method: "POST",
+            authenticated: true
+        )
+        return (result.isFavorited, result.favoriteIds)
+    }
+
+    func getFavoriteProducts() async throws -> [Product] {
+        let dtos: [ProductDTO] = try await APIClient.shared.request(
+            endpoint: "/products/mine/favorites",
+            authenticated: true
+        )
+        return dtos.map { $0.toProduct() }
     }
 }
 

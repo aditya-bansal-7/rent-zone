@@ -4,6 +4,8 @@ struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppStore.self) private var appStore
     @State private var isListingSheetPresented = false
+    @State private var isEditProfilePresented = false
+    @State private var isFavoritesPresented = false
     @State private var isSigningOut = false
 
     private var user: User? { appStore.userStore.currentUser }
@@ -98,7 +100,7 @@ struct ProfileView: View {
                         }
 
                         // Edit Profile Button
-                        Button(action: {}) {
+                        Button(action: { isEditProfilePresented = true }) {
                             Text("Edit Profile")
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.primary)
@@ -123,6 +125,12 @@ struct ProfileView: View {
         .sheet(isPresented: $isListingSheetPresented) {
             ListingInfoView()
         }
+        .sheet(isPresented: $isEditProfilePresented) {
+            EditProfileView()
+        }
+        .sheet(isPresented: $isFavoritesPresented) {
+            FavoritesView()
+        }
     }
 
     @ViewBuilder
@@ -131,7 +139,7 @@ struct ProfileView: View {
             GlassEffectContainer {
                 VStack(spacing: 12) {
                     ProfileMenuRow(icon: "doc.text", title: "My Listing", action: { isListingSheetPresented = true })
-                    ProfileMenuRow(icon: "heart", title: "Favourites")
+                    ProfileMenuRow(icon: "heart", title: "Favourites", action: { isFavoritesPresented = true })
                     ProfileMenuRow(icon: "gearshape", title: "Settings")
                     ProfileMenuRow(icon: "questionmark.circle", title: "Help & Support")
                     ProfileMenuRow(icon: "textformat.size", title: "Language")
@@ -160,7 +168,7 @@ struct ProfileView: View {
         } else {
             VStack(spacing: 12) {
                 ProfileMenuRowLegacy(icon: "doc.text", title: "My Listing", action: { isListingSheetPresented = true })
-                ProfileMenuRowLegacy(icon: "heart", title: "Favourites")
+                ProfileMenuRowLegacy(icon: "heart", title: "Favourites", action: { isFavoritesPresented = true })
                 ProfileMenuRowLegacy(icon: "gearshape", title: "Settings")
                 ProfileMenuRowLegacy(icon: "questionmark.circle", title: "Help & Support")
                 ProfileMenuRowLegacy(icon: "textformat.size", title: "Language")

@@ -6,6 +6,7 @@ interface ProductFilters {
   size?: string;
   condition?: ProductCondition;
   occasion?: string;
+  listedByUserId?: string;
   minPrice?: number;
   maxPrice?: number;
   sort?: 'priceLowToHigh' | 'priceHighToLow' | 'ratingHighToLow' | 'newest';
@@ -15,7 +16,7 @@ interface ProductFilters {
 
 export const getProducts = async (filters: ProductFilters = {}) => {
   const {
-    categoryId, size, condition, occasion,
+    categoryId, size, condition, occasion, listedByUserId,
     minPrice, maxPrice, sort = 'newest',
     page = 1, limit = 20,
   } = filters;
@@ -25,6 +26,7 @@ export const getProducts = async (filters: ProductFilters = {}) => {
     ...(size && { size }),
     ...(condition && { condition }),
     ...(occasion && { occasion }),
+    ...(listedByUserId && { listedByUserId }),
     ...(minPrice !== undefined || maxPrice !== undefined
       ? { rentPricePerDay: { gte: minPrice, lte: maxPrice } }
       : {}),
@@ -67,9 +69,9 @@ export const getProductById = (id: string) =>
     },
   });
 
-export const createProduct = (userId: string, data: Prisma.ProductCreateInput) =>
+export const createProduct = (userId: string, data: Omit<Prisma.ProductCreateInput, 'listedBy'>) =>
   prisma.product.create({
-    data: { ...data, listedBy: { connect: { id: userId } } },
+    data: { ...data, listedBy: { connect: { id: userId } } } as Prisma.ProductCreateInput,
     include: { category: true },
   });
 
@@ -109,4 +111,42 @@ export const getBookedDates = async (id: string) => {
   const product = await prisma.product.findUnique({ where: { id }, select: { bookedDates: true } });
   if (!product) throw new Error('Product not found');
   return product.bookedDates;
+};
+
+export const toggleFavorite = async (userId: string, productId: string) => {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { favouriteProductIds: true } });
+  if (!user) throw new Error('User not found');
+
+  const favorites = user.favouriteProductIds || [];
+  const isFavorited = favorites.includes(productId);
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      favouriteProductIds: isFavorited
+        ? { set: favorites.filter((id) => id !== productId) }
+        : { push: productId },
+    },
+    select: { favouriteProductIds: true },
+  });
+
+  return { isFavorited: !isFavorited, favoriteIds: updatedUser.favouriteProductIds };
+};
+
+export const getFavorites = async (userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { favouriteProductIds: true },
+  });
+
+  if (!user) throw new Error('User not found');
+
+  return prisma.product.findMany({
+    where: { id: { in: user.favouriteProductIds } },
+    include: {
+      category: true,
+      listedBy: { select: { id: true, name: true, profileImage: true, isVerified: true } },
+      _count: { select: { reviews: true } },
+    },
+  });
 };

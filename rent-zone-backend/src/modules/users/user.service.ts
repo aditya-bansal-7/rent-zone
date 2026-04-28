@@ -1,4 +1,5 @@
 import prisma from '../../config/db';
+import { CategoryType } from '@prisma/client';
 
 export const getUserById = (id: string) =>
   prisma.user.findUnique({
@@ -14,8 +15,18 @@ export const getUserById = (id: string) =>
     },
   });
 
-export const updateUser = (userId: string, data: { name?: string; location?: string; profileImage?: string }) =>
-  prisma.user.update({ where: { id: userId }, data });
+
+export const updateUser = (
+  userId: string,
+  data: {
+    name?: string;
+    location?: string;
+    profileImage?: string;
+    university?: string;
+    phoneNumber?: string;
+    preferredCategory?: CategoryType;
+  }
+) => prisma.user.update({ where: { id: userId }, data });
 
 export const getFavourites = async (userId: string) => {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { favouriteProductIds: true } });
