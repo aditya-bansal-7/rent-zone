@@ -62,6 +62,18 @@ struct ProductDetailView: View {
                     .scrollTargetBehavior(.viewAligned)
                     .frame(height: 450)
 
+                    // Tap-outside-to-dismiss overlay for 3-dot menu
+                    if showMenu {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .frame(height: 450)
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                    showMenu = false
+                                }
+                            }
+                    }
+
                     HStack(alignment: .top) {
                         Button(action: { dismiss() }) {
                             Image(systemName: "chevron.left")
@@ -429,7 +441,7 @@ struct ProductDetailView: View {
             }
             .environment(appStore)
         }
-        .alert("Request Sent! 🎉", isPresented: $showRentConfirmation) {
+        .alert("Request Sent", isPresented: $showRentConfirmation) {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Your rental request for \(product.name) has been sent to the owner.")
@@ -483,7 +495,8 @@ struct ProductDetailView: View {
             let rental = try await RentalService.shared.createRental(
                 productId: product.id,
                 startDate: startDate,
-                endDate: endDate
+                endDate: endDate,
+                totalPrice: product.rentPricePerDay
             )
             appStore.rentalStore.addItem(rental)
             await MainActor.run {
