@@ -13,6 +13,9 @@ struct ProductDetailView: View {
     @State private var calendarDisplayedMonth = Date()
     @State private var isRequestingRent = false
     @State private var rentError: String? = nil
+    @State private var showAddReview = false
+    @State private var localReviews: [Review] = []
+    @State private var didInitReviews = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -351,22 +354,43 @@ struct ProductDetailView: View {
 
                         Spacer()
 
-                        Text("\(product.reviews.count) Reviews")
+                        Text("\(displayReviews.count) Reviews")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.gray)
                     }
 
-                    if product.reviews.isEmpty {
-                        Text("No reviews yet. Be the first to rent!")
+                    // Add Review Button
+                    Button(action: { showAddReview = true }) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "square.and.pencil")
+                                .font(.system(size: 16, weight: .medium))
+                            Text("Write a Review")
+                                .font(.system(size: 14, weight: .semibold))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.gray)
+                        }
+                        .foregroundColor(Color(red: 130/255, green: 90/255, blue: 210/255))
+                        .padding(14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color(red: 243/255, green: 236/255, blue: 255/255))
+                        )
+                    }
+
+                    if displayReviews.isEmpty {
+                        Text("No reviews yet. Be the first to review!")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(product.reviews.prefix(3)) { review in
+                        ForEach(displayReviews.prefix(3)) { review in
                             ReviewItemView(
                                 name: review.userName ?? "User",
                                 rating: review.rating,
                                 text: review.content,
-                                profileImage: review.userImage
+                                profileImage: review.userImage,
+                                reviewImages: review.imageURLs
                             )
                         }
                     }
@@ -379,11 +403,29 @@ struct ProductDetailView: View {
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
+        .onAppear {
+            if !didInitReviews {
+                localReviews = product.reviews
+                didInitReviews = true
+            }
+        }
+        .sheet(isPresented: $showAddReview) {
+            AddReviewView(product: product) { newReview in
+                localReviews.insert(newReview, at: 0)
+            }
+            .environment(appStore)
+        }
         .alert("Request Sent! 🎉", isPresented: $showRentConfirmation) {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Your rental request for \(product.name) has been sent to the owner.")
         }
+    }
+
+    // MARK: - Computed
+
+    private var displayReviews: [Review] {
+        didInitReviews ? localReviews : product.reviews
     }
 
     // MARK: - Actions
@@ -488,6 +530,7 @@ struct ReviewItemView: View {
     let rating: Int
     let text: String
     var profileImage: String? = nil
+    var reviewImages: [String] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -511,12 +554,19 @@ struct ReviewItemView: View {
                 Text(name)
                     .font(.system(size: 14, weight: .bold))
 
+                Spacer()
+
                 HStack(spacing: 2) {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
-                        .font(.system(size: 10))
-                    Text("\(rating)")
-                        .font(.system(size: 12, weight: .bold))
+                    ForEach(0..<rating, id: \.self) { _ in
+                        Image(systemName: "star.fill")
+                            .foregroundColor(.yellow)
+                            .font(.system(size: 10))
+                    }
+                    ForEach(0..<(5 - rating), id: \.self) { _ in
+                        Image(systemName: "star")
+                            .foregroundColor(Color(.systemGray3))
+                            .font(.system(size: 10))
+                    }
                 }
             }
 
@@ -524,8 +574,32 @@ struct ReviewItemView: View {
                 .font(.system(size: 13, weight: .regular))
                 .foregroundColor(.black.opacity(0.8))
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.bottom, 4)
+
+            // Review Images
+            if !reviewImages.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(reviewImages, id: \.self) { imageStr in
+                            if let url = URL(string: imageStr) {
+                                AsyncImage(url: url) { phase in
+                                    if case .success(let image) = phase {
+                                        image.resizable().scaledToFill()
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color(.systemGray5))
+                                            .overlay(ProgressView())
+                                    }
+                                }
+                                .frame(width: 70, height: 70)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+                        }
+                    }
+                }
+                .padding(.top, 4)
+            }
         }
+        .padding(.bottom, 4)
     }
 }
 
