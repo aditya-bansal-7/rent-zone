@@ -5,6 +5,9 @@ struct UserDTO: Decodable, Identifiable {
     let id: String
     let name: String
     let location: String
+    let university: String?
+    let phoneNumber: String?
+    let preferredCategory: String?
     let isVerified: Bool
     let profileImage: String?
     let favouriteProductIds: [String]
@@ -20,7 +23,10 @@ struct UserDTO: Decodable, Identifiable {
             id: id,
             name: name,
             location: location,
+            university: university,
+            phoneNumber: phoneNumber,
             isVerified: isVerified,
+            favouriteProducts: favouriteProductIds,
             profileImage: profileImage,
             email: email
         )

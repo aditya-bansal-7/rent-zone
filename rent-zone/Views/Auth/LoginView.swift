@@ -1,6 +1,9 @@
 import SwiftUI
 import AuthenticationServices
 
+import GoogleSignIn
+
+
 struct LoginView: View {
     @State private var step: LoginStep = .enterEmailOrMobile
     @State private var emailOrMobile = ""
@@ -10,6 +13,7 @@ struct LoginView: View {
     @State private var university = ""
     @State private var phoneNumber = ""
     @State private var selectedCategory: CategoryType = .women
+    @State private var otpCode = ""
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
 
@@ -86,6 +90,23 @@ struct LoginView: View {
                 isDisabled: step != .enterEmailOrMobile,
                 isSuccess: step != .enterEmailOrMobile
             )
+        }
+        
+        if step == .verifyOtp {
+            AuthInputField(
+                placeholder: "Verification Code",
+                text: $otpCode,
+                keyboardType: .numberPad
+            )
+            .transition(.move(edge: .top).combined(with: .opacity))
+            
+            Button(action: { Task { await performSendOtp() } }) {
+                Text("Resend Code")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.blue)
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.top, -8)
         }
         
         if step == .enterPassword || step == .registerDetails {
@@ -167,7 +188,13 @@ struct LoginView: View {
                 errorMessage = "Please enter a valid email address"
                 return
             }
-            step = .enterPassword
+            Task { await performSendOtp() }
+        case .verifyOtp:
+            guard otpCode.count == 6 else {
+                errorMessage = "Please enter the 6-digit code"
+                return
+            }
+            Task { await performVerifyOtp() }
         case .enterPassword:
             Task { await performLogin() }
         case .registerDetails:
@@ -178,6 +205,45 @@ struct LoginView: View {
             withAnimation { step = .onboardingExtra }
         case .onboardingExtra:
             Task { await performRegister() }
+        }
+    }
+
+    private func performSendOtp() async {
+        isLoading = true
+        do {
+            try await AuthService.shared.sendOtp(email: emailOrMobile)
+            await MainActor.run {
+                self.isLoading = false
+                withAnimation { self.step = .verifyOtp }
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func performVerifyOtp() async {
+        isLoading = true
+        do {
+            let result = try await AuthService.shared.verifyOtp(email: emailOrMobile, code: otpCode)
+            await MainActor.run {
+                self.isLoading = false
+                if result.isNewUser == true {
+                    withAnimation { self.step = .registerDetails }
+                } else {
+                    Task {
+                        await appStore.refreshAfterLogin()
+                        await MainActor.run { dismiss() }
+                    }
+                }
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
         }
     }
 
@@ -215,15 +281,25 @@ struct LoginView: View {
     private func performRegister() async {
         isLoading = true
         do {
-            _ = try await appStore.userStore.register(
-                name: name,
-                email: emailOrMobile,
-                password: password,
-                location: location.isEmpty ? "Unknown" : location,
-                university: university,
-                phoneNumber: phoneNumber,
-                preferredCategory: selectedCategory.rawValue
-            )
+            if TokenStorage.isLoggedIn {
+                _ = try await appStore.userStore.updateProfile(
+                    name: name,
+                    location: location.isEmpty ? "Unknown" : location,
+                    university: university,
+                    phoneNumber: phoneNumber,
+                    preferredCategory: selectedCategory.rawValue
+                )
+            } else {
+                _ = try await appStore.userStore.register(
+                    name: name,
+                    email: emailOrMobile,
+                    password: password,
+                    location: location.isEmpty ? "Unknown" : location,
+                    university: university,
+                    phoneNumber: phoneNumber,
+                    preferredCategory: selectedCategory.rawValue
+                )
+            }
             await appStore.refreshAfterLogin()
             await MainActor.run {
                 self.isLoading = false
@@ -247,32 +323,91 @@ struct LoginView: View {
     }
 
     private func handleGoogleSignIn() {
-        errorMessage = "Google Sign In coming soon! Use Apple or Email for now."
+        Task {
+            isLoading = true
+            do {
+                let result = try await GoogleSignInHelper.shared.signIn()
+                guard let idToken = result.user.idToken?.tokenString else {
+                    errorMessage = "Failed to get ID token from Google"
+                    isLoading = false
+                    return
+                }
+                
+                let authResult = try await AuthService.shared.oauthLogin(
+                    name: result.user.profile?.name,
+                    provider: "google",
+                    idToken: idToken
+                )
+                
+                
+                await appStore.refreshAfterLogin()
+                
+                await MainActor.run {
+                    self.isLoading = false
+                    self.name = result.user.profile?.name ?? "User"
+                    self.emailOrMobile = result.user.profile?.email ?? ""
+                    self.password = UUID().uuidString.prefix(8).description
+                    let needsOnboarding = authResult.isNewUser || 
+                                         authResult.user.location.isEmpty || 
+                                         (authResult.user.university ?? "").isEmpty
+                    
+                    if needsOnboarding {
+                        withAnimation {
+                            self.step = .onboardingExtra
+                        }
+                    } else {
+                        dismiss()
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    self.errorMessage = error.localizedDescription
+                }
+            }
+        }
     }
+
 
     private func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let authResult):
             guard let appleIDCredential = authResult.credential as? ASAuthorizationAppleIDCredential else { return }
-            let email = appleIDCredential.email ?? "\(appleIDCredential.user)@privaterelay.appleid.com"
+            
             let name = [appleIDCredential.fullName?.givenName, appleIDCredential.fullName?.familyName]
                 .compactMap { $0 }
                 .joined(separator: " ")
+            
+            guard let identityToken = appleIDCredential.identityToken,
+                  let tokenString = String(data: identityToken, encoding: .utf8) else {
+                errorMessage = "Failed to get identity token from Apple"
+                return
+            }
+            
             Task {
                 isLoading = true
                 do {
-                    let result: AuthResponse = try await APIClient.shared.request(
-                        endpoint: "/auth/oauth",
-                        method: "POST",
-                        body: ["name": name.isEmpty ? "Apple User" : name, "email": email, "provider": "apple"]
+                    let result = try await AuthService.shared.oauthLogin(
+                        name: name.isEmpty ? nil : name,
+                        provider: "apple",
+                        idToken: tokenString
                     )
-                    TokenStorage.accessToken = result.accessToken
-                    TokenStorage.refreshToken = result.refreshToken
-                    TokenStorage.userId = result.user.id
+                    
                     await appStore.refreshAfterLogin()
+                    
                     await MainActor.run {
                         self.isLoading = false
-                        dismiss()
+                        let needsOnboarding = result.isNewUser || 
+                                             result.user.location.isEmpty || 
+                                             (result.user.university ?? "").isEmpty
+                        
+                        if needsOnboarding {
+                            withAnimation {
+                                self.step = .onboardingExtra
+                            }
+                        } else {
+                            dismiss()
+                        }
                     }
                 } catch {
                     await MainActor.run {
@@ -291,6 +426,7 @@ struct LoginView: View {
     private var primaryButtonTitle: String {
         switch step {
         case .enterEmailOrMobile: return "Continue"
+        case .verifyOtp: return "Verify Code"
         case .enterPassword: return "Sign In"
         case .registerDetails: return "Continue"
         case .onboardingExtra: return "Create Account"
@@ -300,6 +436,7 @@ struct LoginView: View {
     private var isPrimaryButtonDisabled: Bool {
         switch step {
         case .enterEmailOrMobile: return emailOrMobile.isEmpty
+        case .verifyOtp: return otpCode.count < 6
         case .enterPassword: return password.isEmpty
         case .registerDetails: return name.isEmpty
         case .onboardingExtra: return location.isEmpty || university.isEmpty
@@ -309,6 +446,7 @@ struct LoginView: View {
     private var headerTitle: String {
         switch step {
         case .enterEmailOrMobile: return "Sign In"
+        case .verifyOtp: return "Verify Email"
         case .enterPassword: return "Welcome Back"
         case .registerDetails: return "Create Account"
         case .onboardingExtra: return "Final Touches"
@@ -318,6 +456,7 @@ struct LoginView: View {
     private var headerSubtitle: String {
         switch step {
         case .enterEmailOrMobile: return "Enter your email to sign in or create an account."
+        case .verifyOtp: return "We've sent a 6-digit code to \(emailOrMobile)."
         case .enterPassword: return "Enter the password for \(emailOrMobile)."
         case .registerDetails: return "Enter your name and password to create an account."
         case .onboardingExtra: return "Tell us a bit more about yourself to personalize your experience."

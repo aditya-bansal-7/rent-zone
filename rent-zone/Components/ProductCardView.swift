@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ProductCardView: View {
+    @Environment(AppStore.self) var appStore
     let product: Product
     @Binding var favoriteProductIds: Set<String>
 
@@ -135,10 +136,23 @@ struct ProductCardView: View {
 
     // MARK: - Favorite Toggle
     private func toggleFavorite() {
+        // Immediate UI feedback
         if isFavorite {
             favoriteProductIds.remove(product.id)
         } else {
             favoriteProductIds.insert(product.id)
+        }
+        
+        // Sync with backend
+        Task {
+            await appStore.productStore.toggleFavorite(productId: product.id, userStore: appStore.userStore)
+            
+            // Ensure local state matches store just in case
+            await MainActor.run {
+                if let favorites = appStore.userStore.currentUser?.favouriteProducts {
+                    favoriteProductIds = Set(favorites)
+                }
+            }
         }
     }
 }

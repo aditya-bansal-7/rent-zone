@@ -4,68 +4,121 @@ struct ListingInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppStore.self) var appStore
     
+    private var user: User? { appStore.userStore.currentUser }
+    
     var body: some View {
-        ZStack(alignment: .topTrailing) {
-            Color(.systemGray6).opacity(0.3)
-                .ignoresSafeArea()
-            
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    // MARK: - Profile Header
-                    profileHeader
-                    
-                    // MARK: - Stats Bar
-                    statsBar
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
-                    
-                    // MARK: - Product Grid
-                    listingGrid
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
-                        .padding(.bottom, 30)
+        NavigationStack {
+            ZStack(alignment: .top) {
+                Color(.systemGray6).opacity(0.3)
+                    .ignoresSafeArea()
+                
+                if appStore.productStore.isLoading && appStore.productStore.myProducts.isEmpty {
+                    VStack {
+                        Spacer()
+                        ProgressView("Loading your listings...")
+                            .progressViewStyle(CircularProgressViewStyle())
+                        Spacer()
+                    }
+                } else if appStore.productStore.myProducts.isEmpty {
+                    VStack(spacing: 16) {
+                        Spacer()
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray)
+                        Text("No listings yet")
+                            .font(.headline)
+                        Text("Start listing your items to see them here!")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                    }
+                } else {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            // MARK: - Profile Header
+                            profileHeader
+                            
+                            // MARK: - Stats Bar
+                            statsBar
+                                .padding(.horizontal, 20)
+                                .padding(.top, 20)
+                            
+                            // MARK: - Product Grid
+                            listingGrid
+                                .padding(.horizontal, 20)
+                                .padding(.top, 20)
+                                .padding(.bottom, 30)
+                        }
+                    }
                 }
             }
-            .toolbar(.hidden, for: .tabBar)
-            
+            .navigationTitle("My Listings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.gray.opacity(0.5))
+                    }
+                }
+            }
+            .task {
+                await appStore.productStore.fetchMyItems()
+            }
         }
     }
     
     // MARK: - Profile Header
     private var profileHeader: some View {
         VStack(spacing: 12) {
-            Image("profile_photo")
-                .resizable()
-                .scaledToFill()
-                .frame(width: 120, height: 120)
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+            Group {
+                if let imageURL = user?.profileImage, let url = URL(string: imageURL) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image.resizable().scaledToFill()
+                        default:
+                            Image(systemName: "person.circle.fill")
+                                .resizable()
+                                .foregroundColor(.gray)
+                        }
+                    }
+                } else {
+                    Image(systemName: "person.circle.fill")
+                        .resizable()
+                        .foregroundColor(.gray)
+                }
+            }
+            .frame(width: 120, height: 120)
+            .clipShape(Circle())
+            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
             
-            Text("Payal Singh")
+            Text(user?.name ?? "Guest User")
                 .font(.system(size: 22, weight: .bold))
                 .foregroundColor(.primary)
             
-            Text("Greater Noida")
+            Text(user?.location ?? "Unknown Location")
                 .font(.system(size: 14))
                 .foregroundColor(.secondary)
         }
-        .padding(.top, 40)
+        .padding(.top, 20)
     }
     
     // MARK: - Stats Bar
     private var statsBar: some View {
         HStack(spacing: 0) {
-            statItem(count: 7, label: "RENTALS")
+            statItem(count: 0, label: "RENTALS") // Placeholder for now
             
             Divider()
                 .frame(height: 36)
             
-            statItem(count: appStore.productStore.products.count, label: "LISTINGS")
+            statItem(count: appStore.productStore.myProducts.count, label: "LISTINGS")
             
             Divider()
                 .frame(height: 36)
             
-            statItem(count: 9, label: "REVIEWS")
+            statItem(count: 0, label: "REVIEWS") // Placeholder for now
         }
         .padding(.vertical, 16)
         .background(
@@ -95,8 +148,11 @@ struct ListingInfoView: View {
         ]
         
         return LazyVGrid(columns: columns, spacing: 16) {
-            ForEach(appStore.productStore.products) { product in
-                ListingCardView(product: product)
+            ForEach(appStore.productStore.myProducts) { product in
+                NavigationLink(destination: ProductDetailView(product: product)) {
+                    ListingCardView(product: product)
+                }
+                .buttonStyle(PlainButtonStyle())
             }
         }
     }
@@ -111,12 +167,21 @@ struct ListingCardView: View {
         VStack(alignment: .leading, spacing: 6) {
             // Image with edit button
             ZStack(alignment: .topTrailing) {
-                // Show uploaded image or asset image
                 Group {
-                        Image(product.imageURLs.first ?? "")
-                            .resizable()
-                            .scaledToFill()
-
+                    if let imageURL = product.imageURLs.first, let url = URL(string: imageURL) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image.resizable().scaledToFill()
+                            default:
+                                Color.gray.opacity(0.2)
+                                    .overlay(Image(systemName: "photo").foregroundColor(.gray))
+                            }
+                        }
+                    } else {
+                        Color.gray.opacity(0.2)
+                            .overlay(Image(systemName: "photo").foregroundColor(.gray))
+                    }
                 }
                 .frame(height: 180)
                 .frame(maxWidth: .infinity)

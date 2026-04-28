@@ -7,9 +7,12 @@ const router = Router();
 
 router.get('/', productController.listProducts);
 router.get('/:id', productController.getProduct);
+router.get('/mine/all', authenticate, productController.getMyProducts);
+router.get('/mine/favorites', authenticate, productController.getFavorites);
 router.get('/:id/booked-dates', productController.getBookedDates);
 
 router.post('/', authenticate, productController.createProduct);
+router.post('/:id/favorite', authenticate, productController.toggleFavorite);
 router.patch('/:id', authenticate, productController.updateProduct);
 router.delete('/:id', authenticate, productController.deleteProduct);
 router.post('/:id/images', authenticate, upload.array('images', 10), productController.uploadImages);

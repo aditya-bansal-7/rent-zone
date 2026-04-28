@@ -3,7 +3,6 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppStore.self) var appStore
     @State private var searchText = ""
-    @State private var selectedCategory = "All Items"
     @State private var favoriteProductIds: Set<String> = []
     @State private var isLoginSheetPresented = false
     @State private var showNotifications = false
@@ -14,11 +13,13 @@ struct HomeView: View {
     }
 
     var popularProducts: [Product] {
-        allProducts.filter { $0.rating >= 4.5 }.prefix(10).map { $0 }
+        // Sort by rating descending and take top 4
+        allProducts.sorted { $0.rating > $1.rating }.prefix(4).map { $0 }
     }
 
     var recentProducts: [Product] {
-        allProducts.filter { $0.bookedDates.isEmpty }.prefix(10).map { $0 }
+        // Array is already sorted by createdAt desc from backend
+        allProducts.prefix(4).map { $0 }
     }
 
     var filteredProducts: [Product] {
@@ -56,7 +57,6 @@ struct HomeView: View {
                                 ProductGridView(products: filteredProducts, favoriteProductIds: $favoriteProductIds)
                             }
                         } else {
-                            CategoryChipsView(selectedCategory: $selectedCategory)
 
                             if appStore.productStore.isLoading {
                                 VStack(spacing: 16) {
@@ -123,6 +123,19 @@ struct HomeView: View {
             .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showNotifications)
             .navigationDestination(for: Product.self) { product in
                 ProductDetailView(product: product)
+            }
+            .task {
+                if let favorites = appStore.userStore.currentUser?.favouriteProducts {
+                    favoriteProductIds = Set(favorites)
+                }
+                if allProducts.isEmpty {
+                    await appStore.productStore.fetchItems()
+                }
+            }
+            .onChange(of: appStore.userStore.currentUser?.favouriteProducts) { _, newValue in
+                if let newValue {
+                    favoriteProductIds = Set(newValue)
+                }
             }
         }
     }
