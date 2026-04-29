@@ -8,6 +8,7 @@ router.use(authenticate);
 
 router.post('/', rentalController.requestRental);
 router.get('/me', rentalController.getMyRentals);
+router.get('/mine', rentalController.getMyRentals);
 router.get('/:id', rentalController.getRental);
 router.patch('/:id/status', rentalController.updateStatus);
 
