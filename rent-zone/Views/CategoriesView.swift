@@ -51,21 +51,12 @@ struct CategorySectionView: View {
     var body: some View {
         VStack(spacing: 20) {
             // Section Header
-            HStack {
-                Text(title)
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundColor(.black)
-                
-                Spacer()
-                
-                NavigationLink(destination: ProductListView(title: title)) {
-                    Text("View All")
-                        .font(.footnote)
-                        .foregroundColor(.gray)
-                }
-            }
-            .padding(.horizontal, 16)
+            Text(title)
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
             
             // Grid
             LazyVGrid(columns: columns, spacing: 24) {
