@@ -26,8 +26,8 @@ struct ChatListView: View {
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
-                            withAnimation {
-                                chatService.conversations.removeAll(where: { $0.id == conversation.id })
+                            Task {
+                                await chatService.deleteConversation(conversation.id)
                             }
                         } label: {
                             Label("Delete", systemImage: "trash")

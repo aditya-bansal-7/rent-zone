@@ -44,3 +44,13 @@ export const sendMessage = async (req: Request, res: Response) => {
     sendError(res, err.message, code);
   }
 };
+
+export const deleteConversation = async (req: Request, res: Response) => {
+  try {
+    await chatService.deleteConversation(req.params.id, req.user!.userId);
+    sendSuccess(res, null, 200, 'Conversation deleted');
+  } catch (err: any) {
+    const code = err.message === 'Not a participant in this conversation' ? 403 : 400;
+    sendError(res, err.message, code);
+  }
+};

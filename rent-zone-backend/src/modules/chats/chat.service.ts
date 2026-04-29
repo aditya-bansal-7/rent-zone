@@ -68,3 +68,21 @@ export const sendMessage = async (
 
   return message;
 };
+
+export const deleteConversation = async (
+  conversationId: string,
+  userId: string
+) => {
+  // Verify the user is a participant
+  const participant = await prisma.chatParticipant.findFirst({
+    where: { conversationId, userId },
+  });
+  if (!participant) throw new Error('Not a participant in this conversation');
+
+  // Cascade delete: messages → participants → conversation
+  await prisma.$transaction([
+    prisma.chatMessage.deleteMany({ where: { conversationId } }),
+    prisma.chatParticipant.deleteMany({ where: { conversationId } }),
+    prisma.chatConversation.delete({ where: { id: conversationId } }),
+  ]);
+};
