@@ -59,7 +59,7 @@ struct CategorySectionView: View {
                 
                 Spacer()
                 
-                NavigationLink(destination: CategoryDetailView(categoryTitle: title)) {
+                NavigationLink(destination: ProductListView(title: title)) {
                     Text("View All")
                         .font(.footnote)
                         .foregroundColor(.gray)
@@ -70,7 +70,7 @@ struct CategorySectionView: View {
             // Grid
             LazyVGrid(columns: columns, spacing: 24) {
                 ForEach(categories) { category in
-                    NavigationLink(destination: CategoryDetailView(categoryTitle: category.name)) {
+                    NavigationLink(destination: ProductListView(title: category.name, categoryId: category.id)) {
                         CategoryItemView(category: category)
                     }
                 }

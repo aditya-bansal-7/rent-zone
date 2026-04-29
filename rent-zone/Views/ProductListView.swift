@@ -1,20 +1,17 @@
-//
-//  CategoryDetailView.swift
-//  rentZoneDemo
-//
-
 import SwiftUI
 
-struct CategoryDetailView: View {
+struct ProductListView: View {
     @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) private var dismiss
     
-    let categoryTitle: String
+    let title: String
+    var categoryId: String? = nil
+    @State var searchText: String = ""
+    var initialProducts: [Product]? = nil
     
     @State private var showSortSheet = false
     @State private var showFilterSheet = false
     @State private var showSearchBar = false
-    @State private var searchText = ""
     
     // Sort & Filter State
     @State private var selectedSort: SortOption? = nil
@@ -29,18 +26,65 @@ struct CategoryDetailView: View {
         GridItem(.flexible(), spacing: 20)
     ]
     
+    var baseProducts: [Product] {
+        if let initialProducts = initialProducts {
+            return initialProducts
+        } else if let categoryId = categoryId {
+            return appStore.productStore.products.filter { $0.categoryId == categoryId }
+        } else {
+            return appStore.productStore.products
+        }
+    }
+    
     var filteredProducts: [Product] {
-        var result = appStore.productStore.sortedAndFiltered(
-            sortOption: selectedSort,
-            priceRange: priceRange,
-            selectedSizes: selectedSizes,
-            selectedOccasions: selectedOccasions,
-            selectedDate: selectedDate
-        )
+        var result = baseProducts
         
+        // Filter by price range
+        result = result.filter { priceRange.contains($0.rentPricePerDay) }
+        
+        // Filter by size
+        if !selectedSizes.isEmpty {
+            result = result.filter { product in
+                selectedSizes.contains(where: { $0.rawValue == product.size })
+            }
+        }
+        
+        // Filter by occasion
+        if !selectedOccasions.isEmpty {
+            result = result.filter { product in
+                guard let occasion = product.occasion else { return false }
+                return selectedOccasions.contains(where: { $0.rawValue == occasion })
+            }
+        }
+        
+        // Filter by date availability
+        if let date = selectedDate {
+            result = result.filter { product in
+                !product.bookedDates.contains(where: {
+                    Calendar.current.isDate($0, inSameDayAs: date)
+                })
+            }
+        }
+        
+        // Apply search text
         if !searchText.isEmpty {
             result = result.filter {
-                $0.name.localizedCaseInsensitiveContains(searchText)
+                $0.name.localizedCaseInsensitiveContains(searchText) ||
+                $0.pickupLocation.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        // Apply Sort
+        if let sortOption = selectedSort {
+            switch sortOption {
+            case .priceLowToHigh:
+                result.sort { $0.rentPricePerDay < $1.rentPricePerDay }
+            case .priceHighToLow:
+                result.sort { $0.rentPricePerDay > $1.rentPricePerDay }
+            case .ratingHighToLow:
+                result.sort { $0.rating > $1.rating }
+            case .newest:
+                break 
             }
         }
         
@@ -69,17 +113,32 @@ struct CategoryDetailView: View {
             
             // MARK: - Product Grid
             ScrollView(showsIndicators: false) {
-                LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(filteredProducts) { product in
-                        ProductCardView(
-                            product: product,
-                            favoriteProductIds: $favoriteProductIds
-                        )
+                if filteredProducts.isEmpty {
+                    VStack(spacing: 20) {
+                        Image(systemName: "tshirt")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray.opacity(0.3))
+                        Text("No outfits found")
+                            .font(.headline)
+                        Text("Try adjusting your filters or search terms")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
                     }
+                    .padding(.top, 100)
+                    .frame(maxWidth: .infinity)
+                } else {
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        ForEach(filteredProducts) { product in
+                            ProductCardView(
+                                product: product,
+                                favoriteProductIds: $favoriteProductIds
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, 30)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 30)
             }
         }
         .background(Color.white)
@@ -87,7 +146,7 @@ struct CategoryDetailView: View {
         .toolbar(.hidden, for: .tabBar)
         .overlay {
             if showSortSheet {
-                Color.black.opacity(0.01)
+                Color.black.opacity(0.15)
                     .ignoresSafeArea()
                     .onTapGesture { showSortSheet = false }
                 
@@ -119,6 +178,14 @@ struct CategoryDetailView: View {
                 totalResults: filteredProducts.count
             )
         }
+        .task {
+            if let favorites = appStore.userStore.currentUser?.favouriteProducts {
+                favoriteProductIds = Set(favorites)
+            }
+            if !searchText.isEmpty {
+                showSearchBar = true
+            }
+        }
     }
     
     private var navBar: some View {
@@ -133,9 +200,10 @@ struct CategoryDetailView: View {
             
             Spacer()
             
-            Text(categoryTitle)
+            Text(title)
                 .font(.title3.weight(.bold))
                 .foregroundColor(.black)
+                .lineLimit(1)
             
             Spacer()
             
@@ -183,7 +251,11 @@ struct CategoryDetailView: View {
             Spacer()
             
             // Sort Button
-            Button(action: { showSortSheet = true }) {
+            Button(action: { 
+                withAnimation(.easeIn(duration: 0.2)) {
+                    showSortSheet = true 
+                }
+            }) {
                 HStack(spacing: 8) {
                     Image(systemName: "line.3.horizontal.decrease")
                         .font(.body.weight(.medium))
@@ -226,13 +298,5 @@ struct CategoryDetailView: View {
         }
         .padding(.vertical, 8)
         .background(Color.white)
-    }
-    
-}
-
-#Preview {
-    NavigationStack {
-        CategoryDetailView(categoryTitle: "Dandiya Dresses")
-            .environment(AppStore())
     }
 }

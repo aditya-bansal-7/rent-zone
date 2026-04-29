@@ -12,6 +12,31 @@ export const createRental = async (
   if (!product) throw new Error('Product not found');
   if (product.listedByUserId === rentedByUserId) throw new Error('Cannot rent your own product');
 
+  // Check for overlapping rentals
+  const overlappingRental = await prisma.rental.findFirst({
+    where: {
+      productId,
+      status: { in: ['approved', 'active'] },
+      OR: [
+        { startDate: { lte: endDate }, endDate: { gte: startDate } }
+      ]
+    }
+  });
+
+  if (overlappingRental) {
+    throw new Error('This product is already booked for the selected dates');
+  }
+
+  // Check if any of the dates are in product.bookedDates
+  const bookedDates = product.bookedDates.map(d => d.toISOString().split('T')[0]);
+  let current = new Date(startDate);
+  while (current <= endDate) {
+    if (bookedDates.includes(current.toISOString().split('T')[0])) {
+      throw new Error('One or more selected dates are already booked');
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
   const rental = await prisma.rental.create({
     data: {
       productId,
@@ -88,5 +113,32 @@ export const updateRentalStatus = async (id: string, userId: string, status: Ren
     if (!isOwner) throw new Error('Only the owner can mark as returned');
   }
 
-  return prisma.rental.update({ where: { id }, data: { status } });
+  const updatedRental = await prisma.rental.update({ 
+    where: { id }, 
+    data: { status },
+    include: { product: true }
+  });
+
+  // If approved, update product bookedDates
+  if (status === 'approved') {
+    const start = new Date(updatedRental.startDate);
+    const end = new Date(updatedRental.endDate);
+    const newDates: Date[] = [];
+    let current = new Date(start);
+    while (current <= end) {
+      newDates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+
+    await prisma.product.update({
+      where: { id: updatedRental.productId },
+      data: {
+        bookedDates: {
+          push: newDates
+        }
+      }
+    });
+  }
+
+  return updatedRental;
 };
