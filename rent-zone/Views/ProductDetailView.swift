@@ -20,6 +20,7 @@ struct ProductDetailView: View {
     @State private var didInitReviews = false
 
     @State private var showVirtualTryOn = false
+    @State private var showSellerProfile = false
 
 
     var body: some View {
@@ -346,51 +347,54 @@ struct ProductDetailView: View {
                 .padding(.top, 10)
 
                 // Seller Card
-                HStack(spacing: 14) {
-                    if let profileImg = product.listedBy?.profileImage, let url = URL(string: profileImg) {
-                        AsyncImage(url: url) { phase in
-                            if case .success(let image) = phase {
-                                image.resizable().scaledToFill()
-                            } else {
-                                Image(systemName: "person.crop.circle.fill")
-                                    .resizable()
-                                    .foregroundStyle(.gray.opacity(0.5))
+                Button(action: { showSellerProfile = true }) {
+                    HStack(spacing: 14) {
+                        if let profileImg = product.listedBy?.profileImage, let url = URL(string: profileImg) {
+                            AsyncImage(url: url) { phase in
+                                if case .success(let image) = phase {
+                                    image.resizable().scaledToFill()
+                                } else {
+                                    Image(systemName: "person.crop.circle.fill")
+                                        .resizable()
+                                        .foregroundStyle(.gray.opacity(0.5))
+                                }
                             }
-                        }
-                        .frame(width: 48, height: 48)
-                        .clipShape(Circle())
-                    } else {
-                        Image(systemName: "person.crop.circle.fill")
-                            .resizable()
                             .frame(width: 48, height: 48)
-                            .foregroundColor(.gray.opacity(0.5))
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 6) {
-                            Text(product.listedBy?.name ?? "Owner")
-                                .font(.system(size: 16, weight: .bold))
-                            if product.listedBy?.isVerified == true {
-                                Image(systemName: "checkmark.seal.fill")
-                                    .foregroundColor(.blue)
-                                    .font(.system(size: 14))
-                            }
+                            .clipShape(Circle())
+                        } else {
+                            Image(systemName: "person.crop.circle.fill")
+                                .resizable()
+                                .frame(width: 48, height: 48)
+                                .foregroundColor(.gray.opacity(0.5))
                         }
-                        Text(product.listedBy?.location ?? "India")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.gray)
-                    }
 
-                    Spacer()
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 6) {
+                                Text(product.listedBy?.name ?? "Owner")
+                                    .font(.system(size: 16, weight: .bold))
+                                if product.listedBy?.isVerified == true {
+                                    Image(systemName: "checkmark.seal.fill")
+                                        .foregroundColor(.blue)
+                                        .font(.system(size: 14))
+                                }
+                            }
+                            Text(product.listedBy?.location ?? "India")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.gray)
+                        }
 
-                    HStack(spacing: 4) {
-                        Text(product.rating.formatted(.number.precision(.fractionLength(1))))
-                            .font(.system(size: 14, weight: .bold))
-                        Image(systemName: "star.fill")
-                            .foregroundColor(.yellow)
-                            .font(.system(size: 12))
+                        Spacer()
+
+                        HStack(spacing: 4) {
+                            Text(product.rating.formatted(.number.precision(.fractionLength(1))))
+                                .font(.system(size: 14, weight: .bold))
+                            Image(systemName: "star.fill")
+                                .foregroundColor(.yellow)
+                                .font(.system(size: 12))
+                        }
                     }
                 }
+                .buttonStyle(.plain)
                 .cardStyle()
                 .padding(.top, 10)
 
@@ -518,6 +522,34 @@ struct ProductDetailView: View {
         }
         .fullScreenCover(isPresented: $showVirtualTryOn) {
             VirtualTryOnView(product: product)
+        }
+        .sheet(isPresented: $showSellerProfile) {
+            if let listedBy = product.listedBy {
+                NavigationStack {
+                    OtherUserProfileView(
+                        user: User(
+                            id: listedBy.id,
+                            name: listedBy.name,
+                            location: listedBy.location ?? "India",
+                            isVerified: listedBy.isVerified ?? false,
+                            profileImage: listedBy.profileImage
+                        ),
+                        userId: listedBy.id
+                    )
+                    .environment(appStore)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button(action: { showSellerProfile = false }) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                    .frame(width: 30, height: 30)
+                                    .background(.ultraThinMaterial, in: Circle())
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

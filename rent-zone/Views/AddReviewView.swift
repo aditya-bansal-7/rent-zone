@@ -64,7 +64,7 @@ struct AddReviewView: View {
 
                         Text(ratingLabel)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(rating > 0 ? ratingColor : .gray)
+                            .foregroundColor(rating > 0 ? .yellow : .gray)
                             .animation(.easeInOut(duration: 0.2), value: rating)
 
                         HStack(spacing: 16) {
@@ -76,7 +76,7 @@ struct AddReviewView: View {
                                 }) {
                                     Image(systemName: star <= rating ? "star.fill" : "star")
                                         .font(.system(size: 36))
-                                        .foregroundColor(star <= rating ? ratingColor : Color(.systemGray3))
+                                        .foregroundColor(star <= rating ? .yellow : Color(.systemGray3))
                                         .scaleEffect(star <= rating ? 1.1 : 0.95)
                                         .animation(.spring(response: 0.3, dampingFraction: 0.5), value: rating)
                                 }
@@ -233,12 +233,8 @@ struct AddReviewView: View {
                                 }
                                 .foregroundColor(.white)
                             } else {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "paperplane.fill")
-                                        .font(.system(size: 16))
-                                    Text("Submit Review")
-                                        .font(.system(size: 16, weight: .bold))
-                                }
+                                Text("Submit Review")
+                                    .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.white)
                             }
                         }
@@ -291,11 +287,11 @@ struct AddReviewView: View {
 
     private var ratingLabel: String {
         switch rating {
-        case 1: return "😞 Poor"
-        case 2: return "😐 Fair"
-        case 3: return "🙂 Good"
-        case 4: return "😊 Very Good"
-        case 5: return "🤩 Excellent!"
+        case 1: return "Poor"
+        case 2: return "Fair"
+        case 3: return "Good"
+        case 4: return "Very Good"
+        case 5: return "Excellent"
         default: return "Tap a star to rate"
         }
     }

@@ -169,4 +169,17 @@ class ChatService: ObservableObject {
             print("Encoding error: \(error)")
         }
     }
+    
+    func deleteConversation(_ conversationId: String) async {
+        do {
+            let _: EmptyResponse = try await APIClient.shared.request(
+                endpoint: "/chats/\(conversationId)",
+                method: "DELETE",
+                authenticated: true
+            )
+            conversations.removeAll(where: { $0.id == conversationId })
+        } catch {
+            print("Error deleting conversation: \(error)")
+        }
+    }
 }
