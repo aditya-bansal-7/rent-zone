@@ -43,6 +43,7 @@ export const getMyProducts = async (req: Request, res: Response) => {
     const result = await productService.getProducts({
       listedByUserId: req.user!.userId,
       limit: 100,
+      
     });
     sendSuccess(res, result.products);
   } catch (err: any) {

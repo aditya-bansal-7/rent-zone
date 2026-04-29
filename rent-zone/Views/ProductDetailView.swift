@@ -488,10 +488,21 @@ struct ProductDetailView: View {
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
-        .onAppear {
+        .task {
             if !didInitReviews {
-                localReviews = product.reviews
-                didInitReviews = true
+                do {
+                    let fetchedProduct = try await ProductService.shared.getProduct(id: product.id)
+                    await MainActor.run {
+                        self.localReviews = fetchedProduct.reviews
+                        self.didInitReviews = true
+                    }
+                } catch {
+                    print("Failed to load product details: \(error)")
+                    await MainActor.run {
+                        self.localReviews = product.reviews
+                        self.didInitReviews = true
+                    }
+                }
             }
         }
         .sheet(isPresented: $showAddReview) {
@@ -530,9 +541,9 @@ struct ProductDetailView: View {
         if let start = startDate, let end = endDate {
             let days = Int(end.timeIntervalSince(start) / 86400) + 1
             let total = Int(product.rentPricePerDay) * days + Int(product.securityDeposit)
-            return "Request to Rent • ₹\(total)"
+            return "Request to Rent"
         }
-        return startDate == nil ? "Select Dates" : "Select End Date"
+        return "Request to Rent"
     }
 
     // MARK: - Actions
