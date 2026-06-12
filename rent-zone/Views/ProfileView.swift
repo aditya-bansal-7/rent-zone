@@ -77,12 +77,7 @@ struct ProfileView: View {
                         .clipShape(Circle())
                         .shadow(color: .black.opacity(0.12), radius: 10, x: 0, y: 5)
 
-                        // Verified badge
-                        if user?.isVerified == true {
-                            Label("Verified", systemImage: "checkmark.seal.fill")
-                                .font(.caption)
-                                .foregroundStyle(.green)
-                        }
+                       
 
                         // Name
                         Text(user?.name ?? "Guest")

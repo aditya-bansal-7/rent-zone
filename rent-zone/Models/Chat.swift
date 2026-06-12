@@ -18,6 +18,7 @@ struct ChatMessage: Codable, Identifiable, Hashable {
     let content: String
     let isFromCurrentUser: Bool
     let timestamp: String
+    var productContext: ChatProductContext?
 }
 
 struct ChatProductContext: Codable, Hashable {

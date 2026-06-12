@@ -65,7 +65,6 @@ export const createRental = async (
       productName: product.name,
       productImageName: product.imageURLs[0] ?? '',
       requesterName: rental.rentedBy.name,
-      requesterProfileImage: rental.rentedBy.profileImage ?? '',
     },
   });
 

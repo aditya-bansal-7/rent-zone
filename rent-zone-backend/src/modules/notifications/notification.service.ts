@@ -64,7 +64,6 @@ export const respondToRequest = async (notificationId: string, userId: string, a
           productImageName: product?.imageURLs[0],
           fromUserId: userId,
           requesterName: owner?.name ?? 'Owner',
-          requesterProfileImage: owner?.profileImage ?? '',
           rentalDate: notif.rentalDate,
           totalPrice: notif.totalPrice,
         }
