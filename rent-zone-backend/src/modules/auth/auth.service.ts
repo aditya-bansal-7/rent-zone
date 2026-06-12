@@ -176,10 +176,10 @@ export const updateProfile = async (
   data: {
     name?: string;
     location?: string;
-    university?: string;
-    phoneNumber?: string;
-    profileImage?: string;
-    preferredCategory?: CategoryType;
+    university?: string | null;
+    phoneNumber?: string | null;
+    profileImage?: string | null;
+    preferredCategory?: CategoryType | null;
   }
 ) => {
   return prisma.user.update({

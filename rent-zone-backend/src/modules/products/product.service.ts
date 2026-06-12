@@ -56,8 +56,8 @@ export const getProducts = async (filters: ProductFilters = {}) => {
   return { products, total, page, limit, totalPages: Math.ceil(total / limit) };
 };
 
-export const getProductById = (id: string) =>
-  prisma.product.findUnique({
+export const getProductById = async (id: string) => {
+  const product = await prisma.product.findUnique({
     where: { id },
     include: {
       category: true,
@@ -66,8 +66,31 @@ export const getProductById = (id: string) =>
         include: { user: { select: { id: true, name: true, profileImage: true } } },
         orderBy: { createdAt: 'desc' },
       },
+      rentals: {
+        where: { status: { in: ['approved', 'active'] } },
+        select: { startDate: true, endDate: true }
+      }
     },
   });
+
+  if (!product) return null;
+
+  const dynamicBookedDates = new Set(product.bookedDates.map(d => d.toISOString().split('T')[0]));
+  
+  product.rentals.forEach(rental => {
+    let current = new Date(rental.startDate);
+    const end = new Date(rental.endDate);
+    while (current <= end) {
+      dynamicBookedDates.add(current.toISOString().split('T')[0]);
+      current.setDate(current.getDate() + 1);
+    }
+  });
+
+  const allBookedDates = Array.from(dynamicBookedDates).map(d => new Date(d));
+  
+  const { rentals, ...productWithoutRentals } = product;
+  return { ...productWithoutRentals, bookedDates: allBookedDates };
+};
 
 export const createProduct = (userId: string, data: Omit<Prisma.ProductCreateInput, 'listedBy'>) =>
   prisma.product.create({

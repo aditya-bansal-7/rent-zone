@@ -115,7 +115,8 @@ struct ProductDTO: Decodable, Identifiable {
 
         let parsedBookedDates: [Date] = (bookedDates ?? []).compactMap { dateStr in
             let formatter = ISO8601DateFormatter()
-            return formatter.date(from: dateStr)
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            return formatter.date(from: dateStr) ?? ISO8601DateFormatter().date(from: dateStr)
         }
 
         return Product(
@@ -192,6 +193,9 @@ struct RentalDTO: Decodable, Identifiable {
 
     func toRental() -> Rental {
         let fmt = ISO8601DateFormatter()
+        fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let fallbackFmt = ISO8601DateFormatter()
+        
         let statusEnum: RentalStatus = {
             switch status {
             case "requested": return .requested
@@ -207,8 +211,8 @@ struct RentalDTO: Decodable, Identifiable {
             productId: productId,
             rentedByUserId: rentedByUserId,
             rentedFromUserId: rentedFromUserId,
-            startDate: fmt.date(from: startDate) ?? Date(),
-            endDate: fmt.date(from: endDate) ?? Date(),
+            startDate: fmt.date(from: startDate) ?? fallbackFmt.date(from: startDate) ?? Date(),
+            endDate: fmt.date(from: endDate) ?? fallbackFmt.date(from: endDate) ?? Date(),
             totalPrice: totalPrice,
             status: statusEnum
         )
@@ -244,19 +248,22 @@ struct NotificationDTO: Decodable, Identifiable {
             }
         }()
         let fmt = ISO8601DateFormatter()
+        fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let fallbackFmt = ISO8601DateFormatter()
+        
         return AppNotification(
             id: id,
             userId: userId,
             title: title,
             content: content,
             icon: icon,
-            createdAt: createdAt.flatMap { fmt.date(from: $0) } ?? Date(),
+            createdAt: createdAt.flatMap { fmt.date(from: $0) ?? fallbackFmt.date(from: $0) } ?? Date(),
             isRead: isRead,
             type: typeEnum,
             status: statusEnum,
             productId: productId,
             fromUserId: fromUserId,
-            rentalDate: rentalDate.flatMap { fmt.date(from: $0) },
+            rentalDate: rentalDate.flatMap { fmt.date(from: $0) ?? fallbackFmt.date(from: $0) },
             totalPrice: totalPrice,
             productImageName: productImageName,
             productName: productName,
@@ -287,7 +294,10 @@ struct ChatConversationDTO: Decodable, Identifiable {
         let latestMsg = messages?.last
         
         let fmt = ISO8601DateFormatter()
-        let date = updatedAt.flatMap { fmt.date(from: $0) } ?? Date()
+        fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let fallbackFmt = ISO8601DateFormatter()
+        
+        let date = updatedAt.flatMap { fmt.date(from: $0) ?? fallbackFmt.date(from: $0) } ?? Date()
         let displayFormatter = DateFormatter()
         displayFormatter.dateFormat = "h:mm a"
         let timeString = displayFormatter.string(from: date)
@@ -321,7 +331,10 @@ struct ChatMessageDTO: Decodable, Identifiable {
     
     func toChatMessage(currentUserId: String) -> ChatMessage {
         let fmt = ISO8601DateFormatter()
-        let date = createdAt.flatMap { fmt.date(from: $0) } ?? Date()
+        fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let fallbackFmt = ISO8601DateFormatter()
+        
+        let date = createdAt.flatMap { fmt.date(from: $0) ?? fallbackFmt.date(from: $0) } ?? Date()
         let displayFormatter = DateFormatter()
         displayFormatter.dateFormat = "h:mm a"
         let timeString = displayFormatter.string(from: date)

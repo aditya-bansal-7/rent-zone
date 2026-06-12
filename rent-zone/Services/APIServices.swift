@@ -151,7 +151,8 @@ class ProductService {
     func getBookedDates(productId: String) async throws -> [Date] {
         let dateStrings: [String] = try await APIClient.shared.request(endpoint: "/products/\(productId)/booked-dates")
         let formatter = ISO8601DateFormatter()
-        return dateStrings.compactMap { formatter.date(from: $0) }
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return dateStrings.compactMap { formatter.date(from: $0) ?? ISO8601DateFormatter().date(from: $0) }
     }
 
     func toggleFavorite(productId: String) async throws -> (isFavorited: Bool, favoriteIds: [String]) {

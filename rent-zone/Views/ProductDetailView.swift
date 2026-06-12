@@ -17,6 +17,7 @@ struct ProductDetailView: View {
 
     @State private var showAddReview = false
     @State private var localReviews: [Review] = []
+    @State private var localBookedDates: [Date] = []
     @State private var didInitReviews = false
 
     @State private var showVirtualTryOn = false
@@ -63,6 +64,7 @@ struct ProductDetailView: View {
                     .scrollTargetBehavior(.viewAligned)
                     .frame(height: 450)
 
+                    // Navigation bar overlaying image
                     HStack(alignment: .top) {
                         Button(action: { dismiss() }) {
                             Image(systemName: "chevron.left")
@@ -77,7 +79,7 @@ struct ProductDetailView: View {
 
                         if showMenu {
                             HStack(spacing: 24) {
-                                Button(action: { isFavorite.toggle() }) {
+                                Button(action: { handleFavoriteToggle() }) {
                                     VStack(spacing: 4) {
                                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                                             .font(.system(size: 22, weight: .medium))
@@ -259,7 +261,7 @@ struct ProductDetailView: View {
                             startDate: $startDate,
                             endDate: $endDate,
                             displayedMonth: $calendarDisplayedMonth,
-                            bookedDates: product.bookedDates
+                            bookedDates: displayBookedDates
                         )
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     } else {
@@ -271,7 +273,7 @@ struct ProductDetailView: View {
                                     let day = Calendar.current.component(.day, from: date)
                                     let monthStr = date.formatted(.dateTime.month(.abbreviated)).uppercased()
                                     
-                                    let isBooked = product.bookedDates.contains { Calendar.current.isDate($0, inSameDayAs: date) }
+                                    let isBooked = displayBookedDates.contains { Calendar.current.isDate($0, inSameDayAs: date) }
                                     let isSelected = (startDate != nil && Calendar.current.isDate(startDate!, inSameDayAs: date)) || (endDate != nil && Calendar.current.isDate(endDate!, inSameDayAs: date))
                                     let inRange = startDate != nil && endDate != nil && date > startDate! && date < endDate!
                                     
@@ -493,17 +495,24 @@ struct ProductDetailView: View {
         .toolbar(.hidden, for: .tabBar)
         .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
         .task {
+            // Initialize favourite state from user's actual favourites
+            if let favorites = appStore.userStore.currentUser?.favouriteProducts {
+                isFavorite = favorites.contains(product.id)
+            }
+            
             if !didInitReviews {
                 do {
                     let fetchedProduct = try await ProductService.shared.getProduct(id: product.id)
                     await MainActor.run {
                         self.localReviews = fetchedProduct.reviews
+                        self.localBookedDates = fetchedProduct.bookedDates
                         self.didInitReviews = true
                     }
                 } catch {
                     print("Failed to load product details: \(error)")
                     await MainActor.run {
                         self.localReviews = product.reviews
+                        self.localBookedDates = product.bookedDates
                         self.didInitReviews = true
                     }
                 }
@@ -569,6 +578,10 @@ struct ProductDetailView: View {
         didInitReviews ? localReviews : product.reviews
     }
 
+    private var displayBookedDates: [Date] {
+        didInitReviews ? localBookedDates : product.bookedDates
+    }
+
     private var rentButtonText: String {
         if let start = startDate, let end = endDate {
             let days = Int(end.timeIntervalSince(start) / 86400) + 1
@@ -579,6 +592,22 @@ struct ProductDetailView: View {
     }
 
     // MARK: - Actions
+
+    private func handleFavoriteToggle() {
+        isFavorite.toggle()
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+            showMenu = false
+        }
+        Task {
+            await appStore.productStore.toggleFavorite(productId: product.id, userStore: appStore.userStore)
+            // Sync local state with the store
+            await MainActor.run {
+                if let favorites = appStore.userStore.currentUser?.favouriteProducts {
+                    isFavorite = favorites.contains(product.id)
+                }
+            }
+        }
+    }
 
     private func shareProduct() {
         let shareText = "Check out \(product.name) on RentZone! ₹\(Int(product.rentPricePerDay))/day"
@@ -617,7 +646,7 @@ struct ProductDetailView: View {
                 endDate = date
             } else {
                 // Check if any booked dates are in between
-                let hasBookedInRange = product.bookedDates.contains { bookedDate in
+                let hasBookedInRange = displayBookedDates.contains { bookedDate in
                     bookedDate > start && bookedDate < date
                 }
                 if !hasBookedInRange {

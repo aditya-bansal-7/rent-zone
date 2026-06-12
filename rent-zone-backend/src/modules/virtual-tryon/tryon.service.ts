@@ -1,6 +1,9 @@
 import prisma from '../../config/db';
 import { uploadToCloudinary } from '../../utils/cloudinary.utils';
-
+/**
+ * Creates a virtual try-on record by uploading the user's image directly.
+ * (Legacy: stores the raw uploaded image as the result)
+ */
 export const createTryOn = async (userId: string, productId: string, buffer: Buffer) => {
   const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) throw new Error('Product not found');
