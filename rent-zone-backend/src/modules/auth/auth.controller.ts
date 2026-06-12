@@ -104,7 +104,13 @@ export const getMe = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const data = updateProfileSchema.parse(req.body);
-    const user = await authService.updateProfile(req.user!.userId, data);
+    const user = await authService.updateProfile(req.user!.userId, {
+  ...data,
+  university: data.university ?? undefined,
+  phoneNumber: data.phoneNumber ?? undefined,
+  preferredCategory: data.preferredCategory ?? undefined,
+  profileImage: data.profileImage ?? undefined,
+});
     sendSuccess(res, user, 200, 'Profile updated successfully');
   } catch (err: any) {
     sendError(res, err.message);
