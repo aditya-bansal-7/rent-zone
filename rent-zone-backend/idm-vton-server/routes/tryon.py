@@ -10,7 +10,7 @@ from flask import Blueprint, jsonify, request
 from config import Config
 from models.schemas import error_response, tryon_response
 from services.idm_vton_service import get_service
-from utils.image_utils import cleanup_file, save_upload, validate_image_file
+from server_utils.image_utils import cleanup_file, save_upload, validate_image_file
 
 logger = logging.getLogger(__name__)
 

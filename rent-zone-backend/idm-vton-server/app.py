@@ -34,8 +34,8 @@ from flask_cors import CORS
 
 from config import Config
 from routes import register_routes
-from utils.error_handlers import register_error_handlers
-from utils.logging_config import setup_logging
+from server_utils.error_handlers import register_error_handlers
+from server_utils.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
 

@@ -19,7 +19,7 @@ from torchvision import transforms
 from torchvision.transforms.functional import to_pil_image
 
 from config import Config
-from utils.logging_config import log_duration
+from server_utils.logging_config import log_duration
 
 logger = logging.getLogger(__name__)
 
@@ -314,7 +314,7 @@ class IDMVTONService:
             mask, mask_gray = get_mask_location("hd", "upper_body", model_parse, keypoints)
             mask = mask.resize((W, H))
         else:
-            from utils.image_utils import pil_to_binary_mask
+            from server_utils.image_utils import pil_to_binary_mask
             mask = pil_to_binary_mask(human_img)
 
         mask_gray = (1 - transforms.ToTensor()(mask)) * self.tensor_transform(human_img)
