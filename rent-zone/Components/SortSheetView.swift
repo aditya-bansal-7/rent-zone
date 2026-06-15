@@ -25,7 +25,13 @@ struct SortSheetView: View {
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(SortOption.allCases, id: \.self) { option in
                     Button(action: {
-                        tempSort = option
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            if tempSort == option {
+                                tempSort = nil
+                            } else {
+                                tempSort = option
+                            }
+                        }
                     }) {
                         HStack {
                             Text(option.rawValue)

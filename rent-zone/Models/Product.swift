@@ -5,6 +5,15 @@ enum ProductCondition: String, Hashable, CaseIterable {
     case likeNew
     case good
     case worn
+
+    var displayName: String {
+        switch self {
+        case .new: return "New"
+        case .likeNew: return "Like New"
+        case .good: return "Good"
+        case .worn: return "Worn"
+        }
+    }
 }
 
 enum DescriptionTypes: String, Hashable, CaseIterable {
@@ -36,6 +45,7 @@ struct Product: Identifiable, Hashable {
     var reviews: [Review] = []
     var rating: Double = 0.0
     var occasion: String? = nil
+    var createdAt: Date? = nil
 }
 
 struct Category: Identifiable, Hashable {

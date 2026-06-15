@@ -118,6 +118,16 @@ struct ProductDTO: Decodable, Identifiable {
             return formatter.date(from: dateStr)
         }
 
+        let parsedCreatedAt: Date? = createdAt.flatMap { dateStr in
+            let formatter = ISO8601DateFormatter()
+            if let date = formatter.date(from: dateStr) {
+                return date
+            }
+            let fracFormatter = ISO8601DateFormatter()
+            fracFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            return fracFormatter.date(from: dateStr)
+        }
+
         return Product(
             id: id,
             name: name,
@@ -134,7 +144,8 @@ struct ProductDTO: Decodable, Identifiable {
             imageURLs: imageURLs,
             reviews: (reviews ?? []).map { $0.toReview() },
             rating: rating,
-            occasion: occasion
+            occasion: occasion,
+            createdAt: parsedCreatedAt
         )
     }
 }

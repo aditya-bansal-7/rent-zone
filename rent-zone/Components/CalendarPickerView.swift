@@ -52,6 +52,24 @@ struct CalendarPickerView: View {
         date < calendar.startOfDay(for: Date())
     }
 
+    private func hasBookedDate(from start: Date, to end: Date) -> Bool {
+        let startDay = calendar.startOfDay(for: start)
+        let endDay = calendar.startOfDay(for: end)
+        
+        let minDate = min(startDay, endDay)
+        let maxDate = max(startDay, endDay)
+        
+        var current = minDate
+        while current <= maxDate {
+            if isBooked(current) {
+                return true
+            }
+            guard let next = calendar.date(byAdding: .day, value: 1, to: current) else { break }
+            current = next
+        }
+        return false
+    }
+
     private func handleDateSelection(_ date: Date) {
         if isBooked(date) || isPast(date) { return }
         
@@ -66,15 +84,10 @@ struct CalendarPickerView: View {
                 // Allow 1-day rental
                 endDate = date
             } else {
-                // Check if any booked dates are in between
-                let hasBookedInRange = bookedDates.contains { bookedDate in
-                    bookedDate > start && bookedDate < date
-                }
+                // Check if any booked dates are in between (inclusive)
+                let hasBookedInRange = hasBookedDate(from: start, to: date)
                 if !hasBookedInRange {
                     endDate = date
-                } else {
-                    startDate = date
-                    endDate = nil
                 }
             }
         }
@@ -161,8 +174,8 @@ struct CalendarPickerView: View {
                                         }
                                         
                                         if booked {
-                                            DiagonalLineShape()
-                                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                            CrossLineShape()
+                                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                                         }
                                     }
                                 )
