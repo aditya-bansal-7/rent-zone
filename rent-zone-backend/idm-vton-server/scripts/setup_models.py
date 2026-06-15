@@ -98,6 +98,8 @@ def clone_idm_vton_source():
             if preprocess_dst.exists():
                 shutil.rmtree(preprocess_dst)
             shutil.copytree(preprocess_src, preprocess_dst)
+            if not (preprocess_dst / "__init__.py").exists():
+                (preprocess_dst / "__init__.py").write_text("")
             log("  ✓ Copied preprocess/")
 
         # Copy ip_adapter modules
