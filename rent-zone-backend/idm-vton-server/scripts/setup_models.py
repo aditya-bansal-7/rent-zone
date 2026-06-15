@@ -54,8 +54,9 @@ def clone_idm_vton_source():
 
     # Check if source files already exist
     src_dir = ROOT / "src"
-    if (src_dir / "tryon_pipeline.py").exists():
-        log("  ✓ Source files already exist in src/")
+    preprocess_dir = ROOT / "preprocess"
+    if (src_dir / "tryon_pipeline.py").exists() and preprocess_dir.exists():
+        log("  ✓ Source files already exist in src/ and preprocess/")
     else:
         log("  Cloning IDM-VTON repository (sparse checkout)...")
         if temp_dir.exists():
