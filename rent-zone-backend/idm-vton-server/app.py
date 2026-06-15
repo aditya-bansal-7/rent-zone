@@ -9,6 +9,23 @@ import sys
 import os
 import threading
 
+# ---------------------------------------------------------------------------
+# Compatibility shim: huggingface_hub >= 0.24.0 removed `cached_download`.
+# diffusers==0.25.1 still imports it via diffusers/utils/dynamic_modules_utils.py.
+# Patch it before diffusers (or any library that triggers it) is imported.
+# ---------------------------------------------------------------------------
+try:
+    import huggingface_hub
+    if not hasattr(huggingface_hub, "cached_download"):
+        from huggingface_hub import hf_hub_download
+        # Set the attribute on the already-loaded module object so that
+        # `from huggingface_hub import cached_download` works in sub-imports.
+        huggingface_hub.cached_download = hf_hub_download
+        sys.modules["huggingface_hub"].cached_download = hf_hub_download
+except Exception:
+    pass  # If huggingface_hub isn't installed yet, skip gracefully
+# ---------------------------------------------------------------------------
+
 # Ensure the project root is on the Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 

@@ -21,6 +21,7 @@ accelerate>=0.25,<1.0
 pillow>=10.0
 opencv-python>=4.8
 numpy>=1.24,<2.0
+einops>=0.7.0
 
 # ONNX Runtime (for human parsing)
 onnxruntime-gpu>=1.16; platform_machine != "arm64"
