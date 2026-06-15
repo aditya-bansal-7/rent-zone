@@ -346,3 +346,12 @@ struct ChatMessageDTO: Decodable, Identifiable {
     }
 }
 
+// MARK: - Virtual Try-On DTO
+struct TryOnDTO: Decodable, Identifiable {
+    let id: String
+    let userId: String
+    let productId: String
+    let resultImageURL: String
+    let modelUsed: String?
+    let createdAt: String?
+}
