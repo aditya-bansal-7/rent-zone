@@ -5,7 +5,7 @@ struct ProductDetailView: View {
     @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) private var dismiss
     @State private var showMenu = false
-    @State private var currentImageIndex: Int? = 0
+    @State private var currentImageIndex = 0
     @State private var isFavorite = false
     @State private var showRentConfirmation = false
     @State private var showCalendar = false
@@ -30,8 +30,8 @@ struct ProductDetailView: View {
 
                 ZStack(alignment: .top) {
                     // Image Carousel
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
+                    ZStack(alignment: .bottom) {
+                        TabView(selection: $currentImageIndex) {
                             ForEach(Array(product.imageURLs.enumerated()), id: \.offset) { index, imageStr in
                                 Group {
                                     if imageStr.hasPrefix("http"), let url = URL(string: imageStr) {
@@ -52,16 +52,32 @@ struct ProductDetailView: View {
                                             .scaledToFill()
                                     }
                                 }
-                                .frame(width: UIScreen.main.bounds.width - 40, height: 450)
+                                .frame(width: UIScreen.main.bounds.width - 40, height: 420)
                                 .clipped()
                                 .cornerRadius(20)
+                                .tag(index)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .padding(.bottom, 16)
+                        }
+                        .tabViewStyle(.page(indexDisplayMode: .never))
+                        .frame(height: 450)
+
+                        // Custom Premium Page Indicator
+                        if product.imageURLs.count > 1 {
+                            HStack(spacing: 6) {
+                                ForEach(0..<product.imageURLs.count, id: \.self) { index in
+                                    Capsule()
+                                        .fill(currentImageIndex == index ? Color.black : Color.black.opacity(0.15))
+                                        .frame(width: currentImageIndex == index ? 16 : 6, height: 6)
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.75), value: currentImageIndex)
+                                }
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                            .padding(.bottom, 20)
                         }
                     }
-                    .scrollTargetBehavior(.viewAligned)
                     .frame(height: 450)
 
                     // Navigation bar overlaying image
@@ -157,7 +173,7 @@ struct ProductDetailView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         detailRow(title: "Security Deposit:", value: "₹\(Int(product.securityDeposit))")
-                        detailRow(title: "Condition:", value: conditionLabel(product.condition))
+                        detailRow(title: "Condition:", value: product.condition.displayName)
                         detailRow(title: "Size:", value: product.size)
                         detailRow(title: "Pickup:", value: product.pickupLocation)
                         if let occasion = product.occasion {
@@ -268,7 +284,7 @@ struct ProductDetailView: View {
                         // Show chips whenever calendar is closed
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
-                                ForEach(0..<14, id: \.self) { offset in
+                                ForEach(0..<60, id: \.self) { offset in
                                     let date = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: offset, to: Date())!)
                                     let day = Calendar.current.component(.day, from: date)
                                     let monthStr = date.formatted(.dateTime.month(.abbreviated)).uppercased()
@@ -293,7 +309,7 @@ struct ProductDetailView: View {
                                                 .stroke(Color.black, lineWidth: 1.5)
                                         )
                                         .overlay(
-                                            DiagonalLineShape()
+                                            CrossLineShape()
                                                 .stroke(Color.black, lineWidth: isBooked ? 1.5 : 0)
                                         )
                                         .opacity(isBooked ? 0.4 : 1.0)
@@ -695,15 +711,6 @@ struct ProductDetailView: View {
 
     // MARK: - Helpers
 
-    private func conditionLabel(_ cond: ProductCondition) -> String {
-        switch cond {
-        case .new: return "New"
-        case .likeNew: return "Like New"
-        case .good: return "Good"
-        case .worn: return "Worn"
-        }
-    }
-
     private func detailRow(title: String, value: String) -> some View {
         HStack(spacing: 4) {
             Text(title)
@@ -828,12 +835,16 @@ extension View {
     }
 }
 
-// MARK: - Diagonal Line
-struct DiagonalLineShape: Shape {
+// MARK: - Cross Line
+struct CrossLineShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
+        // Top-left to bottom-right
         path.move(to: CGPoint(x: 0, y: 0))
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        // Bottom-left to top-right
+        path.move(to: CGPoint(x: 0, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: 0))
         return path
     }
 }

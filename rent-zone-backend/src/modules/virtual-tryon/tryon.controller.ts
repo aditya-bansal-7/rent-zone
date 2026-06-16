@@ -6,10 +6,12 @@ export const submitTryOn = async (req: Request, res: Response) => {
   try {
     const { productId } = req.body;
     if (!productId) return sendError(res, 'productId is required', 400);
-    if (!req.file) return sendError(res, 'Image file is required', 400);
+    if (!req.file) return sendError(res, 'Person image file is required', 400);
+
     const result = await tryonService.createTryOn(req.user!.userId, productId, req.file.buffer);
     sendSuccess(res, result, 201, 'Virtual try-on created');
   } catch (err: any) {
+    console.error('[TryOn] Controller error:', err.message);
     sendError(res, err.message);
   }
 };
