@@ -84,7 +84,7 @@ struct ProductListView: View {
             case .ratingHighToLow:
                 result.sort { $0.rating > $1.rating }
             case .newest:
-                break 
+                result.sort { ($0.createdAt ?? Date.distantPast) > ($1.createdAt ?? Date.distantPast) }
             }
         }
         

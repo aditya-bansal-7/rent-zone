@@ -151,7 +151,8 @@ class ProductService {
     func getBookedDates(productId: String) async throws -> [Date] {
         let dateStrings: [String] = try await APIClient.shared.request(endpoint: "/products/\(productId)/booked-dates")
         let formatter = ISO8601DateFormatter()
-        return dateStrings.compactMap { formatter.date(from: $0) }
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return dateStrings.compactMap { formatter.date(from: $0) ?? ISO8601DateFormatter().date(from: $0) }
     }
 
     func toggleFavorite(productId: String) async throws -> (isFavorited: Bool, favoriteIds: [String]) {
@@ -344,6 +345,82 @@ class NotificationService {
             endpoint: "/notifications/\(notificationId)/\(accept ? "accept" : "reject")",
             method: "POST",
             authenticated: true
+        )
+    }
+}
+
+// MARK: - Try-On Service
+class TryOnService {
+    static let shared = TryOnService()
+    private init() {}
+
+    struct TryOnResult {
+        let id: String
+        let resultImageURL: String
+        let modelUsed: String?
+    }
+
+    /// Submit a virtual try-on request — uploads person image and gets AI-generated result
+    func submitTryOn(productId: String, personImage: UIImage) async throws -> TryOnResult {
+        guard let imageData = personImage.jpegData(compressionQuality: 0.8) else {
+            throw APIError.noData
+        }
+
+        guard let url = URL(string: API.baseURL + "/tryon") else {
+            throw APIError.invalidURL
+        }
+
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 120 // 2 minute timeout for AI processing
+
+        if let token = TokenStorage.accessToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        } else {
+            throw APIError.unauthorized
+        }
+
+        var bodyData = Data()
+
+        // Add productId field
+        bodyData.append("--\(boundary)\r\n".data(using: .utf8)!)
+        bodyData.append("Content-Disposition: form-data; name=\"productId\"\r\n\r\n".data(using: .utf8)!)
+        bodyData.append("\(productId)\r\n".data(using: .utf8)!)
+
+        // Add person image
+        bodyData.append("--\(boundary)\r\n".data(using: .utf8)!)
+        bodyData.append("Content-Disposition: form-data; name=\"image\"; filename=\"person.jpg\"\r\n".data(using: .utf8)!)
+        bodyData.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        bodyData.append(imageData)
+        bodyData.append("\r\n".data(using: .utf8)!)
+        bodyData.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = bodyData
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.networkError(URLError(.badServerResponse))
+        }
+
+        if httpResponse.statusCode == 401 {
+            throw APIError.unauthorized
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+
+        let wrapper = try decoder.decode(APIResponse<TryOnDTO>.self, from: data)
+
+        guard wrapper.success, let dto = wrapper.data else {
+            throw APIError.serverError(wrapper.message ?? "Virtual try-on failed")
+        }
+
+        return TryOnResult(
+            id: dto.id,
+            resultImageURL: dto.resultImageURL,
+            modelUsed: dto.modelUsed
         )
     }
 }

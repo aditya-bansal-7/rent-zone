@@ -69,32 +69,70 @@ struct ProductDetailEditView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Condition")
                                     .font(.system(size: 16, weight: .bold))
-                                Picker("Condition", selection: $selectedCondition) {
+                                
+                                Menu {
                                     ForEach(ProductCondition.allCases, id: \.self) { condition in
-                                        Text(condition.rawValue.capitalized).tag(condition)
+                                        Button(action: {
+                                            selectedCondition = condition
+                                        }) {
+                                            Text(condition.displayName)
+                                        }
                                     }
+                                } label: {
+                                    HStack {
+                                        Text(selectedCondition.displayName)
+                                            .foregroundColor(.black)
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.8)
+                                        
+                                        Spacer(minLength: 4)
+                                        
+                                        Image(systemName: "chevron.up.chevron.down")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 44)
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(12)
                                 }
-                                .pickerStyle(.menu)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(12)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("Size")
                                     .font(.system(size: 16, weight: .bold))
-                                Picker("Size", selection: $selectedSize) {
+                                
+                                Menu {
                                     ForEach(["XS", "S", "M", "L", "XL", "XXL"], id: \.self) { size in
-                                        Text(size).tag(size)
+                                        Button(action: {
+                                            selectedSize = size
+                                        }) {
+                                            Text(size)
+                                        }
                                     }
+                                } label: {
+                                    HStack {
+                                        Text(selectedSize)
+                                            .foregroundColor(.black)
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.8)
+                                        
+                                        Spacer(minLength: 4)
+                                        
+                                        Image(systemName: "chevron.up.chevron.down")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 44)
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(12)
                                 }
-                                .pickerStyle(.menu)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
-                                .background(Color(.systemGray6))
-                                .cornerRadius(12)
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         
                         // MARK: - Price

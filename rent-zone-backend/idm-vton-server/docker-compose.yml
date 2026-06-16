@@ -1,0 +1,60 @@
+# ============================================================
+# IDM-VTON Flask Inference Server — Docker Compose
+# GPU-enabled deployment with NVIDIA Container Toolkit
+# ============================================================
+
+services:
+  idm-vton:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: idm-vton-server
+    restart: unless-stopped
+
+    ports:
+      - "${PORT:-5000}:5000"
+
+    environment:
+      - PORT=5000
+      - DEVICE=cuda
+      - OUTPUT_DIR=outputs
+      - HF_HOME=/app/hf_cache
+      - MAX_UPLOAD_MB=${MAX_UPLOAD_MB:-20}
+      - NUM_INFERENCE_STEPS=${NUM_INFERENCE_STEPS:-30}
+      - GUIDANCE_SCALE=${GUIDANCE_SCALE:-2.0}
+      - SEED=${SEED:-42}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - NVIDIA_VISIBLE_DEVICES=all
+
+    volumes:
+      # Persist generated outputs
+      - ./outputs:/app/outputs
+      # Persist HuggingFace model cache (avoid re-downloading)
+      - ./hf_cache:/app/hf_cache
+      # Persist checkpoints
+      - ./ckpt:/app/ckpt
+
+    # GPU passthrough — requires NVIDIA Container Toolkit
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 300s  # Model loading takes time
+
+    # Shared memory size for PyTorch DataLoader (if needed)
+    shm_size: '2gb'
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"

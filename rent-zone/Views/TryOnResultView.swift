@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TryOnResultView: View {
     let product: Product
-    let userImage: UIImage
+    let resultImageURL: String
     @Environment(\.dismiss) private var dismiss
     @Environment(AppStore.self) private var appStore
     @State private var isSaved = false
@@ -57,14 +57,36 @@ struct TryOnResultView: View {
                 // MARK: - Result Image
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 24) {
-                        Image(uiImage: userImage)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: .infinity)
-                            .clipShape(RoundedRectangle(cornerRadius: 24))
-                            .shadow(color: .black.opacity(0.08), radius: 16, x: 0, y: 8)
+                        if let url = URL(string: resultImageURL) {
+                            AsyncImage(url: url) { phase in
+                                if case .success(let image) = phase {
+                                    image
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(maxWidth: .infinity)
+                                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                                        .shadow(color: .black.opacity(0.08), radius: 16, x: 0, y: 8)
+                                } else if case .failure = phase {
+                                    Rectangle()
+                                        .fill(Color(.systemGray5))
+                                        .frame(height: 400)
+                                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                                        .overlay(
+                                            Image(systemName: "photo")
+                                                .font(.largeTitle)
+                                                .foregroundColor(.gray)
+                                        )
+                                } else {
+                                    Rectangle()
+                                        .fill(Color(.systemGray5))
+                                        .frame(height: 400)
+                                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                                        .overlay(ProgressView())
+                                }
+                            }
                             .padding(.horizontal, 20)
                             .padding(.top, 16)
+                        }
 
                         // MARK: - Request to Rent Button
                         Button(action: {
@@ -226,7 +248,12 @@ struct TryOnResultView: View {
 
     private func shareResult() {
         let shareText = "Check out how \(product.name) looks on me! 👗 via RentZone"
-        let items: [Any] = [shareText, userImage]
+        
+        // Use URL for sharing, optionally downloading could be added here
+        var items: [Any] = [shareText]
+        if let url = URL(string: resultImageURL) {
+            items.append(url)
+        }
 
         let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
         activityVC.excludedActivityTypes = []
@@ -253,13 +280,15 @@ struct TryOnResultView: View {
             securityDeposit: 500,
             condition: .new,
             size: "M",
+            description: [:],
+            bookedDates: [],
             listedByUserId: "user1",
             categoryId: "cat1",
             pickupLocation: "Jaipur",
             imageURLs: ["https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&q=80"],
             rating: 4.5
         ),
-        userImage: UIImage(systemName: "person.fill")!
+        resultImageURL: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&q=80"
     )
     .environment(AppStore())
 }
