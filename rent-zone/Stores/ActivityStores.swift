@@ -65,8 +65,19 @@ class ReviewStore {
 // MARK: - Notification Store
 @Observable
 class NotificationStore {
-    var notifications: [AppNotification] = []
+    var notifications: [AppNotification] = [] {
+        didSet { _refreshUnread() }
+    }
     var isLoading: Bool = false
+    var hasUnread: Bool = false
+
+    var unreadNotifications: [AppNotification] {
+        notifications.filter { !$0.isRead }
+    }
+
+    private func _refreshUnread() {
+        hasUnread = notifications.contains { !$0.isRead }
+    }
 
     init() {
         NotificationCenter.default.addObserver(forName: NSNotification.Name("NewAppNotification"), object: nil, queue: .main) { [weak self] notification in
@@ -74,14 +85,6 @@ class NotificationStore {
                 self?.addItem(appNotif)
             }
         }
-    }
-
-    var unreadNotifications: [AppNotification] {
-        notifications.filter { !$0.isRead }
-    }
-
-    var hasUnread: Bool {
-        !unreadNotifications.isEmpty
     }
 
     func fetchItems() async {
@@ -102,25 +105,40 @@ class NotificationStore {
 
     func addItem(_ notification: AppNotification) {
         notifications.insert(notification, at: 0)
+        _refreshUnread()
     }
 
     func removeItem(id: String) {
         notifications.removeAll { $0.id == id }
+        _refreshUnread()
     }
 
     func updateItem(_ notification: AppNotification) {
         if let index = notifications.firstIndex(where: { $0.id == notification.id }) {
             notifications[index] = notification
         }
+        _refreshUnread()
     }
 
     func markRead(id: String) {
         if let index = notifications.firstIndex(where: { $0.id == id }) {
             notifications[index].isRead = true
         }
+        _refreshUnread()
         Task {
             try? await NotificationService.shared.markRead(id: id)
         }
+    }
+
+    func markAllRead() {
+        for index in notifications.indices {
+            if !notifications[index].isRead {
+                let id = notifications[index].id
+                notifications[index].isRead = true
+                Task { try? await NotificationService.shared.markRead(id: id) }
+            }
+        }
+        _refreshUnread()
     }
 
     func acceptRequest(id: String) {
@@ -128,6 +146,7 @@ class NotificationStore {
             notifications[index].status = .accepted
             notifications[index].isRead = true
         }
+        _refreshUnread()
         Task {
             try? await NotificationService.shared.respondToRentalRequest(notificationId: id, accept: true)
         }
@@ -138,6 +157,7 @@ class NotificationStore {
             notifications[index].status = .rejected
             notifications[index].isRead = true
         }
+        _refreshUnread()
         Task {
             try? await NotificationService.shared.respondToRentalRequest(notificationId: id, accept: false)
         }

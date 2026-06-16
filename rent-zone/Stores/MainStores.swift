@@ -236,7 +236,7 @@ class ProductStore {
             case .ratingHighToLow:
                 result.sort { $0.rating > $1.rating }
             case .newest:
-                break
+                result.sort { ($0.createdAt ?? Date.distantPast) > ($1.createdAt ?? Date.distantPast) }
             }
         }
 
@@ -269,16 +269,16 @@ class CategoryStore {
 
     private static func defaultCategories() -> [Category] {
         [
-            Category(id: "women-dresses", name: "Dresses", images: "Dress", type: .women),
-            Category(id: "women-suits", name: "Suits", images: "Suits", type: .women),
+            Category(id: "women-dresses", name: "Dress", images: "Dress", type: .women),
+            Category(id: "women-suits", name: "Suit", images: "Suit", type: .women),
             Category(id: "women-saree", name: "Saree", images: "Saree", type: .women),
             Category(id: "women-lehenga", name: "Lehenga", images: "Lehanga", type: .women),
-            Category(id: "women-formals", name: "Formals", images: "Formal", type: .women),
+            Category(id: "women-formals", name: "Formal", images: "Formal", type: .women),
             Category(id: "women-sharara", name: "Sharara", images: "Sharara", type: .women),
-            Category(id: "men-tuxedos", name: "Tuxedos", images: "Tuxedo", type: .men),
-            Category(id: "men-jackets", name: "Jackets", images: "Jackets", type: .men),
-            Category(id: "men-blazers", name: "Blazers", images: "Blazers", type: .men),
-            Category(id: "men-formals", name: "Formals", images: "Formals", type: .men),
+            Category(id: "men-tuxedos", name: "Tuxedo", images: "Tuxedo", type: .men),
+            Category(id: "men-jackets", name: "Jacket", images: "Jacket", type: .men),
+            Category(id: "men-blazers", name: "Blazer", images: "Blazer", type: .men),
+            Category(id: "men-formals", name: "Formal", images: "Formal", type: .men),
             Category(id: "men-kurta", name: "Kurta", images: "Kurta", type: .men),
         ]
     }

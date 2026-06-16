@@ -12,6 +12,7 @@ class AppStore {
     
     var activeTab: Int = 0
     var selectedChatConversation: ChatConversation? = nil
+    var rentTabResetId: Int = 0
 
     init() {
         // Kick off async fetch on init

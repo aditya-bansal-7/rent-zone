@@ -10,7 +10,9 @@ struct VirtualTryOnView: View {
     @State private var isProcessing = false
     @State private var tryOnPickerItem: PhotosPickerItem? = nil
     @State private var showResult = false
-    @State private var resultImage: UIImage? = nil
+    @State private var resultImageURL: String? = nil
+    @State private var errorMessage: String? = nil
+    @State private var processingStage: String = "Uploading your photo..."
 
     // Lavender accent
     private let lavender = Color(red: 220/255, green: 208/255, blue: 255/255)
@@ -83,8 +85,29 @@ struct VirtualTryOnView: View {
                             if let data = try? await newItem?.loadTransferable(type: Data.self),
                                let image = UIImage(data: data) {
                                 uploadedImage = image
+                                errorMessage = nil
                             }
                         }
+                    }
+
+                    // MARK: - Error Message
+                    if let errorMessage {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                                .font(.system(size: 14))
+                            Text(errorMessage)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.red.opacity(0.8))
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.red.opacity(0.06))
+                        )
+                        .padding(.horizontal, 20)
                     }
 
                     // MARK: - How It Works
@@ -131,10 +154,11 @@ struct VirtualTryOnView: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.5)
-                    Text("AI is processing your try-on...")
+                    Text(processingStage)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
-                    Text("This may take a moment")
+                        .multilineTextAlignment(.center)
+                    Text("This may take up to a minute")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.7))
                 }
@@ -160,30 +184,67 @@ struct VirtualTryOnView: View {
             Task {
                 if let data = try? await newItem.loadTransferable(type: Data.self),
                    let image = UIImage(data: data) {
-                    await MainActor.run {
-                        withAnimation {
-                            isProcessing = true
-                        }
-                    }
-
-                    // Simulate AI processing delay
-                    try? await Task.sleep(nanoseconds: 2_500_000_000)
-
-                    await MainActor.run {
-                        withAnimation {
-                            isProcessing = false
-                        }
-                        resultImage = image
-                        showResult = true
-                        tryOnPickerItem = nil
-                    }
+                    await performTryOn(with: image)
+                    tryOnPickerItem = nil
                 }
             }
         }
         .fullScreenCover(isPresented: $showResult) {
-            if let resultImage {
-                TryOnResultView(product: product, userImage: resultImage)
+            if let resultImageURL {
+                TryOnResultView(product: product, resultImageURL: resultImageURL)
                     .environment(appStore)
+            }
+        }
+    }
+
+    // MARK: - Perform Try-On (Real API Call)
+    private func performTryOn(with personImage: UIImage) async {
+        await MainActor.run {
+            withAnimation {
+                isProcessing = true
+                processingStage = "Uploading your photo..."
+                errorMessage = nil
+            }
+        }
+
+        // Animate through processing stages
+        Task {
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            await MainActor.run {
+                if isProcessing { processingStage = "AI is generating your look..." }
+            }
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            await MainActor.run {
+                if isProcessing { processingStage = "Applying the garment to your photo..." }
+            }
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            await MainActor.run {
+                if isProcessing { processingStage = "Almost done, adding final touches..." }
+            }
+        }
+
+        do {
+            let result = try await TryOnService.shared.submitTryOn(
+                productId: product.id,
+                personImage: personImage
+            )
+
+            await MainActor.run {
+                withAnimation {
+                    isProcessing = false
+                }
+                resultImageURL = result.resultImageURL
+                showResult = true
+                if let model = result.modelUsed {
+                    print("[TryOn] Model used: \(model)")
+                }
+            }
+        } catch {
+            await MainActor.run {
+                withAnimation {
+                    isProcessing = false
+                }
+                errorMessage = error.localizedDescription
             }
         }
     }

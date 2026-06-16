@@ -84,7 +84,7 @@ struct ProductListView: View {
             case .ratingHighToLow:
                 result.sort { $0.rating > $1.rating }
             case .newest:
-                break 
+                result.sort { ($0.createdAt ?? Date.distantPast) > ($1.createdAt ?? Date.distantPast) }
             }
         }
         
@@ -144,6 +144,9 @@ struct ProductListView: View {
         .background(Color.white)
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
+        .navigationDestination(for: Product.self) { product in
+            ProductDetailView(product: product)
+        }
         .overlay {
             if showSortSheet {
                 Color.black.opacity(0.15)
@@ -300,3 +303,4 @@ struct ProductListView: View {
         .background(Color.white)
     }
 }
+

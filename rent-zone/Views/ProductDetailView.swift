@@ -5,7 +5,7 @@ struct ProductDetailView: View {
     @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) private var dismiss
     @State private var showMenu = false
-    @State private var currentImageIndex: Int? = 0
+    @State private var currentImageIndex = 0
     @State private var isFavorite = false
     @State private var showRentConfirmation = false
     @State private var showCalendar = false
@@ -17,6 +17,7 @@ struct ProductDetailView: View {
 
     @State private var showAddReview = false
     @State private var localReviews: [Review] = []
+    @State private var localBookedDates: [Date] = []
     @State private var didInitReviews = false
 
     @State private var showVirtualTryOn = false
@@ -29,8 +30,8 @@ struct ProductDetailView: View {
 
                 ZStack(alignment: .top) {
                     // Image Carousel
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
+                    ZStack(alignment: .bottom) {
+                        TabView(selection: $currentImageIndex) {
                             ForEach(Array(product.imageURLs.enumerated()), id: \.offset) { index, imageStr in
                                 Group {
                                     if imageStr.hasPrefix("http"), let url = URL(string: imageStr) {
@@ -51,18 +52,44 @@ struct ProductDetailView: View {
                                             .scaledToFill()
                                     }
                                 }
-                                .frame(width: UIScreen.main.bounds.width - 40, height: 450)
+                                .frame(width: UIScreen.main.bounds.width - 40, height: 420)
                                 .clipped()
                                 .cornerRadius(20)
+                                .tag(index)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .padding(.bottom, 16)
+                        }
+                        .tabViewStyle(.page(indexDisplayMode: .never))
+                        .frame(height: 450)
+
+                        // Custom Premium Page Indicator
+                        if product.imageURLs.count > 1 {
+                            HStack(spacing: 6) {
+                                ForEach(0..<product.imageURLs.count, id: \.self) { index in
+                                    Capsule()
+                                        .fill(currentImageIndex == index ? Color.black : Color.black.opacity(0.15))
+                                        .frame(width: currentImageIndex == index ? 16 : 6, height: 6)
+                                        .animation(.spring(response: 0.25, dampingFraction: 0.75), value: currentImageIndex)
+                                }
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                            .padding(.bottom, 20)
                         }
                     }
-                    .scrollTargetBehavior(.viewAligned)
                     .frame(height: 450)
-
+                    // Tap-to-dismiss layer: above image, below floating buttons
+                    if showMenu {
+                        Color.black.opacity(0.001)
+                            .frame(height: 450)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                    showMenu = false
+                                }
+                            }
+                    }
                     HStack(alignment: .top) {
                         Button(action: { dismiss() }) {
                             Image(systemName: "chevron.left")
@@ -77,7 +104,9 @@ struct ProductDetailView: View {
 
                         if showMenu {
                             HStack(spacing: 24) {
-                                Button(action: { isFavorite.toggle() }) {
+
+                                Button(action: { handleFavoriteToggle() }) {
+
                                     VStack(spacing: 4) {
                                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                                             .font(.system(size: 22, weight: .medium))
@@ -89,9 +118,6 @@ struct ProductDetailView: View {
                                 }
 
                                 Button(action: {
-                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                        showMenu = false
-                                    }
                                     shareProduct()
                                 }) {
                                     VStack(spacing: 4) {
@@ -155,7 +181,7 @@ struct ProductDetailView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         detailRow(title: "Security Deposit:", value: "₹\(Int(product.securityDeposit))")
-                        detailRow(title: "Condition:", value: conditionLabel(product.condition))
+                        detailRow(title: "Condition:", value: product.condition.displayName)
                         detailRow(title: "Size:", value: product.size)
                         detailRow(title: "Pickup:", value: product.pickupLocation)
                         if let occasion = product.occasion {
@@ -164,13 +190,9 @@ struct ProductDetailView: View {
                     }
 
                     Button(action: { showVirtualTryOn = true }) {
-                        HStack(spacing: 12) {
-                            Text("👗")
-                                .font(.system(size: 18))
                             Text("Virtual Try On")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.black)
-                        }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(Color(red: 243/255, green: 236/255, blue: 255/255))
@@ -259,19 +281,19 @@ struct ProductDetailView: View {
                             startDate: $startDate,
                             endDate: $endDate,
                             displayedMonth: $calendarDisplayedMonth,
-                            bookedDates: product.bookedDates
+                            bookedDates: displayBookedDates
                         )
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     } else {
                         // Show chips whenever calendar is closed
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
-                                ForEach(0..<14, id: \.self) { offset in
+                                ForEach(0..<60, id: \.self) { offset in
                                     let date = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: offset, to: Date())!)
                                     let day = Calendar.current.component(.day, from: date)
                                     let monthStr = date.formatted(.dateTime.month(.abbreviated)).uppercased()
                                     
-                                    let isBooked = product.bookedDates.contains { Calendar.current.isDate($0, inSameDayAs: date) }
+                                    let isBooked = displayBookedDates.contains { Calendar.current.isDate($0, inSameDayAs: date) }
                                     let isSelected = (startDate != nil && Calendar.current.isDate(startDate!, inSameDayAs: date)) || (endDate != nil && Calendar.current.isDate(endDate!, inSameDayAs: date))
                                     let inRange = startDate != nil && endDate != nil && date > startDate! && date < endDate!
                                     
@@ -291,7 +313,7 @@ struct ProductDetailView: View {
                                                 .stroke(Color.black, lineWidth: 1.5)
                                         )
                                         .overlay(
-                                            DiagonalLineShape()
+                                            CrossLineShape()
                                                 .stroke(Color.black, lineWidth: isBooked ? 1.5 : 0)
                                         )
                                         .opacity(isBooked ? 0.4 : 1.0)
@@ -493,17 +515,24 @@ struct ProductDetailView: View {
         .toolbar(.hidden, for: .tabBar)
         .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
         .task {
+            // Initialize favourite state from user's actual favourites
+            if let favorites = appStore.userStore.currentUser?.favouriteProducts {
+                isFavorite = favorites.contains(product.id)
+            }
+            
             if !didInitReviews {
                 do {
                     let fetchedProduct = try await ProductService.shared.getProduct(id: product.id)
                     await MainActor.run {
                         self.localReviews = fetchedProduct.reviews
+                        self.localBookedDates = fetchedProduct.bookedDates
                         self.didInitReviews = true
                     }
                 } catch {
                     print("Failed to load product details: \(error)")
                     await MainActor.run {
                         self.localReviews = product.reviews
+                        self.localBookedDates = product.bookedDates
                         self.didInitReviews = true
                     }
                 }
@@ -569,6 +598,10 @@ struct ProductDetailView: View {
         didInitReviews ? localReviews : product.reviews
     }
 
+    private var displayBookedDates: [Date] {
+        didInitReviews ? localBookedDates : product.bookedDates
+    }
+
     private var rentButtonText: String {
         if let start = startDate, let end = endDate {
             let days = Int(end.timeIntervalSince(start) / 86400) + 1
@@ -579,6 +612,22 @@ struct ProductDetailView: View {
     }
 
     // MARK: - Actions
+
+    private func handleFavoriteToggle() {
+        isFavorite.toggle()
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+            showMenu = false
+        }
+        Task {
+            await appStore.productStore.toggleFavorite(productId: product.id, userStore: appStore.userStore)
+            // Sync local state with the store
+            await MainActor.run {
+                if let favorites = appStore.userStore.currentUser?.favouriteProducts {
+                    isFavorite = favorites.contains(product.id)
+                }
+            }
+        }
+    }
 
     private func shareProduct() {
         let shareText = "Check out \(product.name) on RentZone! ₹\(Int(product.rentPricePerDay))/day"
@@ -617,7 +666,7 @@ struct ProductDetailView: View {
                 endDate = date
             } else {
                 // Check if any booked dates are in between
-                let hasBookedInRange = product.bookedDates.contains { bookedDate in
+                let hasBookedInRange = displayBookedDates.contains { bookedDate in
                     bookedDate > start && bookedDate < date
                 }
                 if !hasBookedInRange {
@@ -665,15 +714,6 @@ struct ProductDetailView: View {
     }
 
     // MARK: - Helpers
-
-    private func conditionLabel(_ cond: ProductCondition) -> String {
-        switch cond {
-        case .new: return "New"
-        case .likeNew: return "Like New"
-        case .good: return "Good"
-        case .worn: return "Worn"
-        }
-    }
 
     private func detailRow(title: String, value: String) -> some View {
         HStack(spacing: 4) {
@@ -799,12 +839,16 @@ extension View {
     }
 }
 
-// MARK: - Diagonal Line
-struct DiagonalLineShape: Shape {
+// MARK: - Cross Line
+struct CrossLineShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
+        // Top-left to bottom-right
         path.move(to: CGPoint(x: 0, y: 0))
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        // Bottom-left to top-right
+        path.move(to: CGPoint(x: 0, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: 0))
         return path
     }
 }
@@ -910,3 +954,4 @@ struct ReviewItemView: View {
     ))
     .environment(AppStore())
 }
+

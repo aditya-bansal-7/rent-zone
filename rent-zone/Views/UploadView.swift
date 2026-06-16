@@ -14,7 +14,7 @@ struct UploadView: View {
 
     @State private var name = ""
     @State private var selectedCategoryId = ""
-    @State private var selectedCondition = "good"
+    @State private var selectedCondition = "likeNew"
     @State private var selectedSize = "M"
     @State private var price = ""
     @State private var securityDeposit = ""
@@ -32,7 +32,7 @@ struct UploadView: View {
     @State private var showLoginSheet = false
     @State private var navigateToListing = false
 
-    let conditions = [("new", "New"), ("likeNew", "Like New"), ("good", "Good"), ("worn", "Worn")]
+    let conditions = [("likeNew", "Like New"), ("good", "Good"), ("worn", "Fair")]
     let sizes = ["XS", "S", "M", "L", "XL"]
     let occasions = ["Wedding", "Party", "Festival", "Casual", "Formal"]
 
@@ -52,8 +52,9 @@ struct UploadView: View {
                     Picker("Category", selection: $selectedCategoryId) {
                         Text("Select a category").tag("")
                         ForEach(categories, id: \.id) { cat in
-                            Text("\(cat.type == .women ? "👗" : "👔") \(cat.name)").tag(cat.id)
+                            Text(cat.name).tag(cat.id)
                         }
+                        Text("Other").tag("other")
                     }
                     .pickerStyle(.menu)
                 }
@@ -84,10 +85,11 @@ struct UploadView: View {
                     Text("Occasion")
                         .font(.subheadline).foregroundStyle(.secondary)
                     Picker("Occasion", selection: $selectedOccasion) {
-                        Text("None").tag("")
+                        Text("Select an occasion").tag("")
                         ForEach(occasions, id: \.self) { occ in
                             Text(occ).tag(occ)
                         }
+                        Text("Other").tag("Other")
                     }
                     .pickerStyle(.menu)
                 }
@@ -158,25 +160,24 @@ struct UploadView: View {
                     }
                     Task { await uploadProduct() }
                 } label: {
-                    HStack {
-                        Spacer()
+                    ZStack {
                         if isUploading {
                             HStack(spacing: 12) {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .black))
                                 Text("Uploading Outfit...")
-                                    .font(.system(size: 17, weight: .semibold))
-                                    .foregroundStyle(.black)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.black)
                             }
                         } else {
                             Text("List My Outfit")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundStyle(.black)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.black)
                         }
-                        Spacer()
                     }
-                    .padding(.vertical, 10)
-                    .background(Color.purple.opacity(0.15))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(Color(red: 243/255, green: 236/255, blue: 255/255))
                     .cornerRadius(30)
                 }
                 .disabled(isUploading || name.isEmpty || selectedCategoryId.isEmpty || price.isEmpty)
@@ -189,12 +190,20 @@ struct UploadView: View {
             LoginView()
                 .presentationDetents([.fraction(0.85), .large])
         }
-        .navigationDestination(isPresented: $navigateToListing) {
+        .sheet(isPresented: $navigateToListing) {
             ListingInfoView()
+                .environment(appStore)
         }
         .alert("Outfit Listed! 🎉", isPresented: $uploadSuccess) {
-            Button("View My Listings") { navigateToListing = true }
-            Button("Done") { dismiss() }
+            Button("View My Listings") {
+                appStore.rentTabResetId += 1
+                navigateToListing = true
+            }
+            Button("Done") {
+                appStore.rentTabResetId += 1
+                appStore.activeTab = 0
+                dismiss()
+            }
         } message: {
             Text("Your outfit has been successfully uploaded to Cloudinary and listed on Rent Zone.")
         }
@@ -259,7 +268,7 @@ struct UploadView: View {
     private func clearForm() {
         name = ""
         selectedCategoryId = ""
-        selectedCondition = "good"
+        selectedCondition = "likeNew"
         selectedSize = "M"
         price = ""
         securityDeposit = ""

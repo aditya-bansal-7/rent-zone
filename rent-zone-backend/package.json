@@ -16,8 +16,10 @@
     "seed": "ts-node-dev --transpile-only prisma/seed.ts"
   },
   "dependencies": {
+    "@google/genai": "^1.50.1",
     "@prisma/client": "^5.22.0",
     "apple-signin-auth": "^2.0.0",
+    "axios": "^1.18.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
     "cors": "^2.8.5",

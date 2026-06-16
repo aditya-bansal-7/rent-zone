@@ -179,6 +179,9 @@ struct RentalRequestDetailView: View {
         .background(.ultraThickMaterial)
         .presentationDetents([.medium])
         .presentationDragIndicator(.hidden)
+        .onAppear {
+            appStore.notificationStore.markRead(id: notification.id)
+        }
     }
     
     private var formattedDate: String {

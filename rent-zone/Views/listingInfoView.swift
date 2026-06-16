@@ -58,11 +58,13 @@ struct ListingInfoView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 30, height: 30)
-                            .background(.ultraThinMaterial, in: Circle())
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(Color.black.opacity(0.55))
+                            .frame(width: 28, height: 28)
+                            .background(Circle().fill(Color.black.opacity(0.06)))
+                            .offset(y: 1.5)
                     }
+                    .buttonStyle(PremiumCloseButtonStyle())
                 }
             }
             .task {
@@ -235,4 +237,14 @@ struct ListingCardView: View {
 #Preview {
     ListingInfoView()
         .environment(AppStore())
+}
+
+// MARK: - Premium Button Style
+struct PremiumCloseButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.90 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
+    }
 }

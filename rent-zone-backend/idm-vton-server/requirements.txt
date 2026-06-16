@@ -1,0 +1,41 @@
+# ===========================
+# IDM-VTON Flask Server
+# ===========================
+
+# Web Framework
+flask>=3.0,<4.0
+flask-cors>=4.0,<5.0
+gunicorn>=21.2,<23.0
+
+# PyTorch (install with CUDA support for GPU)
+# For CUDA: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+torch>=2.1
+torchvision>=0.16
+
+# Hugging Face
+transformers>=4.36,<4.46
+diffusers==0.25.1
+accelerate>=0.25,<1.0
+
+# Image Processing
+pillow>=10.0
+opencv-python>=4.8
+numpy>=1.24,<2.0
+einops>=0.7.0
+
+# ONNX Runtime (for human parsing)
+onnxruntime-gpu>=1.16; platform_machine != "arm64"
+onnxruntime>=1.16; platform_machine == "arm64"
+
+# Detectron2 (for DensePose)
+# Install from source: pip install 'git+https://github.com/facebookresearch/detectron2.git'
+
+# Scientific Computing
+scipy>=1.11
+scikit-image>=0.21
+
+# Configuration
+python-dotenv>=1.0
+
+# Utilities
+werkzeug>=3.0
