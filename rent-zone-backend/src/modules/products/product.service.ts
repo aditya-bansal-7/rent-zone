@@ -34,9 +34,9 @@ export const getProducts = async (filters: ProductFilters = {}) => {
 
   const orderBy: Prisma.ProductOrderByWithRelationInput =
     sort === 'priceLowToHigh' ? { rentPricePerDay: 'asc' }
-    : sort === 'priceHighToLow' ? { rentPricePerDay: 'desc' }
-    : sort === 'ratingHighToLow' ? { rating: 'desc' }
-    : { createdAt: 'desc' };
+      : sort === 'priceHighToLow' ? { rentPricePerDay: 'desc' }
+        : sort === 'ratingHighToLow' ? { rating: 'desc' }
+          : { createdAt: 'desc' };
 
   const [products, total] = await Promise.all([
     prisma.product.findMany({

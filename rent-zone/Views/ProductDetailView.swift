@@ -63,6 +63,17 @@ struct ProductDetailView: View {
                     .scrollTargetBehavior(.viewAligned)
                     .frame(height: 450)
 
+                    // Tap-to-dismiss layer: above image, below floating buttons
+                    if showMenu {
+                        Color.black.opacity(0.001)
+                            .frame(height: 450)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                    showMenu = false
+                                }
+                            }
+                    }
                     HStack(alignment: .top) {
                         Button(action: { dismiss() }) {
                             Image(systemName: "chevron.left")
@@ -77,7 +88,9 @@ struct ProductDetailView: View {
 
                         if showMenu {
                             HStack(spacing: 24) {
-                                Button(action: { isFavorite.toggle() }) {
+                                Button(action: {
+                                    isFavorite.toggle()
+                                }) {
                                     VStack(spacing: 4) {
                                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                                             .font(.system(size: 22, weight: .medium))
@@ -89,9 +102,6 @@ struct ProductDetailView: View {
                                 }
 
                                 Button(action: {
-                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                        showMenu = false
-                                    }
                                     shareProduct()
                                 }) {
                                     VStack(spacing: 4) {
@@ -164,13 +174,9 @@ struct ProductDetailView: View {
                     }
 
                     Button(action: { showVirtualTryOn = true }) {
-                        HStack(spacing: 12) {
-                            Text("👗")
-                                .font(.system(size: 18))
                             Text("Virtual Try On")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.black)
-                        }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(Color(red: 243/255, green: 236/255, blue: 255/255))
@@ -910,3 +916,4 @@ struct ReviewItemView: View {
     ))
     .environment(AppStore())
 }
+

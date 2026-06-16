@@ -21,6 +21,7 @@ struct ProductDetailEditView: View {
     
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
+    @State private var showDeleteAlert = false
     
     // Map camera position for pickup location
     @State private var mapPosition = MapCameraPosition.region(
@@ -163,11 +164,17 @@ struct ProductDetailEditView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: handleDelete) {
+                    Button(action: { showDeleteAlert = true }) {
                         Image(systemName: "trash")
                             .foregroundColor(.red)
                     }
                 }
+            }
+            .alert("Delete Listing?", isPresented: $showDeleteAlert) {
+                Button("Delete", role: .destructive) { handleDelete() }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("Are you sure you want to delete \"\(product.name)\"? This action cannot be undone.")
             }
         }
     }
@@ -256,6 +263,15 @@ struct ProductDetailEditView: View {
                 await MainActor.run {
                     isLoading = false
                     errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+}
+                    isLoading = false
+                    alertTitle = "Delete Failed"
+                    alertMessage = error.localizedDescription
+                    showErrorAlert = true
                 }
             }
         }

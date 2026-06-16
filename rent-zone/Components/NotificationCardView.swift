@@ -6,8 +6,10 @@ struct NotificationCardView: View {
     
     private var relativeTime: String {
         let interval = Date().timeIntervalSince(notification.createdAt)
-        let hours = Int(interval / 3600)
-        if hours < 1 { return "Just now" }
+        if interval < 60 { return "Just now" }
+        let minutes = Int(interval / 60)
+        if minutes < 60 { return "\(minutes)m ago" }
+        let hours = minutes / 60
         if hours < 24 { return "\(hours)h ago" }
         let days = hours / 24
         if days == 1 { return "Yesterday" }

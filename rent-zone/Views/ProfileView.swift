@@ -22,8 +22,7 @@ struct ProfileView: View {
             )
             .ignoresSafeArea()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
+            VStack(spacing: 0) {
                     // Close button
                     HStack {
                         Button(action: { dismiss() }) {
@@ -118,7 +117,6 @@ struct ProfileView: View {
 
                     Spacer(minLength: 40)
                 }
-            }
         }
         .sheet(isPresented: $isListingSheetPresented) {
             ListingInfoView()

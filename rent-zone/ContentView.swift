@@ -21,6 +21,7 @@ struct ContentView: View {
             
             Tab("Rent", systemImage: "plus", value: 3) {
                 UploadViewCamera()
+                    .id(appStore.rentTabResetId)
             }
         }
     }

@@ -19,7 +19,7 @@ struct ProductCardView: View {
     }
 
     var body: some View {
-        NavigationLink(value: product) {
+        NavigationLink(destination: ProductDetailView(product: product)) {
             VStack(alignment: .leading, spacing: 8) {
 
                 // MARK: - Image Section

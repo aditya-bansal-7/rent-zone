@@ -52,6 +52,7 @@ struct NotificationCentreView: View {
                         NotificationCardView(
                             notification: notification,
                             onViewRequest: {
+                                appStore.notificationStore.markRead(id: notification.id)
                                 selectedNotification = notification
                             }
                         )
@@ -67,6 +68,9 @@ struct NotificationCentreView: View {
         .clipShape(RoundedRectangle(cornerRadius: 36))
         .if26GlassEffect(cornerRadius: 36)
         .padding(.horizontal, 16)
+        .onAppear {
+            appStore.notificationStore.markAllRead()
+        }
         .sheet(item: $selectedNotification) { notification in
             RentalRequestDetailView(notification: notification)
                 .environment(appStore)
