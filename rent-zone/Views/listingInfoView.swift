@@ -4,6 +4,9 @@ struct ListingInfoView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppStore.self) var appStore
     
+    @State private var selectedProduct: Product? = nil
+    @State private var hasFetched = false
+    
     private var user: User? { appStore.userStore.currentUser }
     
     var body: some View {
@@ -68,7 +71,13 @@ struct ListingInfoView: View {
                 }
             }
             .task {
+                guard !hasFetched else { return }
+                hasFetched = true
                 await appStore.productStore.fetchMyItems()
+            }
+            .sheet(item: $selectedProduct) { product in
+                ProductDetailEditView(product: product)
+                    .environment(appStore)
             }
         }
     }
@@ -112,7 +121,7 @@ struct ListingInfoView: View {
     // MARK: - Stats Bar
     private var statsBar: some View {
         HStack(spacing: 0) {
-            statItem(count: 0, label: "RENTALS") // Placeholder for now
+            statItem(count: 0, label: "RENTALS")
             
             Divider()
                 .frame(height: 36)
@@ -122,7 +131,7 @@ struct ListingInfoView: View {
             Divider()
                 .frame(height: 36)
             
-            statItem(count: 0, label: "REVIEWS") // Placeholder for now
+            statItem(count: 0, label: "REVIEWS")
         }
         .padding(.vertical, 16)
         .background(
@@ -153,10 +162,9 @@ struct ListingInfoView: View {
         
         return LazyVGrid(columns: columns, spacing: 16) {
             ForEach(appStore.productStore.myProducts) { product in
-                NavigationLink(destination: ProductDetailView(product: product)) {
-                    ListingCardView(product: product)
-                }
-                .buttonStyle(PlainButtonStyle())
+                ListingCardView(product: product, onEdit: {
+                    selectedProduct = product
+                })
             }
         }
     }
@@ -165,7 +173,7 @@ struct ListingInfoView: View {
 // MARK: - Listing Card View
 struct ListingCardView: View {
     let product: Product
-    @State private var isEditSheetPresented = false
+    let onEdit: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -197,7 +205,7 @@ struct ListingCardView: View {
                 )
                 
                 // Edit button
-                Button(action: { isEditSheetPresented = true }) {
+                Button(action: onEdit) {
                     ZStack {
                         Circle()
                             .fill(Color.white)
@@ -228,9 +236,6 @@ struct ListingCardView: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemGray6))
         )
-        .sheet(isPresented: $isEditSheetPresented) {
-            ProductDetailEditView(product: product)
-        }
     }
 }
 
