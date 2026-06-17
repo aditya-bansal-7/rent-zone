@@ -109,6 +109,13 @@ export const deleteProduct = async (id: string, userId: string) => {
   const product = await prisma.product.findUnique({ where: { id } });
   if (!product) throw new Error('Product not found');
   if (product.listedByUserId !== userId) throw new Error('Forbidden');
+
+  // Delete related records first to avoid foreign key constraints
+  await prisma.review.deleteMany({ where: { productId: id } });
+  await prisma.rental.deleteMany({ where: { productId: id } });
+  await prisma.notification.deleteMany({ where: { productId: id } });
+  await prisma.virtualTryOn.deleteMany({ where: { productId: id } });
+
   await prisma.product.delete({ where: { id } });
 };
 

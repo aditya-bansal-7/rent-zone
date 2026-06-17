@@ -211,6 +211,35 @@ class AuthService {
             authenticated: true
         )
     }
+    
+    // MARK: Change Password
+    func changePassword(oldPassword: String, newPassword: String) async throws {
+        let body: [String: Any] = [
+            "oldPassword": oldPassword,
+            "newPassword": newPassword
+        ]
+        _ = try await APIClient.shared.request(
+            endpoint: "/auth/change-password",
+            method: "PATCH",
+            body: body,
+            authenticated: true
+        ) as EmptyResponse
+    }
+    
+    // MARK: Reset Password (OTP)
+    func resetPassword(email: String, code: String, newPassword: String) async throws {
+        let body: [String: Any] = [
+            "email": email,
+            "code": code,
+            "newPassword": newPassword
+        ]
+        _ = try await APIClient.shared.request(
+            endpoint: "/auth/reset-password",
+            method: "POST",
+            body: body,
+            authenticated: false
+        ) as EmptyResponse
+    }
 }
 
 // MARK: - Empty Response helper

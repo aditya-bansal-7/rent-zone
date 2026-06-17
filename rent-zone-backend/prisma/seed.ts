@@ -25,18 +25,18 @@ async function main() {
   // ── Categories ─────────────────────────────────────────────────────────────
   const categories = await Promise.all([
     // Women
-    prisma.category.create({ data: { name: 'Dresses', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.women } }),
+    prisma.category.create({ data: { name: 'Dress', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.women } }),
     prisma.category.create({ data: { name: 'Saree', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.women } }),
     prisma.category.create({ data: { name: 'Lehenga', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.women } }),
     prisma.category.create({ data: { name: 'Sharara', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.women } }),
-    prisma.category.create({ data: { name: 'Suits', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.women } }),
-    prisma.category.create({ data: { name: 'Formals', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.women } }),
+    prisma.category.create({ data: { name: 'Suit', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.women } }),
+    prisma.category.create({ data: { name: 'Formal', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.women } }),
     // Men
-    prisma.category.create({ data: { name: 'Tuxedos', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
+    prisma.category.create({ data: { name: 'Tuxedo', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
     prisma.category.create({ data: { name: 'Kurta', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
-    prisma.category.create({ data: { name: 'Blazers', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
-    prisma.category.create({ data: { name: 'Jackets', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
-    prisma.category.create({ data: { name: 'Formals', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
+    prisma.category.create({ data: { name: 'Blazer', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
+    prisma.category.create({ data: { name: 'Jacket', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
+    prisma.category.create({ data: { name: 'Formal', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
   ]);
 
   console.log(`✅ Created ${categories.length} categories`);

@@ -33,7 +33,7 @@ struct UploadView: View {
     @State private var navigateToListing = false
 
     let conditions = [("likeNew", "Like New"), ("good", "Good"), ("worn", "Fair")]
-    let sizes = ["XS", "S", "M", "L", "XL"]
+    let sizes = ["XS", "S", "M", "L", "XL", "XXL"]
     let occasions = ["Wedding", "Party", "Festival", "Casual", "Formal"]
 
     var body: some View {

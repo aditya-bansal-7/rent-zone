@@ -232,3 +232,56 @@ export const verifyOtp = async (email: string, code: string) => {
 
   return { email, isNewUser: true };
 };
+
+// ── Change Password ────────────────────────────────────────────────────────────
+export const changePassword = async (userId: string, oldPassword: string, newPassword: string) => {
+  const account = await prisma.account.findUnique({
+    where: { userId },
+  });
+
+  if (!account) {
+    throw new Error('Account not found');
+  }
+  
+  if (account.provider !== 'email' || !account.passwordHash) {
+    throw new Error('Password change is only available for email accounts');
+  }
+
+  const isValid = await bcrypt.compare(oldPassword, account.passwordHash);
+  if (!isValid) {
+    throw new Error('Incorrect old password');
+  }
+
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.account.update({
+    where: { id: account.id },
+    data: { passwordHash: newPasswordHash },
+  });
+};
+
+// ── Reset Password (OTP) ───────────────────────────────────────────────────────
+export const resetPassword = async (email: string, code: string, newPassword: string) => {
+  const otpEntry = await prisma.oTP.findUnique({ where: { email } });
+
+  if (!otpEntry || otpEntry.code !== code) {
+    throw new Error('Invalid verification code');
+  }
+
+  if (new Date() > otpEntry.expiresAt) {
+    throw new Error('Verification code has expired');
+  }
+
+  const account = await prisma.account.findUnique({ where: { email } });
+  if (!account || account.provider !== 'email') {
+    throw new Error('Password reset is only available for email accounts');
+  }
+
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.account.update({
+    where: { id: account.id },
+    data: { passwordHash: newPasswordHash },
+  });
+
+  // Delete the OTP after successful reset
+  await prisma.oTP.delete({ where: { email } });
+};
