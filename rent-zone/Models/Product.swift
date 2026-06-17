@@ -11,7 +11,7 @@ enum ProductCondition: String, Hashable, CaseIterable {
         case .new: return "New"
         case .likeNew: return "Like New"
         case .good: return "Good"
-        case .worn: return "Worn"
+        case .worn: return "Fair"
         }
     }
 }

@@ -269,16 +269,16 @@ class CategoryStore {
 
     private static func defaultCategories() -> [Category] {
         [
-            Category(id: "women-dresses", name: "Dress", images: "Dress", type: .women),
-            Category(id: "women-suits", name: "Suit", images: "Suit", type: .women),
+            Category(id: "women-dress", name: "Dress", images: "Dress", type: .women),
+            Category(id: "women-suit", name: "Suit", images: "Suit", type: .women),
             Category(id: "women-saree", name: "Saree", images: "Saree", type: .women),
             Category(id: "women-lehenga", name: "Lehenga", images: "Lehanga", type: .women),
-            Category(id: "women-formals", name: "Formal", images: "Formal", type: .women),
+            Category(id: "women-formal", name: "Formal", images: "Formal", type: .women),
             Category(id: "women-sharara", name: "Sharara", images: "Sharara", type: .women),
-            Category(id: "men-tuxedos", name: "Tuxedo", images: "Tuxedo", type: .men),
-            Category(id: "men-jackets", name: "Jacket", images: "Jacket", type: .men),
-            Category(id: "men-blazers", name: "Blazer", images: "Blazer", type: .men),
-            Category(id: "men-formals", name: "Formal", images: "Formal", type: .men),
+            Category(id: "men-tuxedo", name: "Tuxedo", images: "Tuxedo", type: .men),
+            Category(id: "men-jacket", name: "Jacket", images: "Jacket", type: .men),
+            Category(id: "men-blazer", name: "Blazer", images: "Blazer", type: .men),
+            Category(id: "men-formal", name: "Formal", images: "Formal", type: .men),
             Category(id: "men-kurta", name: "Kurta", images: "Kurta", type: .men),
         ]
     }

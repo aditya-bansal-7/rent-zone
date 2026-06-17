@@ -71,11 +71,13 @@ struct ProductDetailEditView: View {
                                     .font(.system(size: 16, weight: .bold))
                                 
                                 Menu {
-                                    ForEach(ProductCondition.allCases, id: \.self) { condition in
+                                    ForEach([("likeNew", "Like New"), ("good", "Good"), ("worn", "Fair")], id: \.0) { cond in
                                         Button(action: {
-                                            selectedCondition = condition
+                                            if let condition = ProductCondition(rawValue: cond.0) {
+                                                selectedCondition = condition
+                                            }
                                         }) {
-                                            Text(condition.displayName)
+                                            Text(cond.1)
                                         }
                                     }
                                 } label: {
@@ -173,16 +175,17 @@ struct ProductDetailEditView: View {
                         // MARK: - Update Button
                         Button(action: handleUpdate) {
                             if isLoading {
-                                ProgressView().tint(.white)
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .black))
                             } else {
                                 Text("Update Product")
-                                    .fontWeight(.bold)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.black)
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.black)
-                        .foregroundColor(.white)
+                        .padding(.vertical, 18)
+                        .background(Color(red: 243/255, green: 236/255, blue: 255/255))
                         .cornerRadius(30)
                         .disabled(isLoading)
                     }
@@ -289,15 +292,21 @@ struct ProductDetailEditView: View {
     
     private func handleDelete() {
         isLoading = true
+        let productId = product.id
         Task {
             do {
-                try await ProductService.shared.deleteProduct(id: product.id)
+                try await ProductService.shared.deleteProduct(id: productId)
                 await MainActor.run {
-                    appStore.productStore.removeItem(id: product.id)
                     isLoading = false
                     dismiss()
+                    // Delay store removal so the sheet dismissal animation completes
+                    // before the parent ListingCardView is destroyed
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        appStore.productStore.removeItem(id: productId)
+                    }
                 }
             } catch {
+                print("[Delete] Error: \(error)")
                 await MainActor.run {
                     isLoading = false
                     errorMessage = error.localizedDescription
@@ -306,4 +315,5 @@ struct ProductDetailEditView: View {
         }
     }
 }
+
 
