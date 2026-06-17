@@ -306,12 +306,4 @@ struct ProductDetailEditView: View {
         }
     }
 }
-                    isLoading = false
-                    alertTitle = "Delete Failed"
-                    alertMessage = error.localizedDescription
-                    showErrorAlert = true
-                }
-            }
-        }
-    }
-}
+

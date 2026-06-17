@@ -6,19 +6,19 @@ struct SettingsView: View {
     @State private var darkModeEnabled = false
     @State private var locationServicesEnabled = true
     
+    // For alert presentation
+    @State private var showDeleteAlert = false
+    
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("Account")) {
-                    NavigationLink(destination: Text("Change Password")) {
+                Section(header: Text("Account").font(.subheadline).foregroundColor(.gray)) {
+                    NavigationLink(destination: ChangePasswordView()) {
                         Label("Change Password", systemImage: "lock")
-                    }
-                    NavigationLink(destination: Text("Email Notifications")) {
-                        Label("Email Preferences", systemImage: "envelope")
                     }
                 }
                 
-                Section(header: Text("App Settings")) {
+                Section(header: Text("App Settings").font(.subheadline).foregroundColor(.gray)) {
                     Toggle(isOn: $notificationsEnabled) {
                         Label("Push Notifications", systemImage: "bell")
                     }
@@ -28,15 +28,39 @@ struct SettingsView: View {
                     Toggle(isOn: $locationServicesEnabled) {
                         Label("Location Services", systemImage: "location")
                     }
+                    NavigationLink(destination: LanguageSettingsView()) {
+                        Label("Language", systemImage: "globe")
+                    }
                 }
                 
-                Section(header: Text("Data")) {
-                    Button(action: {}) {
+                Section(header: Text("Support & Legal").font(.subheadline).foregroundColor(.gray)) {
+                    NavigationLink(destination: HelpAndSupportView()) {
+                        Label("Help & Support", systemImage: "questionmark.circle")
+                    }
+                    NavigationLink(destination: Text("Terms of Service Content").navigationTitle("Terms of Service")) {
+                        Label("Terms of Service", systemImage: "doc.text")
+                    }
+                }
+                
+                Section(header: Text("Data").font(.subheadline).foregroundColor(.gray)) {
+                    Button(action: {
+                        // Clear cache action
+                    }) {
                         Label("Clear Cache", systemImage: "trash")
+                            .foregroundColor(.primary)
+                    }
+                }
+                
+                Section {
+                    Button(action: {
+                        showDeleteAlert = true
+                    }) {
+                        Label("Delete Account", systemImage: "person.crop.circle.badge.xmark")
                             .foregroundColor(.red)
                     }
                 }
             }
+            .listStyle(InsetGroupedListStyle())
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -45,6 +69,14 @@ struct SettingsView: View {
                         dismiss()
                     }
                 }
+            }
+            .alert("Delete Account", isPresented: $showDeleteAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    // Perform account deletion logic here
+                }
+            } message: {
+                Text("Are you sure you want to delete your account? This action cannot be undone.")
             }
         }
     }
