@@ -22,7 +22,7 @@ struct UserHeaderView: View {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell")
                         .font(.system(size: 22))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                     
                     if appStore.notificationStore.hasUnread {
                         Circle()

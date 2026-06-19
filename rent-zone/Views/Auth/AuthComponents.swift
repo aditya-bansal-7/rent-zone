@@ -28,11 +28,11 @@ struct AuthInputField: View {
             }
         }
         .padding(16)
-        .background(Color(white: 0.96))
+        .background(Color(UIColor.secondarySystemBackground))
         .cornerRadius(15)
         .overlay(
             RoundedRectangle(cornerRadius: 15)
-                .stroke(isSuccess ? Color.green.opacity(0.5) : Color(white: 0.9), lineWidth: 1)
+                .stroke(isSuccess ? Color.green.opacity(0.5) : Color(UIColor.separator), lineWidth: 1)
         )
         .disabled(isDisabled)
         .opacity(isDisabled ? 0.6 : 1.0)
@@ -59,7 +59,7 @@ struct PrimaryAuthButton: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 56)
-            .background(isDisabled ? Color(white: 0.9) : Color(red: 243/255, green: 236/255, blue: 255/255))
+            .background(isDisabled ? Color(UIColor.tertiarySystemFill) : Color(red: 243/255, green: 236/255, blue: 255/255))
             .cornerRadius(30)
         }
         .disabled(isDisabled || isLoading)
@@ -102,15 +102,15 @@ struct SocialAuthButtons: View {
                         .foregroundColor(.blue)
                     Text("Continue with Google")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
-                .background(Color.white)
+                .background(Color(UIColor.systemBackground))
                 .cornerRadius(30)
                 .overlay(
                     RoundedRectangle(cornerRadius: 30)
-                        .stroke(Color(white: 0.9), lineWidth: 1)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
                 )
             }
         }

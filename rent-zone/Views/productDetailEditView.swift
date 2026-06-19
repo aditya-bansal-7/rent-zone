@@ -83,7 +83,7 @@ struct ProductDetailEditView: View {
                                 } label: {
                                     HStack {
                                         Text(selectedCondition.displayName)
-                                            .foregroundColor(.black)
+                                            .foregroundColor(.primary)
                                             .lineLimit(1)
                                             .minimumScaleFactor(0.8)
                                         
@@ -117,7 +117,7 @@ struct ProductDetailEditView: View {
                                 } label: {
                                     HStack {
                                         Text(selectedSize)
-                                            .foregroundColor(.black)
+                                            .foregroundColor(.primary)
                                             .lineLimit(1)
                                             .minimumScaleFactor(0.8)
                                         
@@ -180,7 +180,7 @@ struct ProductDetailEditView: View {
                             } else {
                                 Text("Update Product")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.primary)
                             }
                         }
                         .frame(maxWidth: .infinity)

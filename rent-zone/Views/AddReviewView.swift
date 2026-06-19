@@ -87,7 +87,7 @@ struct AddReviewView: View {
                     }
                     .padding(20)
                     .frame(maxWidth: .infinity)
-                    .background(Color.white)
+                    .background(Color(UIColor.systemBackground))
                     .cornerRadius(20)
                     .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
 
@@ -122,7 +122,7 @@ struct AddReviewView: View {
                         }
                     }
                     .padding(20)
-                    .background(Color.white)
+                    .background(Color(UIColor.systemBackground))
                     .cornerRadius(20)
                     .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
 
@@ -206,7 +206,7 @@ struct AddReviewView: View {
                         }
                     }
                     .padding(20)
-                    .background(Color.white)
+                    .background(Color(UIColor.systemBackground))
                     .cornerRadius(20)
                     .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
 
@@ -265,7 +265,7 @@ struct AddReviewView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
             }
-            .background(Color(white: 0.97).ignoresSafeArea())
+            .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("Write a Review")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -273,7 +273,7 @@ struct AddReviewView: View {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                             .frame(width: 32, height: 32)
                             .background(Color(.systemGray6))
                             .clipShape(Circle())

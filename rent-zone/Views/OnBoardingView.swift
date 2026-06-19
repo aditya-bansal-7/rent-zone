@@ -90,7 +90,7 @@ struct OnboardingView: View {
             .padding(.top, 12)
             .padding(.trailing, 24)
         }
-        .background(Color.white)
+        .background(Color(UIColor.systemBackground))
         .ignoresSafeArea(.container, edges: .bottom)
     }
 }

@@ -107,7 +107,7 @@ struct ReportUserView: View {
                             TextEditor(text: $description)
                                 .frame(height: 120)
                                 .padding(6)
-                                .background(Color.white)
+                                .background(Color(UIColor.systemBackground))
                                 .cornerRadius(12)
                                 .shadow(color: .black.opacity(0.08), radius: 4)
                         }
@@ -118,7 +118,7 @@ struct ReportUserView: View {
                             showSuccess = true
                         } label: {
                             Text("Submit Report")
-                                .foregroundColor(isFormValid ? .black : .gray)
+                                .foregroundColor(isFormValid ? .primary : .gray)
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(isFormValid ? Color(red: 243/255, green: 236/255, blue: 255/255) : Color(.systemGray5))
@@ -149,7 +149,7 @@ struct ReportUserView: View {
                     } label: {
                         Image(systemName: "chevron.left")
                             .font(.body.weight(.semibold))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                     }
                 }
                 

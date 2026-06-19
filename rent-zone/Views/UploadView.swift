@@ -166,12 +166,12 @@ struct UploadView: View {
                                     .progressViewStyle(CircularProgressViewStyle(tint: .black))
                                 Text("Uploading Outfit...")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.primary)
                             }
                         } else {
                             Text("List My Outfit")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                         }
                     }
                     .frame(maxWidth: .infinity)

@@ -29,6 +29,17 @@ const updateProfileSchema = z.object({
   preferredCategory: z.enum(['men', 'women']).optional().nullable(),
 });
 
+const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1, 'Old password is required'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+});
+
+const resetPasswordSchema = z.object({
+  email: z.string().email(),
+  code: z.string().length(6, 'Verification code must be 6 digits'),
+  newPassword: z.string().min(6, 'New password must be at least 6 characters'),
+});
+
 export const register = async (req: Request, res: Response) => {
   try {
     const data = registerSchema.parse(req.body);
@@ -104,7 +115,13 @@ export const getMe = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const data = updateProfileSchema.parse(req.body);
-    const user = await authService.updateProfile(req.user!.userId, data);
+    const user = await authService.updateProfile(req.user!.userId, {
+  ...data,
+  university: data.university ?? undefined,
+  phoneNumber: data.phoneNumber ?? undefined,
+  preferredCategory: data.preferredCategory ?? undefined,
+  profileImage: data.profileImage ?? undefined,
+});
     sendSuccess(res, user, 200, 'Profile updated successfully');
   } catch (err: any) {
     sendError(res, err.message);
@@ -142,5 +159,26 @@ export const uploadProfileImage = async (req: Request, res: Response) => {
     sendSuccess(res, user, 200, 'Profile image uploaded');
   } catch (err: any) {
     sendError(res, err.message);
+  }
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const data = changePasswordSchema.parse(req.body);
+    await authService.changePassword(req.user!.userId, data.oldPassword, data.newPassword);
+    sendSuccess(res, {}, 200, 'Password changed successfully');
+  } catch (err: any) {
+    const status = err.message === 'Incorrect old password' ? 401 : 400;
+    sendError(res, err.message, status);
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const data = resetPasswordSchema.parse(req.body);
+    await authService.resetPassword(data.email, data.code, data.newPassword);
+    sendSuccess(res, {}, 200, 'Password reset successfully');
+  } catch (err: any) {
+    sendError(res, err.message, 400);
   }
 };

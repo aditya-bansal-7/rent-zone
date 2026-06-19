@@ -49,7 +49,7 @@ struct ChatListView: View {
             }
             .listStyle(.plain)
         }
-            .background(Color(white: 0.97))
+            .background(Color(UIColor.systemBackground))
             .navigationTitle("Chat")
             .navigationDestination(item: $bindableAppStore.selectedChatConversation) { conversation in
                 PersonalChatView(conversation: conversation)
@@ -110,7 +110,7 @@ struct ChatRowView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(conversation.participantName)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                 Text(conversation.lastMessageTime)
                     .font(.system(size: 12, weight: .regular))
                     .foregroundColor(.gray)

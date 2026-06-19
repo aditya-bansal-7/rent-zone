@@ -141,7 +141,7 @@ struct ProductListView: View {
                 }
             }
         }
-        .background(Color.white)
+        .background(Color(UIColor.systemBackground))
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .navigationDestination(for: Product.self) { product in
@@ -163,7 +163,7 @@ struct ProductListView: View {
                     .padding(.bottom, 16)
                     .background(
                         UnevenRoundedRectangle(topLeadingRadius: 24, topTrailingRadius: 24)
-                            .fill(Color.white)
+                            .fill(Color(UIColor.systemBackground))
                             .shadow(color: .black.opacity(0.1), radius: 16, x: 0, y: -4)
                     )
                 }
@@ -198,14 +198,14 @@ struct ProductListView: View {
             }) {
                 Image(systemName: "chevron.left")
                     .font(.title3.weight(.semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
             }
             
             Spacer()
             
             Text(title)
                 .font(.title3.weight(.bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .lineLimit(1)
             
             Spacer()
@@ -218,12 +218,12 @@ struct ProductListView: View {
             }) {
                 Image(systemName: "magnifyingglass")
                     .font(.title3.weight(.semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.white)
+        .background(Color(UIColor.systemBackground))
     }
     
     private var searchBar: some View {
@@ -265,7 +265,7 @@ struct ProductListView: View {
                     Text("Sort")
                         .font(.body.weight(.medium))
                 }
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .padding(.horizontal, 28)
                 .padding(.vertical, 12)
                 .background(
@@ -288,7 +288,7 @@ struct ProductListView: View {
                             .frame(width: 7, height: 7)
                     }
                 }
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .background(
@@ -300,7 +300,7 @@ struct ProductListView: View {
             Spacer()
         }
         .padding(.vertical, 8)
-        .background(Color.white)
+        .background(Color(UIColor.systemBackground))
     }
 }
 

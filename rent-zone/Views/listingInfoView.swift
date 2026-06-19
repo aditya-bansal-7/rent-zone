@@ -61,13 +61,15 @@ struct ListingInfoView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(Color.black.opacity(0.55))
-                            .frame(width: 28, height: 28)
-                            .background(Circle().fill(Color.black.opacity(0.06)))
-                            .offset(y: 1.5)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .frame(width: 44, height: 44)
+                            .background(
+                                Circle()
+                                    .fill(.ultraThinMaterial)
+                            )
+                            .clipShape(Circle())
                     }
-                    .buttonStyle(PremiumCloseButtonStyle())
                 }
             }
             .task {
@@ -208,7 +210,7 @@ struct ListingCardView: View {
                 Button(action: onEdit) {
                     ZStack {
                         Circle()
-                            .fill(Color.white)
+                            .fill(Color(UIColor.systemBackground))
                             .frame(width: 28, height: 28)
                             .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                         
