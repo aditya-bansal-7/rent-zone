@@ -47,10 +47,10 @@ struct UploadViewCamera: View {
                     HStack(spacing: 8) {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 16))
-                        Text(selectedImages.isEmpty ? "Upload Photo" : "Change Photos")
+                        Text(selectedImages.isEmpty ? "Upload Photo" : "Edit Photos")
                             .font(.system(size: 16, weight: .medium))
                     }
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(.black)
                     .padding(.horizontal, 70)
                     .padding(.vertical, 14)
                     .background(
@@ -58,30 +58,32 @@ struct UploadViewCamera: View {
                             .stroke(Color.gray.opacity(0.4), lineWidth: 2)
                     )
                 }
-                .tint(.primary)
 
                 Spacer().frame(height: 20)
 
-                Text("Upload clear, attractive photos\nof your outfit to attract renters.")
-                    .font(.system(size: 15))
-                    .foregroundStyle(.gray)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
+                if selectedImages.isEmpty {
+                    Text("Upload clear, attractive photos\nof your outfit to attract renters.")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.gray)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                }
 
                 Spacer().frame(height: 30)
 
-                // Next button
-                NavigationLink(destination: UploadView(selectedImages: selectedImages)) {
-                    Text("Next")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(selectedImages.isEmpty ? .gray : .primary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(selectedImages.isEmpty ? Color.gray.opacity(0.1) : Color.purple.opacity(0.15))
-                        .cornerRadius(30)
+                // Next button — only shown when images are selected
+                if !selectedImages.isEmpty {
+                    NavigationLink(destination: UploadView(selectedImages: selectedImages)) {
+                        Text("Continue")
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.purple.opacity(0.15))
+                            .cornerRadius(30)
+                    }
+                    .padding(.horizontal, 40)
                 }
-                .disabled(selectedImages.isEmpty)
-                .padding(.horizontal, 40)
 
                 Spacer().frame(height: 40)
             }

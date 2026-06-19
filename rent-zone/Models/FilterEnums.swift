@@ -19,6 +19,5 @@ enum Occasion: String, CaseIterable {
     case wedding = "Wedding"
     case party = "Party"
     case festival = "Festival"
-    case casual = "Casual"
-    case formal = "Formal"
+    case other = "Other"
 }

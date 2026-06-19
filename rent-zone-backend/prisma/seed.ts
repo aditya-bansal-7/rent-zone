@@ -36,14 +36,13 @@ async function main() {
     prisma.category.create({ data: { name: 'Kurta', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
     prisma.category.create({ data: { name: 'Blazer', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
     prisma.category.create({ data: { name: 'Jacket', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
-    prisma.category.create({ data: { name: 'Formal', image: 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/leather-bag-gray.jpg', type: CategoryType.men } }),
   ]);
 
   console.log(`✅ Created ${categories.length} categories`);
 
   const [
     dressescat, sareecat, lehengacat, shararacat, suitsWomencat, formalsWomencat,
-    tuxedocat, kurtacat, blazercat, jacketscat, formalsMencat,
+    tuxedocat, kurtacat, blazercat, jacketscat,
   ] = categories;
 
   // ── Users ─────────────────────────────────────────────────────────────────
