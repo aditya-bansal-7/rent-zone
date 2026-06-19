@@ -54,7 +54,7 @@ struct CategorySectionView: View {
             Text(title)
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
             
@@ -83,7 +83,7 @@ struct CategoryItemView: View {
             
             Text(category.name)
                 .font(.subheadline)
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
         }
     }
 }

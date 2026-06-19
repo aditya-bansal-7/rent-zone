@@ -22,10 +22,10 @@ struct AuthOnboardingStepView: View {
                         Button(action: { selectedCategory = cat }) {
                             Text(cat.rawValue.capitalized)
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(selectedCategory == cat ? .white : .black)
+                                .foregroundColor(selectedCategory == cat ? .white : .primary)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
-                                .background(selectedCategory == cat ? Color.black : Color(white: 0.96))
+                                .background(selectedCategory == cat ? Color.primary : Color(UIColor.systemGray6))
                                 .cornerRadius(12)
                         }
                     }

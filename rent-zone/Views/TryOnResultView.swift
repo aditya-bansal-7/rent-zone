@@ -14,7 +14,7 @@ struct TryOnResultView: View {
 
     var body: some View {
         ZStack {
-            Color(white: 0.97)
+            Color(UIColor.systemGroupedBackground)
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -23,7 +23,7 @@ struct TryOnResultView: View {
                     Button(action: { dismiss() }) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                             .frame(width: 44, height: 44)
                             .background {
                                 Group {
@@ -43,7 +43,7 @@ struct TryOnResultView: View {
 
                     Text("Try-On Result")
                         .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
 
                     Spacer()
 
@@ -101,12 +101,12 @@ struct TryOnResultView: View {
                                             .progressViewStyle(CircularProgressViewStyle(tint: .black))
                                         Text("Sending...")
                                             .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(.black)
+                                            .foregroundColor(.primary)
                                     }
                                 } else {
                                     Text("Request to Rent")
                                         .font(.system(size: 17, weight: .bold))
-                                        .foregroundColor(.black)
+                                        .foregroundColor(.primary)
                                 }
                             }
                             .frame(maxWidth: .infinity)
@@ -146,10 +146,10 @@ struct TryOnResultView: View {
                                 HStack(spacing: 8) {
                                     Image(systemName: isSaved ? "heart.fill" : "heart")
                                         .font(.system(size: 18, weight: .medium))
-                                        .foregroundColor(isSaved ? .red : .black)
+                                        .foregroundColor(isSaved ? .red : .primary)
                                     Text(isSaved ? "Saved" : "Save")
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.black)
+                                        .foregroundColor(.primary)
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
@@ -177,7 +177,7 @@ struct TryOnResultView: View {
                                     Text("Share")
                                         .font(.system(size: 16, weight: .semibold))
                                 }
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
                                 .background {

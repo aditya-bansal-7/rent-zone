@@ -80,11 +80,16 @@ class APIClient {
         }
 
         if httpResponse.statusCode == 401 {
-            // Try to refresh token
+            // First check if the server returned a meaningful error message
+            if let wrapper = try? decoder.decode(APIResponse<T>.self, from: data),
+               let message = wrapper.message {
+                // A real server-side 401 error (e.g., wrong password) — surface it immediately
+                throw APIError.serverError(message)
+            }
+            // Otherwise it's a token expiry — try to refresh and retry
             if authenticated {
                 do {
                     try await AuthService.shared.refreshTokens()
-                    // Retry with new token
                     return try await self.request(endpoint: endpoint, method: method, body: body, authenticated: authenticated)
                 } catch {
                     throw APIError.unauthorized

@@ -16,7 +16,7 @@ struct SortSheetView: View {
             // Header
             Text("Sort by")
                 .font(.title2.weight(.bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .padding(.horizontal, 24)
                 .padding(.top, 24)
                 .padding(.bottom, 20)
@@ -36,14 +36,14 @@ struct SortSheetView: View {
                         HStack {
                             Text(option.rawValue)
                                 .font(.body)
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                             
                             Spacer()
                             
                             if tempSort == option {
                                 Image(systemName: "checkmark")
                                     .font(.body.weight(.semibold))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.primary)
                             }
                         }
                         .padding(.horizontal, 24)
@@ -59,7 +59,7 @@ struct SortSheetView: View {
             }) {
                 Text("Done")
                     .font(.headline.weight(.bold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(

@@ -61,7 +61,7 @@ struct FilterView: View {
             // MARK: - Bottom Button
             bottomButton
         }
-        .background(Color.white)
+        .background(Color(UIColor.systemBackground))
         .onAppear {
             tempLow = priceRange.lowerBound
             tempHigh = priceRange.upperBound
@@ -77,14 +77,14 @@ struct FilterView: View {
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.left")
                     .font(.title3.weight(.semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
             }
             
             Spacer()
             
             Text("Filters")
                 .font(.title2.weight(.bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
             
             Spacer()
             
@@ -103,7 +103,7 @@ struct FilterView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Price Range")
                 .font(.headline.weight(.bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
             
             HStack {
                 Text("₹\(Int(tempLow))")
@@ -125,7 +125,7 @@ struct FilterView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Size")
                 .font(.headline.weight(.bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
             
             HStack(spacing: 10) {
                 ForEach(ClothingSize.allCases, id: \.self) { size in
@@ -138,7 +138,7 @@ struct FilterView: View {
                     }) {
                         Text(size.rawValue)
                             .font(.caption.weight(.medium))
-                            .foregroundColor(tempSizes.contains(size) ? .white : .black)
+                            .foregroundColor(tempSizes.contains(size) ? .white : .primary)
                             .frame(width: 40, height: 40)
                             .background(
                                 Circle()
@@ -166,7 +166,7 @@ struct FilterView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Ocassion")
                 .font(.headline.weight(.bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
             
             ForEach(Occasion.allCases, id: \.self) { occasion in
                 Button(action: {
@@ -179,7 +179,7 @@ struct FilterView: View {
                     HStack {
                         Text(occasion.rawValue)
                             .font(.subheadline)
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                         
                         Spacer()
                         
@@ -200,14 +200,14 @@ struct FilterView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Date")
                 .font(.headline.weight(.bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
             
             Button(action: {
                 showDatePicker.toggle()
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "calendar")
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                     
                     Text(tempDate != nil ? formattedDate(tempDate!) : "Select date")
                         .font(.subheadline)
@@ -251,7 +251,7 @@ struct FilterView: View {
         }) {
             Text(hasActiveFilters ? "Show \(totalResults) Results" : "Close")
                 .font(.headline.weight(.bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(
@@ -270,7 +270,7 @@ struct FilterView: View {
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 30)
-        .background(Color.white)
+        .background(Color(UIColor.systemBackground))
     }
     
     // MARK: - Helpers
@@ -319,13 +319,13 @@ struct RangeSliderView: View {
                 
                 // Active track
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.black)
+                    .fill(Color.primary)
                     .frame(width: highOffset - lowOffset, height: 3)
                     .offset(x: lowOffset + 14)
                 
                 // Low thumb
                 Circle()
-                    .fill(Color.black)
+                    .fill(Color.primary)
                     .frame(width: 22, height: 22)
                     .shadow(color: .black.opacity(0.15), radius: 3, x: 0, y: 2)
                     .offset(x: lowOffset + 3)
@@ -339,7 +339,7 @@ struct RangeSliderView: View {
                 
                 // High thumb
                 Circle()
-                    .fill(Color.black)
+                    .fill(Color.primary)
                     .frame(width: 22, height: 22)
                     .shadow(color: .black.opacity(0.15), radius: 3, x: 0, y: 2)
                     .offset(x: highOffset + 3)

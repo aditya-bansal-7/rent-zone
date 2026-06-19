@@ -16,7 +16,7 @@ struct TermsFooter: View {
                 } label: {
                     Text("Terms of Service")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                         .underline()
                 }
 
@@ -29,7 +29,7 @@ struct TermsFooter: View {
                 } label: {
                     Text("Privacy Policy")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                         .underline()
                 }
             }

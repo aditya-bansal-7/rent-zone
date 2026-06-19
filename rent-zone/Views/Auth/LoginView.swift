@@ -48,7 +48,7 @@ struct LoginView: View {
                 }
             }
         }
-        .background(Color.white.edgesIgnoringSafeArea(.all))
+        .background(Color(UIColor.systemBackground).edgesIgnoringSafeArea(.all))
         .animation(.easeInOut(duration: 0.3), value: step)
     }
 
@@ -62,7 +62,7 @@ struct LoginView: View {
             Button(action: { dismiss() }) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 24))
-                    .foregroundColor(Color(white: 0.8))
+                    .foregroundColor(.secondary)
             }
         }
         .padding(.horizontal, 24)
@@ -165,7 +165,7 @@ struct LoginView: View {
                             .foregroundColor(.gray)
                         Text("Create Account")
                             .fontWeight(.bold)
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                     }
                     .font(.system(size: 14))
                 }
