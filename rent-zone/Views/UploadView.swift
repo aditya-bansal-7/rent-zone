@@ -34,7 +34,7 @@ struct UploadView: View {
 
     let conditions = [("likeNew", "Like New"), ("good", "Good"), ("worn", "Fair")]
     let sizes = ["XS", "S", "M", "L", "XL", "XXL"]
-    let occasions = ["Wedding", "Party", "Festival", "Casual", "Formal"]
+    let occasions = ["Wedding", "Party", "Festival", "Other"]
 
     var body: some View {
         Form {
@@ -67,7 +67,7 @@ struct UploadView: View {
                             Text(cond.1).tag(cond.0)
                         }
                     }
-                    .pickerStyle(.segmented)
+                    .pickerStyle(.menu)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -78,7 +78,7 @@ struct UploadView: View {
                             Text(size).tag(size)
                         }
                     }
-                    .pickerStyle(.segmented)
+                    .pickerStyle(.menu)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -89,7 +89,6 @@ struct UploadView: View {
                         ForEach(occasions, id: \.self) { occ in
                             Text(occ).tag(occ)
                         }
-                        Text("Other").tag("Other")
                     }
                     .pickerStyle(.menu)
                 }
@@ -194,7 +193,7 @@ struct UploadView: View {
             ListingInfoView()
                 .environment(appStore)
         }
-        .alert("Outfit Listed! 🎉", isPresented: $uploadSuccess) {
+        .alert("Outfit Listed!", isPresented: $uploadSuccess) {
             Button("View My Listings") {
                 appStore.rentTabResetId += 1
                 navigateToListing = true

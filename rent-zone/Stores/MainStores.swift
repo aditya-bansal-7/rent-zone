@@ -278,7 +278,6 @@ class CategoryStore {
             Category(id: "men-tuxedo", name: "Tuxedo", images: "Tuxedo", type: .men),
             Category(id: "men-jacket", name: "Jacket", images: "Jacket", type: .men),
             Category(id: "men-blazer", name: "Blazer", images: "Blazer", type: .men),
-            Category(id: "men-formal", name: "Formal", images: "Formal", type: .men),
             Category(id: "men-kurta", name: "Kurta", images: "Kurta", type: .men),
         ]
     }
