@@ -66,7 +66,7 @@ struct ProductDetailView: View {
                             HStack(spacing: 6) {
                                 ForEach(0..<product.imageURLs.count, id: \.self) { index in
                                     Capsule()
-                                        .fill(currentImageIndex == index ? Color.black : Color.black.opacity(0.15))
+                                        .fill(currentImageIndex == index ? Color.primary : Color.primary.opacity(0.15))
                                         .frame(width: currentImageIndex == index ? 16 : 6, height: 6)
                                         .animation(.spring(response: 0.25, dampingFraction: 0.75), value: currentImageIndex)
                                 }
@@ -94,7 +94,7 @@ struct ProductDetailView: View {
                         Button(action: { dismiss() }) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                                 .frame(width: 44, height: 44)
                                 .background(.ultraThinMaterial)
                                 .clipShape(Circle())
@@ -110,10 +110,10 @@ struct ProductDetailView: View {
                                     VStack(spacing: 4) {
                                         Image(systemName: isFavorite ? "heart.fill" : "heart")
                                             .font(.system(size: 22, weight: .medium))
-                                            .foregroundColor(isFavorite ? .red : .black)
+                                            .foregroundColor(isFavorite ? .red : .primary)
                                         Text("Favourite")
                                             .font(.system(size: 10, weight: .medium))
-                                            .foregroundColor(.black)
+                                            .foregroundColor(.primary)
                                     }
                                 }
 
@@ -126,7 +126,7 @@ struct ProductDetailView: View {
                                         Text("Share")
                                             .font(.system(size: 10, weight: .medium))
                                     }
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.primary)
                                 }
                             }
                             .padding(.horizontal, 20)
@@ -152,7 +152,7 @@ struct ProductDetailView: View {
                             }) {
                                 Image(systemName: "ellipsis")
                                     .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.primary)
                                     .frame(width: 44, height: 44)
                                     .background(.ultraThinMaterial)
                                     .clipShape(Circle())
@@ -192,7 +192,7 @@ struct ProductDetailView: View {
                     Button(action: { showVirtualTryOn = true }) {
                             Text("Virtual Try On")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(Color(red: 243/255, green: 236/255, blue: 255/255))
@@ -202,7 +202,7 @@ struct ProductDetailView: View {
                 }
                 .padding(24)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white)
+                .background(Color(UIColor.systemBackground))
                 .cornerRadius(30)
                 .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: -5)
                 .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
@@ -267,7 +267,7 @@ struct ProductDetailView: View {
                                     Text(showCalendar ? "Show Chips" : "Calendar")
                                 }
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                             }
                         }
                         
@@ -304,17 +304,17 @@ struct ProductDetailView: View {
                                             Text(monthStr)
                                                 .font(.system(size: 10, weight: .bold))
                                         }
-                                        .foregroundColor(.black)
+                                        .foregroundColor(.primary)
                                         .frame(width: 55, height: 65)
-                                        .background(isSelected ? Color(red: 230/255, green: 210/255, blue: 255/255) : (inRange ? Color(red: 243/255, green: 236/255, blue: 255/255) : Color.white))
+                                        .background(isSelected ? Color(red: 230/255, green: 210/255, blue: 255/255) : (inRange ? Color(red: 243/255, green: 236/255, blue: 255/255) : Color(UIColor.systemBackground)))
                                         .cornerRadius(10)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color.black, lineWidth: 1.5)
+                                                .stroke(Color.primary, lineWidth: 1.5)
                                         )
                                         .overlay(
                                             CrossLineShape()
-                                                .stroke(Color.black, lineWidth: isBooked ? 1.5 : 0)
+                                                .stroke(Color.primary, lineWidth: isBooked ? 1.5 : 0)
                                         )
                                         .opacity(isBooked ? 0.4 : 1.0)
                                     }
@@ -433,11 +433,11 @@ struct ProductDetailView: View {
                     ZStack {
                         if isRequestingRent {
                             ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                                .progressViewStyle(CircularProgressViewStyle(tint: .primary))
                         } else {
                             Text(rentButtonText)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -482,7 +482,7 @@ struct ProductDetailView: View {
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(.gray)
                         }
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 14)
@@ -513,7 +513,7 @@ struct ProductDetailView: View {
         }
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
-        .background(Color(white: 0.98).edgesIgnoringSafeArea(.all))
+        .background(Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all))
         .task {
             // Initialize favourite state from user's actual favourites
             if let favorites = appStore.userStore.currentUser?.favouriteProducts {
@@ -744,11 +744,11 @@ struct ProductDetailView: View {
                     .font(.system(size: 20, weight: .bold))
                 Text(monthStr)
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
-            .background(Color.white)
+            .background(Color(UIColor.systemBackground))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -795,7 +795,7 @@ struct ProductDetailView: View {
                 Spacer()
                 Text("₹\(Int(product.rentPricePerDay) * days + Int(product.securityDeposit))")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
             }
         }
         .padding(16)
@@ -809,7 +809,7 @@ struct ProductDetailView: View {
                 .font(.system(size: 14, weight: .bold))
             Text(value)
                 .font(.system(size: 14, weight: .regular))
-                .foregroundColor(.black.opacity(0.8))
+                .foregroundColor(.primary.opacity(0.8))
         }
     }
 }
@@ -832,7 +832,7 @@ extension View {
         self
             .padding(24)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white)
+            .background(Color(UIColor.systemBackground))
             .cornerRadius(30)
             .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 5)
             .padding(.horizontal, 20)
@@ -901,7 +901,7 @@ struct ReviewItemView: View {
 
             Text(text)
                 .font(.system(size: 13, weight: .regular))
-                .foregroundColor(.black.opacity(0.8))
+                .foregroundColor(.primary.opacity(0.8))
                 .fixedSize(horizontal: false, vertical: true)
 
             // Review Images

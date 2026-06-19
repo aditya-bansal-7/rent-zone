@@ -50,7 +50,7 @@ struct UploadViewCamera: View {
                         Text(selectedImages.isEmpty ? "Upload Photo" : "Change Photos")
                             .font(.system(size: 16, weight: .medium))
                     }
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primary)
                     .padding(.horizontal, 70)
                     .padding(.vertical, 14)
                     .background(
@@ -58,6 +58,7 @@ struct UploadViewCamera: View {
                             .stroke(Color.gray.opacity(0.4), lineWidth: 2)
                     )
                 }
+                .tint(.primary)
 
                 Spacer().frame(height: 20)
 
@@ -73,7 +74,7 @@ struct UploadViewCamera: View {
                 NavigationLink(destination: UploadView(selectedImages: selectedImages)) {
                     Text("Next")
                         .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(selectedImages.isEmpty ? .gray : .black)
+                        .foregroundStyle(selectedImages.isEmpty ? .gray : .primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(selectedImages.isEmpty ? Color.gray.opacity(0.1) : Color.purple.opacity(0.15))

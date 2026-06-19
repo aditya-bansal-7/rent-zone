@@ -15,9 +15,9 @@ struct PersonalChatView: View {
                 Button(action: { dismiss() }) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                         .frame(width: 40, height: 40)
-                        .background(Color.white)
+                        .background(Color(UIColor.systemBackground))
                         .clipShape(Circle())
                         .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
                 }
@@ -59,7 +59,7 @@ struct PersonalChatView: View {
                     if conversation.isOnline {
                         Text("Online")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                     }
                 }
                 
@@ -74,12 +74,12 @@ struct PersonalChatView: View {
                         
                     }
                     .offset(x:-10)
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                 }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 14)
-            .background(Color.white)
+            .background(Color(UIColor.systemBackground))
             .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
             
             // Messages
@@ -100,7 +100,7 @@ struct PersonalChatView: View {
                                 HStack(alignment: .bottom, spacing: 2) {
                                     Text("₹\(Int(product.pricePerDay))")
                                         .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.black)
+                                        .foregroundColor(.primary)
                                     Text("/day")
                                         .font(.system(size: 11, weight: .medium))
                                         .foregroundColor(.gray)
@@ -126,7 +126,7 @@ struct PersonalChatView: View {
                 .padding(.top, 20)
                 .padding(.bottom, 20)
             }
-            .background(Color(white: 0.97))
+            .background(Color(UIColor.systemGroupedBackground))
             
             // Attachment menu
             if showAttachmentMenu {
@@ -166,7 +166,7 @@ struct PersonalChatView: View {
                     .font(.system(size: 15))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(Color(white: 0.95))
+                    .background(Color(UIColor.secondarySystemBackground))
                     .cornerRadius(20)
                 
                 Button(action: {
@@ -181,12 +181,12 @@ struct PersonalChatView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
-            .background(Color.white)
+            .background(Color(UIColor.systemBackground))
             .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: -2)
         }
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
-        .background(Color(white: 0.97))
+        .background(Color(UIColor.systemGroupedBackground))
         .sheet(isPresented: $showReport) {
             ReportUserView(reportedUserName: conversation.participantName, reportedUserImage: conversation.participantImage, reportedUserLocation: nil)
                 .environment(AppStore())
@@ -209,13 +209,13 @@ struct ChatBubbleView: View {
         VStack(alignment: message.isFromCurrentUser ? .trailing : .leading, spacing: 6) {
             Text(message.content)
                 .font(.system(size: 15, weight: .regular))
-                .foregroundColor(.black)
+                .foregroundColor(message.isFromCurrentUser ? .black : .primary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .background(
                     message.isFromCurrentUser
                     ? Color(red: 243/255, green: 236/255, blue: 255/255)
-                    : Color.white
+                    : Color(UIColor.secondarySystemBackground)
                 )
                 .cornerRadius(18)
                 .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)

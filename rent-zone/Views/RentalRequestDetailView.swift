@@ -120,10 +120,10 @@ struct RentalRequestDetailView: View {
                     }) {
                         Text("Accept")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(Color(UIColor.systemBackground))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Color.black)
+                            .background(Color.primary)
                             .cornerRadius(30)
                     }
                 }
@@ -164,12 +164,12 @@ struct RentalRequestDetailView: View {
                         Text("Chat")
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .overlay(
                         RoundedRectangle(cornerRadius: 30)
-                            .stroke(Color.black.opacity(0.1), lineWidth: 1.5)
+                            .stroke(Color.primary.opacity(0.2), lineWidth: 1.5)
                     )
                 }
                 .padding(.horizontal, 24)

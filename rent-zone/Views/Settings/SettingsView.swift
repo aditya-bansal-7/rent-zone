@@ -3,7 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
     @State private var notificationsEnabled = true
-    @State private var darkModeEnabled = false
+    @AppStorage("isDarkMode") private var isDarkMode = false
     @State private var locationServicesEnabled = true
     
     // For alert presentation
@@ -22,7 +22,7 @@ struct SettingsView: View {
                     Toggle(isOn: $notificationsEnabled) {
                         Label("Push Notifications", systemImage: "bell")
                     }
-                    Toggle(isOn: $darkModeEnabled) {
+                    Toggle(isOn: $isDarkMode) {
                         Label("Dark Mode", systemImage: "moon")
                     }
                     Toggle(isOn: $locationServicesEnabled) {
@@ -79,6 +79,7 @@ struct SettingsView: View {
                 Text("Are you sure you want to delete your account? This action cannot be undone.")
             }
         }
+        .preferredColorScheme(isDarkMode ? .dark : .light)
     }
 }
 

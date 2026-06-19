@@ -3,6 +3,7 @@ import SwiftUI
 struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppStore.self) private var appStore
+    @AppStorage("isDarkMode") private var isDarkMode = false
     @State private var isListingSheetPresented = false
     @State private var isEditProfilePresented = false
     @State private var isFavoritesPresented = false
@@ -16,7 +17,7 @@ struct ProfileView: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [Color(.systemGray6), Color.white, Color(.systemGray6).opacity(0.5)],
+                colors: [Color(.systemGray6), Color(UIColor.systemBackground), Color(.systemGray6).opacity(0.5)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
@@ -136,6 +137,7 @@ struct ProfileView: View {
         .sheet(isPresented: $isLanguagePresented) {
             LanguageSettingsView()
         }
+        .preferredColorScheme(isDarkMode ? .dark : .light)
     }
 
     @ViewBuilder

@@ -27,8 +27,8 @@ struct CategoryChipsView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(isSelected ? Color.black : Color.white)
-            .foregroundColor(isSelected ? .white : .black)
+            .background(isSelected ? Color.primary : Color(UIColor.systemBackground))
+            .foregroundColor(isSelected ? Color(UIColor.systemBackground) : .primary)
             .cornerRadius(20)
             .overlay(
                 RoundedRectangle(cornerRadius: 20)

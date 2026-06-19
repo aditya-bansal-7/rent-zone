@@ -20,7 +20,7 @@ struct VirtualTryOnView: View {
 
     var body: some View {
         ZStack {
-            Color(white: 0.97)
+            Color(UIColor.systemGroupedBackground)
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
@@ -31,7 +31,7 @@ struct VirtualTryOnView: View {
                         Button(action: { dismiss() }) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                                 .frame(width: 44, height: 44)
                                 .background {
                                     Group {
@@ -62,7 +62,7 @@ struct VirtualTryOnView: View {
                             Text("Upload Photo")
                                 .font(.system(size: 16, weight: .semibold))
                         }
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background {
@@ -122,7 +122,7 @@ struct VirtualTryOnView: View {
                     PhotosPicker(selection: $tryOnPickerItem, matching: .images) {
                         Text("Start Try-On")
                             .font(.system(size: 17, weight: .bold))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 18)
                             .background {
@@ -352,7 +352,7 @@ struct VirtualTryOnView: View {
         VStack(alignment: .leading, spacing: 20) {
             Text("How It Works")
                 .font(.system(size: 22, weight: .bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
 
             stepRow(
                 number: "1",
@@ -381,7 +381,7 @@ struct VirtualTryOnView: View {
         HStack(spacing: 16) {
             Text(number)
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .frame(width: 32, height: 32)
                 .background(lavenderLight)
                 .clipShape(Circle())
@@ -394,7 +394,7 @@ struct VirtualTryOnView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                 Text(subtitle)
                     .font(.system(size: 13))
                     .foregroundColor(.gray)
@@ -407,7 +407,7 @@ struct VirtualTryOnView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Helpful Tips")
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
 
             tipRow("Position yourself fully within the frame")
             tipRow("Avoid Blurry Photos")
@@ -435,7 +435,7 @@ struct VirtualTryOnView: View {
                 .foregroundColor(Color(red: 130/255, green: 100/255, blue: 200/255))
             Text(text)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
         }
     }
 }
