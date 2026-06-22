@@ -41,7 +41,7 @@ struct UserHeaderView: View {
                             image.resizable().scaledToFill()
                         } else {
                             Circle()
-                                .fill(Color.purple.opacity(0.8))
+                                .fill(Color.brandPurple.opacity(0.8))
                                 .overlay(
                                     Text(String(user.name.prefix(1)))
                                         .font(.system(size: 16, weight: .bold))
@@ -53,7 +53,7 @@ struct UserHeaderView: View {
                     .clipShape(Circle())
                 } else {
                     Circle()
-                        .fill(Color.purple.opacity(0.8))
+                        .fill(Color.brandPurple.opacity(0.8))
                         .frame(width: 38, height: 38)
                         .overlay(
                             Text(String(user.name.prefix(1)))

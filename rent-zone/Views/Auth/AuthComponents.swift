@@ -54,12 +54,12 @@ struct PrimaryAuthButton: View {
                 } else {
                     Text(title)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(isDisabled ? .gray : .black)
+                        .foregroundColor(isDisabled ? .gray : .white)
                 }
             }
             .frame(maxWidth: .infinity)
             .frame(height: 56)
-            .background(isDisabled ? Color(UIColor.tertiarySystemFill) : Color(red: 243/255, green: 236/255, blue: 255/255))
+            .background(isDisabled ? Color(UIColor.tertiarySystemFill) : Color.brandPurple)
             .cornerRadius(30)
         }
         .disabled(isDisabled || isLoading)
@@ -99,7 +99,7 @@ struct SocialAuthButtons: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 24, height: 24)
-                        .foregroundColor(.blue)
+                        .foregroundColor(.brandPurple)
                     Text("Continue with Google")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.primary)

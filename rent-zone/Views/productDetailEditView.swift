@@ -176,16 +176,16 @@ struct ProductDetailEditView: View {
                         Button(action: handleUpdate) {
                             if isLoading {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
                                 Text("Update Product")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.white)
                             }
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
-                        .background(Color(red: 243/255, green: 236/255, blue: 255/255))
+                        .background(Color.brandPurple)
                         .cornerRadius(30)
                         .disabled(isLoading)
                     }

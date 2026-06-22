@@ -74,7 +74,7 @@ struct ChangePasswordView: View {
                         // OTP row
                         HStack(spacing: 12) {
                             Image(systemName: "envelope.badge.shield.half.filled")
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(Color.brandPurple)
                                 .font(.title3)
 
                             VStack(alignment: .leading, spacing: 2) {
@@ -164,7 +164,7 @@ struct ChangePasswordView: View {
                         }
                     }
                     .foregroundStyle(Color.white)
-                    .listRowBackground(isSubmitDisabled ? Color.blue.opacity(0.4) : Color.blue)
+                    .listRowBackground(isSubmitDisabled ? Color.brandPurple.opacity(0.4) : Color.brandPurple)
                     .disabled(isSubmitDisabled || isLoading)
                 }
 
@@ -181,7 +181,7 @@ struct ChangePasswordView: View {
                                         .scaleEffect(0.85)
                                 }
                                 Text(isSendingOTP ? "Sending code…" : "Forgot Current Password?")
-                                    .foregroundStyle(isSendingOTP ? Color.secondary : Color.blue)
+                                    .foregroundStyle(isSendingOTP ? Color.secondary : Color.brandPurple)
                             }
                         }
                         .disabled(isSendingOTP)
@@ -196,7 +196,7 @@ struct ChangePasswordView: View {
                                         .scaleEffect(0.85)
                                 }
                                 Text(isSendingOTP ? "Sending…" : "Resend Code")
-                                    .foregroundStyle(isSendingOTP ? Color.secondary : Color.blue)
+                                    .foregroundStyle(isSendingOTP ? Color.secondary : Color.brandPurple)
                             }
                         }
                         .disabled(isSendingOTP)
@@ -207,7 +207,7 @@ struct ChangePasswordView: View {
                             fieldError = nil
                         } label: {
                             Text("Use Current Password Instead")
-                                .foregroundStyle(Color.blue)
+                                .foregroundStyle(Color.brandPurple)
                         }
                     }
                 }

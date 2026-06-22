@@ -52,7 +52,7 @@ struct PersonalChatView: View {
                             .font(.system(size: 16, weight: .bold))
                         if conversation.isVerified {
                             Image(systemName: "checkmark.seal.fill")
-                                .foregroundColor(.blue)
+                                .foregroundColor(.brandPurple)
                                 .font(.system(size: 14))
                         }
                     }
@@ -107,12 +107,12 @@ struct PersonalChatView: View {
                                 }
                                 Text("Need on \(product.needDate)")
                                     .font(.system(size: 12, weight: .regular))
-                                    .foregroundColor(.black.opacity(0.7))
+                                    .foregroundColor(.secondary)
                             }
                         }
                         .padding(14)
                         .frame(maxWidth: 280, alignment: .leading)
-                        .background(Color(red: 243/255, green: 236/255, blue: 255/255))
+                        .background(Color.brandPurple.opacity(0.15))
                         .cornerRadius(18)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                     }
@@ -175,7 +175,7 @@ struct PersonalChatView: View {
                 }) {
                     Image(systemName: "paperplane.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(messageText.isEmpty ? .gray : .blue)
+                        .foregroundColor(messageText.isEmpty ? .gray : .brandPurple)
                 }
                 .disabled(messageText.isEmpty)
             }
@@ -209,12 +209,12 @@ struct ChatBubbleView: View {
         VStack(alignment: message.isFromCurrentUser ? .trailing : .leading, spacing: 6) {
             Text(message.content)
                 .font(.system(size: 15, weight: .regular))
-                .foregroundColor(message.isFromCurrentUser ? .black : .primary)
+                .foregroundColor(message.isFromCurrentUser ? .white : .primary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .background(
                     message.isFromCurrentUser
-                    ? Color(red: 243/255, green: 236/255, blue: 255/255)
+                    ? Color.brandPurple
                     : Color(UIColor.secondarySystemBackground)
                 )
                 .cornerRadius(18)

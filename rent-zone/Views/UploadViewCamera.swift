@@ -74,10 +74,10 @@ struct UploadViewCamera: View {
                 NavigationLink(destination: UploadView(selectedImages: selectedImages)) {
                     Text("Next")
                         .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(selectedImages.isEmpty ? .gray : .primary)
+                        .foregroundStyle(selectedImages.isEmpty ? .gray : .white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(selectedImages.isEmpty ? Color.gray.opacity(0.1) : Color.purple.opacity(0.15))
+                        .background(selectedImages.isEmpty ? Color.gray.opacity(0.1) : Color.brandPurple)
                         .cornerRadius(30)
                 }
                 .disabled(selectedImages.isEmpty)

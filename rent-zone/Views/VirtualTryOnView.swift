@@ -16,7 +16,7 @@ struct VirtualTryOnView: View {
 
     // Lavender accent
     private let lavender = Color(red: 220/255, green: 208/255, blue: 255/255)
-    private let lavenderLight = Color(red: 243/255, green: 236/255, blue: 255/255)
+    private let lavenderLight = Color.brandPurple.opacity(0.15)
 
     var body: some View {
         ZStack {
