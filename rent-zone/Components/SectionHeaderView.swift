@@ -22,8 +22,8 @@ struct SectionHeaderView<Destination: View>: View {
             if showViewAll {
                 if let destination = destination {
                     NavigationLink(destination: destination) {
-                        Text("View All")
-                            .font(.system(size: 13))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.gray)
                     }
                 } else {
