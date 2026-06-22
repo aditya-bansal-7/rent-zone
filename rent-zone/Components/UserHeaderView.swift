@@ -21,14 +21,25 @@ struct UserHeaderView: View {
             }) {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell")
-                        .font(.system(size: 22))
+                        .font(.system(size: 20))
                         .foregroundColor(.primary)
+                        .frame(width: 40, height: 40)
+                        .background(Color(uiColor: .systemGray6))
+                        .clipShape(Circle())
                     
                     if appStore.notificationStore.hasUnread {
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 9, height: 9)
-                            .offset(x: 2, y: -2)
+                        let count = appStore.notificationStore.unreadNotifications.count
+                        Text("\(count > 99 ? "99+" : "\(count)")")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 4)
+                            .frame(minWidth: 16, minHeight: 16)
+                            .background(Color.red)
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5)
+                            )
+                            .offset(x: 6, y: -6)
                     }
                 }
                 .frame(width: 44, height: 44)

@@ -1,89 +1,146 @@
 import SwiftUI
 
+// MARK: - Event Category Mock
+struct EventCategory: Identifiable {
+    let id = UUID()
+    let name: String
+    let iconName: String
+    let tintColor: Color
+}
+
 struct CategoriesView: View {
     @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) var dismiss
     
-    var womenCategories: [Category] {
-        appStore.categoryStore.categories.filter { $0.type == .women }
-    }
+    @State private var selectedGender: CategoryType = .women
     
-    var menCategories: [Category] {
-        appStore.categoryStore.categories.filter { $0.type == .men }
+    // Mock Data for Event Categories
+    let eventCategories: [EventCategory] = [
+        EventCategory(name: "Navratri", iconName: "sparkles", tintColor: .orange),
+        EventCategory(name: "Diwali", iconName: "flame.fill", tintColor: .yellow),
+        EventCategory(name: "Wedding", iconName: "heart.fill", tintColor: .red),
+        EventCategory(name: "Haldi", iconName: "sun.max.fill", tintColor: .yellow),
+        EventCategory(name: "Freshers", iconName: "party.popper.fill", tintColor: .purple),
+        EventCategory(name: "Party", iconName: "music.note", tintColor: .blue)
+    ]
+    
+    var currentCategories: [Category] {
+        appStore.categoryStore.categories.filter { $0.type == selectedGender }
     }
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                
-                // MARK: - Content
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 32) {
-                        // Women Section
-                        CategorySectionView(title: "Women", categories: womenCategories)
-                        
-                        // Men Section
-                        CategorySectionView(title: "Men", categories: menCategories)
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 28) {
+                    
+                    // MARK: - Native Segmented Picker
+                    Picker("Select Category", selection: $selectedGender) {
+                        Text("Women").tag(CategoryType.women)
+                        Text("Men").tag(CategoryType.men)
                     }
-                    .padding(.top, 24)
-                    .padding(.bottom, 40)
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    
+                    // MARK: - Event Categories (Horizontal)
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Shop by Event")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                            .padding(.horizontal)
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 16) {
+                                // Add a leading padding spacer to match horizontal layout smoothly
+                                Spacer().frame(width: 0)
+                                
+                                ForEach(eventCategories) { event in
+                                    EventCategoryItemView(event: event)
+                                }
+                                
+                                Spacer().frame(width: 0)
+                            }
+                        }
+                    }
+                    
+                    // MARK: - Dress Categories (Square Grid)
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Shop by Category")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                            .padding(.horizontal)
+                        
+                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 24) {
+                            ForEach(currentCategories) { category in
+                                NavigationLink(destination: ProductListView(title: category.name, categoryId: category.id)) {
+                                    DressCategoryItemView(category: category)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
                 }
+                .padding(.bottom, 40)
             }
             .navigationTitle("Categories")
+            // Native large titles look much better for root tabs
+            .navigationBarTitleDisplayMode(.large)
             .navigationDestination(for: Product.self) { product in
                 ProductDetailView(product: product)
             }
         }
     }
-
 }
 
-struct CategorySectionView: View {
-    let title: String
-    let categories: [Category]
-    
-    private let columns = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16)
-    ]
+// MARK: - Event Category Item View
+struct EventCategoryItemView: View {
+    let event: EventCategory
     
     var body: some View {
-        VStack(spacing: 20) {
-            // Section Header
-            Text(title)
-                .font(.title3)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-            
-            // Grid
-            LazyVGrid(columns: columns, spacing: 24) {
-                ForEach(categories) { category in
-                    NavigationLink(destination: ProductListView(title: category.name, categoryId: category.id)) {
-                        CategoryItemView(category: category)
-                    }
-                }
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(event.tintColor.opacity(0.15))
+                    .frame(width: 72, height: 72)
+                
+                Image(systemName: event.iconName)
+                    .font(.system(size: 28, weight: .regular))
+                    .foregroundColor(event.tintColor)
             }
-            .padding(.horizontal, 16)
+            
+            Text(event.name)
+                .font(.subheadline)
+                .foregroundColor(.primary)
         }
     }
 }
 
-struct CategoryItemView: View {
+// MARK: - Dress Category Item View (Apple Native Styling)
+// Apple native grids (like Music/Podcasts/Photos) usually have the image as a card, 
+// and the text sitting cleanly below it without a shared background box.
+struct DressCategoryItemView: View {
     let category: Category
     
     var body: some View {
-        VStack(spacing: 12) {
-            Image(category.images)
-                .resizable()
-                .scaledToFit()
-                .frame(height: 100)
+        VStack(alignment: .leading, spacing: 8) {
+            ZStack {
+                Color(uiColor: .secondarySystemBackground)
+                
+                Image(category.images)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(20)
+            }
+            .aspectRatio(1, contentMode: .fill) // Enforce square
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             
             Text(category.name)
                 .font(.subheadline)
                 .foregroundColor(.primary)
+                .lineLimit(1)
         }
     }
 }
