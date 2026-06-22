@@ -102,7 +102,7 @@ struct CalendarPickerView: View {
                         .font(.system(size: 18, weight: .bold))
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.purple.opacity(0.6))
+                        .foregroundColor(.brandPurple.opacity(0.6))
                 }
                 
                 Spacer()
@@ -115,7 +115,7 @@ struct CalendarPickerView: View {
                     }) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.purple.opacity(0.5))
+                            .foregroundColor(.brandPurple.opacity(0.5))
                     }
                     
                     Button(action: {
@@ -125,7 +125,7 @@ struct CalendarPickerView: View {
                     }) {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.purple.opacity(0.5))
+                            .foregroundColor(.brandPurple.opacity(0.5))
                     }
                 }
             }
@@ -155,7 +155,7 @@ struct CalendarPickerView: View {
                         }) {
                             Text("\(calendar.component(.day, from: date))")
                                 .font(.system(size: 16, weight: selected || today ? .bold : .regular))
-                                .foregroundColor(selected ? .black : (booked || past ? .gray.opacity(0.3) : (today ? .purple : .black)))
+                                .foregroundColor(selected ? .black : (booked || past ? .gray.opacity(0.3) : (today ? .brandPurple : .black)))
                                 .frame(width: 36, height: 36)
                                 .background(
                                     ZStack {

@@ -29,7 +29,7 @@ struct RentalRequestDetailView: View {
                         Text(notification.requesterName ?? "Unknown User")
                             .font(.system(size: 17, weight: .bold))
                         Image(systemName: "checkmark.seal.fill")
-                            .foregroundColor(.blue)
+                            .foregroundColor(.brandPurple)
                             .font(.system(size: 14))
                     }
                     Text("Verified User")

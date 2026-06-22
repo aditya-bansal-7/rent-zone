@@ -54,7 +54,7 @@ struct EditProfileView: View {
                             PhotosPicker(selection: $photoPickerItem, matching: .images) {
                                 Text("Change Photo")
                                     .font(.subheadline)
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.brandPurple)
                             }
                         }
                         Spacer()

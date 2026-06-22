@@ -192,10 +192,10 @@ struct ProductDetailView: View {
                     Button(action: { showVirtualTryOn = true }) {
                             Text("Virtual Try On")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.primary)
+                                .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color(red: 243/255, green: 236/255, blue: 255/255))
+                        .background(Color.brandPurple)
                         .cornerRadius(30)
                         .padding(.top, 8)
                     }
@@ -306,7 +306,7 @@ struct ProductDetailView: View {
                                         }
                                         .foregroundColor(.primary)
                                         .frame(width: 55, height: 65)
-                                        .background(isSelected ? Color(red: 230/255, green: 210/255, blue: 255/255) : (inRange ? Color(red: 243/255, green: 236/255, blue: 255/255) : Color(UIColor.systemBackground)))
+                                        .background(isSelected ? Color.brandPurple.opacity(0.3) : (inRange ? Color.brandPurple.opacity(0.15) : Color(UIColor.systemBackground)))
                                         .cornerRadius(10)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 10)
@@ -396,7 +396,7 @@ struct ProductDetailView: View {
                                     .font(.system(size: 16, weight: .bold))
                                 if product.listedBy?.isVerified == true {
                                     Image(systemName: "checkmark.seal.fill")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(.brandPurple)
                                         .font(.system(size: 14))
                                 }
                             }
@@ -433,16 +433,16 @@ struct ProductDetailView: View {
                     ZStack {
                         if isRequestingRent {
                             ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .primary))
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         } else {
                             Text(rentButtonText)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.primary)
+                                .foregroundColor(.white)
                         }
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
-                    .background(startDate != nil && endDate != nil ? Color(red: 243/255, green: 236/255, blue: 255/255) : Color.gray.opacity(0.1))
+                    .background(startDate != nil && endDate != nil ? Color.brandPurple : Color.gray.opacity(0.1))
                     .cornerRadius(30)
                 }
                 .disabled(isRequestingRent || startDate == nil || endDate == nil)
@@ -486,7 +486,7 @@ struct ProductDetailView: View {
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 14)
-                                .fill(Color(red: 243/255, green: 236/255, blue: 255/255))
+                                .fill(Color.brandPurple.opacity(0.15))
                         )
                     }
 

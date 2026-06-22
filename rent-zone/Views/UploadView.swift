@@ -163,20 +163,20 @@ struct UploadView: View {
                         if isUploading {
                             HStack(spacing: 12) {
                                 ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 Text("Uploading Outfit...")
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.primary)
+                                    .foregroundColor(.white)
                             }
                         } else {
                             Text("List My Outfit")
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.primary)
+                                .foregroundColor(.white)
                         }
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
-                    .background(Color(red: 243/255, green: 236/255, blue: 255/255))
+                    .background(Color.brandPurple)
                     .cornerRadius(30)
                 }
                 .disabled(isUploading || name.isEmpty || selectedCategoryId.isEmpty || price.isEmpty)

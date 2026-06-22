@@ -103,7 +103,7 @@ struct LoginView: View {
             Button(action: { Task { await performSendOtp() } }) {
                 Text("Resend Code")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.blue)
+                    .foregroundColor(.brandPurple)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.top, -8)
@@ -155,7 +155,7 @@ struct LoginView: View {
                 }) {
                     Text("Login with Password")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.blue)
+                        .foregroundColor(.brandPurple)
                 }
                 .padding(.top, 4)
                 
@@ -183,7 +183,7 @@ struct LoginView: View {
                     Button(action: { withAnimation { step = .enterPassword } }) {
                         Text("Use Password instead")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.blue)
+                            .foregroundColor(.brandPurple)
                     }
                     .padding(.top, 4)
                 }
@@ -192,7 +192,7 @@ struct LoginView: View {
                     Button(action: { Task { await performSendOtp() } }) {
                         Text("Use OTP instead")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.blue)
+                            .foregroundColor(.brandPurple)
                     }
                     .padding(.top, 4)
                 }

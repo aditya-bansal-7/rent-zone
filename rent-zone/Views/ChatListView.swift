@@ -43,7 +43,7 @@ struct ChatListView: View {
                         } label: {
                             Label(conversation.hasUnread ? "Mark Read" : "Mark Unread", systemImage: conversation.hasUnread ? "envelope.open" : "envelope.badge")
                         }
-                        .tint(.blue)
+                        .tint(.brandPurple)
                     }
                 }
             }

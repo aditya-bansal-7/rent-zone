@@ -284,7 +284,7 @@ struct ProductListView: View {
                         .font(.body.weight(.medium))
                     if hasActiveFilters {
                         Circle()
-                            .fill(Color.purple)
+                            .fill(Color.brandPurple)
                             .frame(width: 7, height: 7)
                     }
                 }

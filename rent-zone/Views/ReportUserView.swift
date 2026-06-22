@@ -118,10 +118,10 @@ struct ReportUserView: View {
                             showSuccess = true
                         } label: {
                             Text("Submit Report")
-                                .foregroundColor(isFormValid ? .primary : .gray)
+                                .foregroundColor(isFormValid ? .white : .gray)
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(isFormValid ? Color(red: 243/255, green: 236/255, blue: 255/255) : Color(.systemGray5))
+                                .background(isFormValid ? Color.brandPurple : Color(.systemGray5))
                                 .cornerRadius(30)
                         }
                         .disabled(!isFormValid)
