@@ -14,6 +14,7 @@ struct MyRentalsView: View {
     @State private var hasFetched = false
     @State private var productCache: [String: Product] = [:]
     @State private var isFetchingProducts = false
+    @State private var productToReview: Product?
 
     private var user: User? { appStore.userStore.currentUser }
 
@@ -67,7 +68,12 @@ struct MyRentalsView: View {
                                     RentalCardView(
                                         rental: rental,
                                         product: productCache[rental.productId],
-                                        isLentOut: selectedTab == .lentOut
+                                        isLentOut: selectedTab == .lentOut,
+                                        onReviewTap: {
+                                            if let product = productCache[rental.productId] {
+                                                productToReview = product
+                                            }
+                                        }
                                     )
                                 }
                             }
@@ -95,6 +101,12 @@ struct MyRentalsView: View {
                 Task {
                     await fetchProductDetails()
                 }
+            }
+            .sheet(item: $productToReview) { product in
+                AddReviewView(product: product) { _ in
+                    // Currently no local review state needed in MyRentalsView
+                }
+                .environment(appStore)
             }
         }
     }
@@ -158,44 +170,78 @@ struct RentalCardView: View {
     let rental: Rental
     let product: Product?
     let isLentOut: Bool
+    var onReviewTap: (() -> Void)? = nil
 
     var body: some View {
-        HStack(spacing: 14) {
-            // Product Image
-            productImage
-                .frame(width: 90, height: 100)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+        VStack(spacing: 0) {
+            HStack(spacing: 14) {
+                // Product Image
+                productImage
+                    .frame(width: 90, height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
 
-            // Details
-            VStack(alignment: .leading, spacing: 6) {
-                // Product name
-                Text(product?.name ?? "Loading...")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
+                // Details
+                VStack(alignment: .leading, spacing: 6) {
+                    // Product name
+                    Text(product?.name ?? "Loading...")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
 
-                // Date range
-                HStack(spacing: 4) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                    Text("\(formattedDate(rental.startDate)) – \(formattedDate(rental.endDate))")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.secondary)
+                    // Date range
+                    HStack(spacing: 4) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                        Text("\(formattedDate(rental.startDate)) – \(formattedDate(rental.endDate))")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Price
+                    Text("₹ \(Int(rental.totalPrice))")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.primary)
+
+                    // Status Badge
+                    statusBadge
                 }
 
-                // Price
-                Text("₹ \(Int(rental.totalPrice))")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.primary)
-
-                // Status Badge
-                statusBadge
+                Spacer()
             }
+            .padding(12)
 
-            Spacer()
+            if !isLentOut {
+                Divider()
+                
+                Button(action: {
+                    onReviewTap?()
+                }) {
+                    HStack {
+                        Text("How was your experience?")
+                            .font(.system(size: 13, weight: .regular))
+                            .foregroundColor(.secondary)
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 4) {
+                            Image(systemName: "square.and.pencil")
+                                .font(.system(size: 11))
+                            Text("Write a Review")
+                                .font(.system(size: 12, weight: .bold))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color.brandPurple)
+                        .cornerRadius(14)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.systemGray6))

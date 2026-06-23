@@ -23,7 +23,11 @@ struct ProductDetailView: View {
     @State private var showVirtualTryOn = false
     @State private var showSellerProfile = false
 
-
+    private var safeAreaTop: CGFloat {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows.first?.safeAreaInsets.top ?? 54
+    }
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
@@ -52,37 +56,43 @@ struct ProductDetailView: View {
                                             .scaledToFill()
                                     }
                                 }
-                                .frame(width: UIScreen.main.bounds.width - 40, height: 420)
+                                .frame(width: UIScreen.main.bounds.width, height: 500)
                                 .clipped()
-                                .cornerRadius(20)
                                 .tag(index)
                             }
                         }
                         .tabViewStyle(.page(indexDisplayMode: .never))
-                        .frame(height: 450)
+                        .frame(height: 500)
 
-                        // Custom Premium Page Indicator
-                        if product.imageURLs.count > 1 {
-                            HStack(spacing: 6) {
-                                ForEach(0..<product.imageURLs.count, id: \.self) { index in
-                                    Capsule()
-                                        .fill(currentImageIndex == index ? Color.primary : Color.primary.opacity(0.15))
-                                        .frame(width: currentImageIndex == index ? 16 : 6, height: 6)
-                                        .animation(.spring(response: 0.25, dampingFraction: 0.75), value: currentImageIndex)
-                                }
+                        // White Gradient Blend at the bottom
+                        LinearGradient(
+                            colors: [Color(UIColor.systemBackground).opacity(0), Color(UIColor.systemBackground)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(height: 120)
+
+                        // Photo Count Badge
+                        if product.imageURLs.count > 0 {
+                            HStack {
+                                Text("\(currentImageIndex + 1)/\(product.imageURLs.count)")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.black.opacity(0.4))
+                                    .clipShape(Capsule())
+                                    .padding(.leading, 20)
+                                    .padding(.bottom, 50)
+                                Spacer()
                             }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Capsule())
-                            .padding(.bottom, 20)
                         }
                     }
-                    .frame(height: 450)
+                    .frame(height: 500)
                     // Tap-to-dismiss layer: above image, below floating buttons
                     if showMenu {
                         Color.black.opacity(0.001)
-                            .frame(height: 450)
+                            .frame(height: 500)
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
@@ -162,7 +172,7 @@ struct ProductDetailView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .padding(.top, safeAreaTop)
                 }
 
                 // Product Info Card
@@ -470,26 +480,6 @@ struct ProductDetailView: View {
                             .foregroundColor(.gray)
                     }
 
-                    // Add Review Button
-                    Button(action: { showAddReview = true }) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "square.and.pencil")
-                                .font(.system(size: 16, weight: .medium))
-                            Text("Write a Review")
-                                .font(.system(size: 14, weight: .semibold))
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.gray)
-                        }
-                        .foregroundColor(.primary)
-                        .padding(14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(Color.brandPurple.opacity(0.15))
-                        )
-                    }
-
                     if displayReviews.isEmpty {
                         Text("No reviews yet. Be the first to review!")
                             .font(.subheadline)
@@ -511,6 +501,7 @@ struct ProductDetailView: View {
                 .padding(.bottom, 40)
             }
         }
+        .ignoresSafeArea(edges: .top)
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .background(Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all))
@@ -537,12 +528,6 @@ struct ProductDetailView: View {
                     }
                 }
             }
-        }
-        .sheet(isPresented: $showAddReview) {
-            AddReviewView(product: product) { newReview in
-                localReviews.insert(newReview, at: 0)
-            }
-            .environment(appStore)
         }
         .alert("Request Sent! 🎉", isPresented: $showRentConfirmation) {
             Button("OK", role: .cancel) { }
