@@ -568,13 +568,7 @@ struct ProductDetailView: View {
                     .environment(appStore)
                     .toolbar {
                         ToolbarItem(placement: .navigationBarLeading) {
-                            Button(action: { showSellerProfile = false }) {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(.primary)
-                                    .frame(width: 30, height: 30)
-                                    .background(.ultraThinMaterial, in: Circle())
-                            }
+                            DismissButton(action: { showSellerProfile = false })
                         }
                     }
                 }
