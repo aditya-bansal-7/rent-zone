@@ -59,17 +59,7 @@ struct ListingInfoView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .frame(width: 44, height: 44)
-                            .background(
-                                Circle()
-                                    .fill(.ultraThinMaterial)
-                            )
-                            .clipShape(Circle())
-                    }
+                    DismissButton(action: { dismiss() })
                 }
             }
             .task {

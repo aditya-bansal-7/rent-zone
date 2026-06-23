@@ -90,9 +90,7 @@ struct EditProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                    }
+                    DismissButton(action: { dismiss() })
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {

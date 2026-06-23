@@ -1,4 +1,4 @@
-import SwiftUI
+ import SwiftUI
 
 struct ProfileView: View {
     @Environment(\.dismiss) private var dismiss
@@ -11,45 +11,16 @@ struct ProfileView: View {
     @State private var isHelpPresented = false
     @State private var isLanguagePresented = false
     @State private var isSigningOut = false
+    @State private var isMyRentalsPresented = false
 
     private var user: User? { appStore.userStore.currentUser }
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color(.systemGray6), Color(UIColor.systemBackground), Color(.systemGray6).opacity(0.5)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                    // Close button
-                    HStack {
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.primary)
-                                .frame(width: 44, height: 44)
-                                .background {
-                                    Group {
-                                        if #available(iOS 26.0, *) {
-                                            Color.clear
-                                        } else {
-                                            Circle()
-                                                .fill(.ultraThinMaterial)
-                                        }
-                                    }
-                                }
-                                .if26GlassEffect(cornerRadius: 22)
-                                .clipShape(Circle())
-                        }
-                        Spacer()
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
-                    // MARK: - Profile Header
-                    VStack(spacing: 12) {
+        NavigationStack {
+            ScrollView(showsIndicators: false) {
+                        VStack(spacing: 0) {
+                            // MARK: - Profile Header
+                            VStack(spacing: 12) {
                         // Profile Image
                         Group {
                             if let imageURL = user?.profileImage, let url = URL(string: imageURL) {
@@ -116,8 +87,22 @@ struct ProfileView: View {
                     // MARK: - Menu Items
                     menuItems
 
-                    Spacer(minLength: 40)
+                            Spacer(minLength: 40)
+                        }
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            DismissButton(action: { dismiss() })
+                        }
+                    }
                 }
+        .background {
+            LinearGradient(
+                colors: [Color(.systemGray6), Color(UIColor.systemBackground), Color(.systemGray6).opacity(0.5)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
         }
         .sheet(isPresented: $isListingSheetPresented) {
             ListingInfoView()
@@ -134,6 +119,9 @@ struct ProfileView: View {
         .sheet(isPresented: $isHelpPresented) {
             HelpAndSupportView()
         }
+        .sheet(isPresented: $isMyRentalsPresented) {
+            MyRentalsView()
+        }
         .sheet(isPresented: $isLanguagePresented) {
             LanguageSettingsView()
         }
@@ -146,6 +134,7 @@ struct ProfileView: View {
             GlassEffectContainer {
                 VStack(spacing: 12) {
                     ProfileMenuRow(icon: "doc.text", title: "My Listing", action: { isListingSheetPresented = true })
+                    ProfileMenuRow(icon: "arrow.left.arrow.right", title: "My Rentals", action: { isMyRentalsPresented = true })
                     ProfileMenuRow(icon: "heart", title: "Favourites", action: { isFavoritesPresented = true })
                     ProfileMenuRow(icon: "gearshape", title: "Settings", action: { isSettingsPresented = true })
                     ProfileMenuRow(icon: "questionmark.circle", title: "Help & Support", action: { isHelpPresented = true })
@@ -175,6 +164,7 @@ struct ProfileView: View {
         } else {
             VStack(spacing: 12) {
                 ProfileMenuRowLegacy(icon: "doc.text", title: "My Listing", action: { isListingSheetPresented = true })
+                ProfileMenuRowLegacy(icon: "arrow.left.arrow.right", title: "My Rentals", action: { isMyRentalsPresented = true })
                 ProfileMenuRowLegacy(icon: "heart", title: "Favourites", action: { isFavoritesPresented = true })
                 ProfileMenuRowLegacy(icon: "gearshape", title: "Settings", action: { isSettingsPresented = true })
                 ProfileMenuRowLegacy(icon: "questionmark.circle", title: "Help & Support", action: { isHelpPresented = true })

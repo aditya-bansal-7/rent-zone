@@ -28,18 +28,11 @@ struct NotificationCentreView: View {
                 
                 Spacer()
                 
-                Button(action: {
+                DismissButton(action: {
                     withAnimation(.easeOut(duration: 0.25)) {
                         isPresented = false
                     }
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.primary)
-                        .frame(width: 30, height: 30)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
-                }
+                })
             }
             .padding(.horizontal, 16)
             .padding(.top, 16)
