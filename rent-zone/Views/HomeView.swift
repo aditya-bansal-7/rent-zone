@@ -89,14 +89,14 @@ struct HomeView: View {
                             } else {
                                 SectionHeaderView(
                                     title: "POPULAR OUTFITS",
-                                    destination: ProductListView(title: "Popular Outfits", initialProducts: allProducts.sorted { $0.rating > $1.rating })
+                                    destination: ProductListView(title: "Popular Outfits", sortMode: .popular)
                                 )
                                 ProductGridView(products: popularProducts, favoriteProductIds: $favoriteProductIds)
 
                                 // Recent Outfits
                                 SectionHeaderView(
                                     title: "RECENT OUTFITS",
-                                    destination: ProductListView(title: "Recent Outfits", initialProducts: allProducts)
+                                    destination: ProductListView(title: "Recent Outfits", sortMode: .recent)
                                 )
                                 ProductGridView(products: recentProducts, favoriteProductIds: $favoriteProductIds)
                             }

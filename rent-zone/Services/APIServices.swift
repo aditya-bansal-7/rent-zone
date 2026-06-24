@@ -19,6 +19,35 @@ class ProductService {
         page: Int = 1,
         limit: Int = 50
     ) async throws -> [Product] {
+        let result = try await getProductsPaginated(
+            categoryId: categoryId, size: size, condition: condition,
+            occasion: occasion, listedByUserId: listedByUserId,
+            minPrice: minPrice, maxPrice: maxPrice, sort: sort,
+            page: page, limit: limit
+        )
+        return result.products
+    }
+
+    // MARK: Get Products with Pagination Metadata
+    struct PaginatedResult {
+        let products: [Product]
+        let page: Int
+        let totalPages: Int
+        let total: Int
+    }
+
+    func getProductsPaginated(
+        categoryId: String? = nil,
+        size: String? = nil,
+        condition: String? = nil,
+        occasion: String? = nil,
+        listedByUserId: String? = nil,
+        minPrice: Double? = nil,
+        maxPrice: Double? = nil,
+        sort: String? = nil,
+        page: Int = 1,
+        limit: Int = 20
+    ) async throws -> PaginatedResult {
         var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "page", value: "\(page)"),
             URLQueryItem(name: "limit", value: "\(limit)"),
@@ -37,7 +66,12 @@ class ProductService {
         let endpoint = (components.url?.absoluteString.replacingOccurrences(of: API.baseURL, with: "")) ?? "/products"
 
         let result: PaginatedProducts = try await APIClient.shared.request(endpoint: endpoint)
-        return result.products.map { $0.toProduct() }
+        return PaginatedResult(
+            products: result.products.map { $0.toProduct() },
+            page: result.page,
+            totalPages: result.totalPages,
+            total: result.total
+        )
     }
 
     // MARK: Get Product By ID

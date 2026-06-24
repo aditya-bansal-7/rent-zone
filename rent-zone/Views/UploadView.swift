@@ -240,12 +240,18 @@ struct UploadView: View {
 
             // Step 2: Upload images to Cloudinary via backend
             if !selectedImages.isEmpty {
-                let updatedProduct = try await ProductService.shared.uploadImages(
-                    productId: product.id,
-                    images: selectedImages
-                )
-                appStore.productStore.addItem(updatedProduct)
-                uploadedProduct = updatedProduct
+                do {
+                    let updatedProduct = try await ProductService.shared.uploadImages(
+                        productId: product.id,
+                        images: selectedImages
+                    )
+                    appStore.productStore.addItem(updatedProduct)
+                    uploadedProduct = updatedProduct
+                } catch {
+                    // Rollback: delete the product record since images failed to upload
+                    try? await ProductService.shared.deleteProduct(id: product.id)
+                    throw error
+                }
             } else {
                 appStore.productStore.addItem(product)
                 uploadedProduct = product

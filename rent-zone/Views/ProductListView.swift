@@ -1,5 +1,12 @@
 import SwiftUI
 
+// Determines the initial sort order for "View All" navigations
+enum ProductSortMode {
+    case none        // Default order from API
+    case popular     // Sort by rating descending
+    case recent      // Sort by creation date descending
+}
+
 struct ProductListView: View {
     @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) private var dismiss
@@ -7,11 +14,12 @@ struct ProductListView: View {
     let title: String
     var categoryId: String? = nil
     @State var searchText: String = ""
-    var initialProducts: [Product]? = nil
+    var sortMode: ProductSortMode = .none
     
     @State private var showSortSheet = false
     @State private var showFilterSheet = false
     @State private var showSearchBar = false
+    @State private var hasFetchedCategory = false
     
     // Sort & Filter State
     @State private var selectedSort: SortOption? = nil
@@ -27,12 +35,14 @@ struct ProductListView: View {
     ]
     
     var baseProducts: [Product] {
-        if let initialProducts = initialProducts {
-            return initialProducts
-        } else if let categoryId = categoryId {
-            return appStore.productStore.products.filter { $0.categoryId == categoryId }
-        } else {
-            return appStore.productStore.products
+        let products = appStore.productStore.products
+        switch sortMode {
+        case .popular:
+            return products.sorted { $0.rating > $1.rating }
+        case .recent:
+            return products.sorted { ($0.createdAt ?? Date.distantPast) > ($1.createdAt ?? Date.distantPast) }
+        case .none:
+            return products
         }
     }
     
@@ -113,7 +123,7 @@ struct ProductListView: View {
             
             // MARK: - Product Grid
             ScrollView(showsIndicators: false) {
-                if filteredProducts.isEmpty {
+                if filteredProducts.isEmpty && !appStore.productStore.isLoading {
                     VStack(spacing: 20) {
                         Image(systemName: "tshirt")
                             .font(.system(size: 60))
@@ -133,11 +143,26 @@ struct ProductListView: View {
                                 product: product,
                                 favoriteProductIds: $favoriteProductIds
                             )
+                            .onAppear {
+                                // Infinite scroll: trigger fetch when last item appears
+                                if product.id == filteredProducts.last?.id {
+                                    Task {
+                                        await appStore.productStore.fetchNextPage()
+                                    }
+                                }
+                            }
                         }
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
-                    .padding(.bottom, 30)
+
+                    // Loading spinner for next page
+                    if appStore.productStore.isLoadingMore {
+                        ProgressView()
+                            .padding(.vertical, 20)
+                    }
+
+                    Spacer().frame(height: 30)
                 }
             }
         }
@@ -187,6 +212,11 @@ struct ProductListView: View {
             }
             if !searchText.isEmpty {
                 showSearchBar = true
+            }
+            // Fetch category-filtered products from the API if needed
+            if let categoryId = categoryId, !hasFetchedCategory {
+                hasFetchedCategory = true
+                await appStore.productStore.fetchItems(categoryId: categoryId)
             }
         }
     }
