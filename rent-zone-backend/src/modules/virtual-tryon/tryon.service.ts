@@ -11,7 +11,8 @@ export const createTryOn = async (userId: string, productId: string, personImage
   if (!product) throw new Error('Product not found');
   if (!product.imageURLs.length) throw new Error('Product has no images');
 
-  const clothingImageUrl = product.imageURLs[0];
+  console.log(product)
+  const clothingImageUrl = product.imageURLs[1];
 
   // 2. Convert person image buffer to base64 data URL
   const personBase64 = personImageBuffer.toString('base64');
@@ -42,8 +43,7 @@ Image 1 = person (full body photo)
 Image 2 = clothing item
 
 Replace the person's current clothing with the garment from image 2.
-Keep face, pose, body shape, lighting and background unchanged.
-Return ONLY the photorealistic result image, no text.`
+Keep face, pose, body shape, lighting and background unchanged.`
               },
               {
                 type: 'image_url',
