@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "pleated man.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
