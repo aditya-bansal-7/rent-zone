@@ -17,14 +17,12 @@ struct SectionHeaderView<Destination: View>: View {
                 .font(.system(size: 14, weight: .bold))
                 .tracking(0.5)
             
-            Spacer()
-            
             if showViewAll {
                 if let destination = destination {
                     NavigationLink(destination: destination) {
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.gray)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.black)
                     }
                 } else {
                     // If no destination but showViewAll is true, we might want a button or just nothing

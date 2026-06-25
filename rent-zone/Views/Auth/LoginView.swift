@@ -29,8 +29,6 @@ struct LoginView: View {
             
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
-                    subtitle
-                    
                     VStack(spacing: 16) {
                         inputsArea
                         
@@ -51,36 +49,44 @@ struct LoginView: View {
                 }
             }
         }
-        .background(Color(UIColor.systemBackground).edgesIgnoringSafeArea(.all))
+        .background(Color(uiColor: .systemGroupedBackground).edgesIgnoringSafeArea(.all))
         .animation(.easeInOut(duration: 0.3), value: step)
     }
 
     // MARK: - Subviews
     
     private var header: some View {
-        HStack {
-            Text(headerTitle)
-                .font(.system(size: 24, weight: .bold))
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(headerTitle)
+                    .font(.system(size: 34, weight: .bold)) // Apple large title
+                    .foregroundColor(.primary)
+                
+                
+                Text(headerSubtitle)
+                    .font(.system(size: 16))
+                    .foregroundColor(.gray)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+            }.padding(10)
             Spacer()
-            Button(action: { dismiss() }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(.secondary)
+            
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 20))
+                    .foregroundColor(.gray)
+                    .padding(12)
+                    .background(Color.gray.opacity(0.15))
+                    .clipShape(Circle())
             }
+            .padding(.top, 16)
+            .padding(.trailing, 4)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 32)
+        .padding(.horizontal)
+        .padding(.top, 16)
         .padding(.bottom, 8)
-    }
-    
-    private var subtitle: some View {
-        Text(headerSubtitle)
-            .font(.system(size: 15, weight: .regular))
-            .foregroundColor(.gray)
-            .lineSpacing(4)
-            .padding(.horizontal, 24)
-            .padding(.top, 4)
-            .fixedSize(horizontal: false, vertical: true)
     }
     
     @ViewBuilder
@@ -149,18 +155,6 @@ struct LoginView: View {
                     onGoogleAction: handleGoogleSignIn
                 )
                 
-                Button(action: { 
-                    if emailOrMobile.contains("@") && emailOrMobile.count > 5 {
-                        withAnimation { step = .enterPassword }
-                    } else {
-                        errorMessage = "Please enter your email first to login with password"
-                    }
-                }) {
-                    Text("Login with Password")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.brandPurple)
-                }
-                .padding(.top, 4)
                 
                 Button(action: { withAnimation { step = .registerDetails } }) {
                     HStack(spacing: 4) {
@@ -186,7 +180,6 @@ struct LoginView: View {
                     Button(action: { withAnimation { step = .enterPassword } }) {
                         Text("Use Password instead")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.brandPurple)
                     }
                     .padding(.top, 4)
                 }

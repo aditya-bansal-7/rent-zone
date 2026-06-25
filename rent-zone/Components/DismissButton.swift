@@ -6,11 +6,7 @@ struct DismissButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Image(systemName: "xmark")
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(Color(.secondaryLabel))
-        }
+        Button(role: .close, action: action)
     }
 }
 
