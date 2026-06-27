@@ -12,6 +12,7 @@ struct ProfileView: View {
     @State private var isLanguagePresented = false
     @State private var isSigningOut = false
     @State private var isMyRentalsPresented = false
+    @State private var isTryOnHistoryPresented = false
 
     private var user: User? { appStore.userStore.currentUser }
 
@@ -125,6 +126,9 @@ struct ProfileView: View {
         .sheet(isPresented: $isLanguagePresented) {
             LanguageSettingsView()
         }
+        .sheet(isPresented: $isTryOnHistoryPresented) {
+            VirtualTryOnHistoryView()
+        }
         .preferredColorScheme(isDarkMode ? .dark : .light)
     }
 
@@ -135,6 +139,7 @@ struct ProfileView: View {
                 VStack(spacing: 12) {
                     ProfileMenuRow(icon: "doc.text", title: "My Listing", action: { isListingSheetPresented = true })
                     ProfileMenuRow(icon: "arrow.left.arrow.right", title: "My Rentals", action: { isMyRentalsPresented = true })
+                    ProfileMenuRow(icon: "sparkles", title: "Virtual Try-Ons", action: { isTryOnHistoryPresented = true })
                     ProfileMenuRow(icon: "heart", title: "Favourites", action: { isFavoritesPresented = true })
                     ProfileMenuRow(icon: "gearshape", title: "Settings", action: { isSettingsPresented = true })
                     ProfileMenuRow(icon: "questionmark.circle", title: "Help & Support", action: { isHelpPresented = true })
@@ -165,6 +170,7 @@ struct ProfileView: View {
             VStack(spacing: 12) {
                 ProfileMenuRowLegacy(icon: "doc.text", title: "My Listing", action: { isListingSheetPresented = true })
                 ProfileMenuRowLegacy(icon: "arrow.left.arrow.right", title: "My Rentals", action: { isMyRentalsPresented = true })
+                ProfileMenuRowLegacy(icon: "sparkles", title: "Virtual Try-Ons", action: { isTryOnHistoryPresented = true })
                 ProfileMenuRowLegacy(icon: "heart", title: "Favourites", action: { isFavoritesPresented = true })
                 ProfileMenuRowLegacy(icon: "gearshape", title: "Settings", action: { isSettingsPresented = true })
                 ProfileMenuRowLegacy(icon: "questionmark.circle", title: "Help & Support", action: { isHelpPresented = true })

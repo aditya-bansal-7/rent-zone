@@ -457,4 +457,12 @@ class TryOnService {
             modelUsed: dto.modelUsed
         )
     }
+
+    func getMyTryOns() async throws -> [TryOnDTO] {
+        let dtos: [TryOnDTO] = try await APIClient.shared.request(
+            endpoint: "/tryon/me",
+            authenticated: true
+        )
+        return dtos
+    }
 }

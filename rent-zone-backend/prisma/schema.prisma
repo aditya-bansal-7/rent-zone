@@ -134,9 +134,9 @@ model Rental {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  product          Product      @relation(fields: [productId], references: [id])
-  rentedBy         User         @relation("RentedBy", fields: [rentedByUserId], references: [id])
-  rentedFrom       User         @relation("RentedFrom", fields: [rentedFromUserId], references: [id])
+  product          Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rentedBy         User         @relation("RentedBy", fields: [rentedByUserId], references: [id], onDelete: Cascade)
+  rentedFrom       User         @relation("RentedFrom", fields: [rentedFromUserId], references: [id], onDelete: Cascade)
 }
 
 model Review {
