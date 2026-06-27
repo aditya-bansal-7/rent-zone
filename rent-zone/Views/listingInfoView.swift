@@ -58,7 +58,7 @@ struct ListingInfoView: View {
             .navigationTitle("My Listings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     DismissButton(action: { dismiss() })
                 }
             }

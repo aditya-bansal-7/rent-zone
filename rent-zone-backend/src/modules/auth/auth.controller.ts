@@ -34,9 +34,13 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(6, 'New password must be at least 6 characters'),
 });
 
-const resetPasswordSchema = z.object({
+const verifyForgotPasswordOtpSchema = z.object({
   email: z.string().email(),
   code: z.string().length(6, 'Verification code must be 6 digits'),
+});
+
+const resetPasswordSchema = z.object({
+  resetToken: z.string().min(1, 'Reset token is required'),
   newPassword: z.string().min(6, 'New password must be at least 6 characters'),
 });
 
@@ -173,10 +177,20 @@ export const changePassword = async (req: Request, res: Response) => {
   }
 };
 
+export const verifyForgotPasswordOtp = async (req: Request, res: Response) => {
+  try {
+    const data = verifyForgotPasswordOtpSchema.parse(req.body);
+    const result = await authService.verifyForgotPasswordOtp(data.email, data.code);
+    sendSuccess(res, result, 200, 'OTP verified successfully');
+  } catch (err: any) {
+    sendError(res, err.message, 400);
+  }
+};
+
 export const resetPassword = async (req: Request, res: Response) => {
   try {
     const data = resetPasswordSchema.parse(req.body);
-    await authService.resetPassword(data.email, data.code, data.newPassword);
+    await authService.resetPassword(data.resetToken, data.newPassword);
     sendSuccess(res, {}, 200, 'Password reset successfully');
   } catch (err: any) {
     sendError(res, err.message, 400);

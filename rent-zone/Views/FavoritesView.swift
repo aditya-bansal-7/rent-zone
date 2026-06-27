@@ -46,12 +46,8 @@ struct FavoritesView: View {
             .navigationTitle("Favorites")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primary)
-                    }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    DismissButton(action: {dismiss()})
                 }
             }
             .task {

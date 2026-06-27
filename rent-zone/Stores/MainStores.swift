@@ -92,21 +92,67 @@ class ProductStore {
     var myProducts: [Product] = []
     var favoriteProducts: [Product] = []
     var isLoading: Bool = false
+    var isLoadingMore: Bool = false
     var error: String? = nil
 
-    func fetchItems() async {
+    // Pagination state
+    private(set) var currentPage: Int = 1
+    private(set) var totalPages: Int = 1
+    var hasMorePages: Bool { currentPage < totalPages }
+
+    // Track active filters so fetchNextPage uses the same params
+    private(set) var activeCategoryId: String? = nil
+
+    private let pageSize = 20
+
+    func fetchItems(categoryId: String? = nil) async {
         isLoading = true
         error = nil
+        activeCategoryId = categoryId
         do {
-            let fetched = try await ProductService.shared.getProducts(limit: 50)
+            let result = try await ProductService.shared.getProductsPaginated(
+                categoryId: categoryId,
+                page: 1,
+                limit: pageSize
+            )
             await MainActor.run {
-                self.products = fetched
+                self.products = result.products
+                self.currentPage = result.page
+                self.totalPages = result.totalPages
                 self.isLoading = false
             }
         } catch {
             await MainActor.run {
                 self.error = error.localizedDescription
                 self.isLoading = false
+            }
+        }
+    }
+
+    func fetchNextPage() async {
+        guard hasMorePages, !isLoadingMore, !isLoading else { return }
+
+        await MainActor.run { self.isLoadingMore = true }
+
+        do {
+            let nextPage = currentPage + 1
+            let result = try await ProductService.shared.getProductsPaginated(
+                categoryId: activeCategoryId,
+                page: nextPage,
+                limit: pageSize
+            )
+            await MainActor.run {
+                // Deduplicate: only append products not already in the list
+                let existingIds = Set(self.products.map { $0.id })
+                let newProducts = result.products.filter { !existingIds.contains($0.id) }
+                self.products.append(contentsOf: newProducts)
+                self.currentPage = result.page
+                self.totalPages = result.totalPages
+                self.isLoadingMore = false
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoadingMore = false
             }
         }
     }
@@ -154,8 +200,18 @@ class ProductStore {
                     userStore.currentUser = user
                 }
                 
-                // Refresh favorites list if we are on favorites page
-                if !result.isFavorited {
+                // Keep favoriteProducts in sync without a full refetch
+                if result.isFavorited {
+                    // Insert the product if it's not already in the favorites list
+                    if !self.favoriteProducts.contains(where: { $0.id == productId }) {
+                        if let product = self.products.first(where: { $0.id == productId }) {
+                            self.favoriteProducts.insert(product, at: 0)
+                        } else {
+                            // Product not in local cache — do a full refetch
+                            Task { await self.fetchFavorites() }
+                        }
+                    }
+                } else {
                     self.favoriteProducts.removeAll { $0.id == productId }
                 }
             }

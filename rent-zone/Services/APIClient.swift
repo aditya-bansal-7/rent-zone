@@ -3,7 +3,8 @@ import Foundation
 // MARK: - Base URL
 enum API {
     // Change this to your server IP/URL when running on a physical device
-    static let baseURL = "https://history-introduced-tables-aim.trycloudflare.com/api"
+//    static let baseURL = "https://history-introduced-tables-aim.trycloudflare.com/api"
+    static let baseURL = "http://localhost:3000/api"
 }
 
 // MARK: - API Errors
@@ -152,20 +153,77 @@ class APIClient {
     }
 }
 
-// MARK: - Token Storage (Keychain-backed via UserDefaults for simplicity)
+// MARK: - Keychain Helper
+import Security
+
+class KeychainHelper {
+    static func save(key: String, data: Data) {
+        let query = [
+            kSecClass as String: kSecClassGenericPassword as String,
+            kSecAttrAccount as String: key,
+            kSecValueData as String: data
+        ] as [String: Any]
+        SecItemDelete(query as CFDictionary)
+        SecItemAdd(query as CFDictionary, nil)
+    }
+
+    static func load(key: String) -> Data? {
+        let query = [
+            kSecClass as String: kSecClassGenericPassword as String,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: kCFBooleanTrue!,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ] as [String: Any]
+
+        var dataTypeRef: AnyObject? = nil
+        let status: OSStatus = SecItemCopyMatching(query as CFDictionary, &dataTypeRef)
+        if status == noErr {
+            return dataTypeRef as? Data
+        }
+        return nil
+    }
+
+    static func delete(key: String) {
+        let query = [
+            kSecClass as String: kSecClassGenericPassword as String,
+            kSecAttrAccount as String: key
+        ] as [String: Any]
+        SecItemDelete(query as CFDictionary)
+    }
+}
+
+// MARK: - Token Storage (Keychain-backed)
 class TokenStorage {
     private static let accessKey = "rz_access_token"
     private static let refreshKey = "rz_refresh_token"
     private static let userIdKey = "rz_user_id"
 
     static var accessToken: String? {
-        get { UserDefaults.standard.string(forKey: accessKey) }
-        set { UserDefaults.standard.set(newValue, forKey: accessKey) }
+        get {
+            guard let data = KeychainHelper.load(key: accessKey) else { return nil }
+            return String(data: data, encoding: .utf8)
+        }
+        set {
+            if let value = newValue, let data = value.data(using: .utf8) {
+                KeychainHelper.save(key: accessKey, data: data)
+            } else {
+                KeychainHelper.delete(key: accessKey)
+            }
+        }
     }
 
     static var refreshToken: String? {
-        get { UserDefaults.standard.string(forKey: refreshKey) }
-        set { UserDefaults.standard.set(newValue, forKey: refreshKey) }
+        get {
+            guard let data = KeychainHelper.load(key: refreshKey) else { return nil }
+            return String(data: data, encoding: .utf8)
+        }
+        set {
+            if let value = newValue, let data = value.data(using: .utf8) {
+                KeychainHelper.save(key: refreshKey, data: data)
+            } else {
+                KeychainHelper.delete(key: refreshKey)
+            }
+        }
     }
 
     static var userId: String? {
@@ -174,10 +232,44 @@ class TokenStorage {
     }
 
     static func clear() {
-        UserDefaults.standard.removeObject(forKey: accessKey)
-        UserDefaults.standard.removeObject(forKey: refreshKey)
+        KeychainHelper.delete(key: accessKey)
+        KeychainHelper.delete(key: refreshKey)
         UserDefaults.standard.removeObject(forKey: userIdKey)
     }
 
-    static var isLoggedIn: Bool { accessToken != nil }
+    static var isLoggedIn: Bool {
+        // If refresh token exists and is valid, session is good
+        if let refresh = refreshToken, !isTokenExpired(refresh) { return true }
+        // Otherwise, check access token
+        if let access = accessToken, !isTokenExpired(access) { return true }
+        return false
+    }
+
+    private static func isTokenExpired(_ token: String) -> Bool {
+        let parts = token.components(separatedBy: ".")
+        guard parts.count == 3 else { return true }
+        
+        var base64 = parts[1]
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        
+        let length = Double(base64.lengthOfBytes(using: .utf8))
+        let requiredLength = 4 * ceil(length / 4.0)
+        let paddingLength = requiredLength - length
+        if paddingLength > 0 {
+            let padding = String(repeating: "=", count: Int(paddingLength))
+            base64 += padding
+        }
+        
+        guard let data = Data(base64Encoded: base64),
+              let json = try? JSONSerialization.jsonObject(with: data, options: []),
+              let dictionary = json as? [String: Any],
+              let exp = dictionary["exp"] as? TimeInterval else {
+            return true
+        }
+        
+        let expiryDate = Date(timeIntervalSince1970: exp)
+        // Add a 60-second buffer
+        return Date() >= expiryDate.addingTimeInterval(-60)
+    }
 }

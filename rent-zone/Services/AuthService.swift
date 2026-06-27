@@ -226,11 +226,24 @@ class AuthService {
         ) as EmptyResponse
     }
     
-    // MARK: Reset Password (OTP)
-    func resetPassword(email: String, code: String, newPassword: String) async throws {
+    // MARK: Verify Forgot Password OTP
+    func verifyForgotPasswordOtp(email: String, code: String) async throws -> String {
+        let body: [String: Any] = ["email": email, "code": code]
+        struct VerifyForgotPasswordResponse: Decodable {
+            let resetToken: String
+        }
+        let result: VerifyForgotPasswordResponse = try await APIClient.shared.request(
+            endpoint: "/auth/verify-forgot-password-otp",
+            method: "POST",
+            body: body
+        )
+        return result.resetToken
+    }
+
+    // MARK: Reset Password
+    func resetPassword(resetToken: String, newPassword: String) async throws {
         let body: [String: Any] = [
-            "email": email,
-            "code": code,
+            "resetToken": resetToken,
             "newPassword": newPassword
         ]
         _ = try await APIClient.shared.request(

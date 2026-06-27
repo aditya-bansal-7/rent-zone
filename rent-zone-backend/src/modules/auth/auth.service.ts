@@ -7,6 +7,7 @@ import {
   signAccessToken,
   signRefreshToken,
   verifyRefreshToken,
+  verifyAccessToken,
   JwtPayload,
 } from '../../utils/jwt.utils';
 import { sendOtpEmail } from '../../utils/mailer.utils';
@@ -243,8 +244,8 @@ export const changePassword = async (userId: string, oldPassword: string, newPas
     throw new Error('Account not found');
   }
   
-  if (account.provider !== 'email' || !account.passwordHash) {
-    throw new Error('Password change is only available for email accounts');
+  if (!account.passwordHash) {
+    throw new Error('No password is set for this account. Please use forgot password to set one.');
   }
 
   const isValid = await bcrypt.compare(oldPassword, account.passwordHash);
@@ -260,7 +261,7 @@ export const changePassword = async (userId: string, oldPassword: string, newPas
 };
 
 // ── Reset Password (OTP) ───────────────────────────────────────────────────────
-export const resetPassword = async (email: string, code: string, newPassword: string) => {
+export const verifyForgotPasswordOtp = async (email: string, code: string) => {
   const otpEntry = await prisma.oTP.findUnique({ where: { email } });
 
   if (!otpEntry || otpEntry.code !== code) {
@@ -272,8 +273,29 @@ export const resetPassword = async (email: string, code: string, newPassword: st
   }
 
   const account = await prisma.account.findUnique({ where: { email } });
-  if (!account || account.provider !== 'email') {
-    throw new Error('Password reset is only available for email accounts');
+  if (!account) {
+    throw new Error('Account not found');
+  }
+
+  // Delete the OTP after successful verification
+  await prisma.oTP.delete({ where: { email } });
+
+  // Generate a temporary JWT (resetToken)
+  const payload: JwtPayload = { userId: account.userId, email };
+  const resetToken = signAccessToken(payload);
+  return { resetToken };
+};
+
+export const resetPassword = async (resetToken: string, newPassword: string) => {
+  const payload = verifyAccessToken(resetToken);
+  
+  if (!payload || !payload.email) {
+    throw new Error('Invalid reset token');
+  }
+  
+  const account = await prisma.account.findUnique({ where: { email: payload.email } });
+  if (!account) {
+    throw new Error('Account not found');
   }
 
   const newPasswordHash = await bcrypt.hash(newPassword, 10);
@@ -281,7 +303,4 @@ export const resetPassword = async (email: string, code: string, newPassword: st
     where: { id: account.id },
     data: { passwordHash: newPasswordHash },
   });
-
-  // Delete the OTP after successful reset
-  await prisma.oTP.delete({ where: { email } });
 };

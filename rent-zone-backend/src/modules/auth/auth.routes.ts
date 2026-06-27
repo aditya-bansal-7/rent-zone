@@ -12,6 +12,7 @@ router.post('/send-otp', authController.sendOtp);
 router.post('/verify-otp', authController.verifyOtp);
 router.post('/oauth', authController.oauthLogin);
 router.post('/refresh', authController.refresh);
+router.post('/verify-forgot-password-otp', authController.verifyForgotPasswordOtp);
 router.post('/reset-password', authController.resetPassword);
 
 // Protected

@@ -10,6 +10,7 @@ struct UploadViewCamera: View {
     @State private var selectedImages: [UIImage] = []
     @State private var currentPage = 0
     @State private var isLoggedInRequired = false
+    @State private var navigateToUpload = false
 
     var body: some View {
         NavigationStack {
@@ -73,7 +74,13 @@ struct UploadViewCamera: View {
 
                 // Next button — only shown when images are selected
                 if !selectedImages.isEmpty {
-                    NavigationLink(destination: UploadView(selectedImages: selectedImages)) {
+                    Button(action: {
+                        if TokenStorage.isLoggedIn {
+                            navigateToUpload = true
+                        } else {
+                            isLoggedInRequired = true
+                        }
+                    }) {
                         Text("Continue")
                             .font(.system(size: 17, weight: .medium))
                             .foregroundStyle(.black)
@@ -83,6 +90,9 @@ struct UploadViewCamera: View {
                             .cornerRadius(30)
                     }
                     .padding(.horizontal, 40)
+                    .navigationDestination(isPresented: $navigateToUpload) {
+                        UploadView(selectedImages: selectedImages)
+                    }
                 }
 
                 Spacer().frame(height: 40)

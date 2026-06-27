@@ -85,9 +85,9 @@ struct MyRentalsView: View {
                 }
             }
             .navigationTitle("My Rentals")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .topBarTrailing) {
                     DismissButton(action: { dismiss() })
                 }
             }

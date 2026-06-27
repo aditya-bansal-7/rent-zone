@@ -143,7 +143,7 @@ struct ReportUserView: View {
                 Text("Thank you for reporting. We will review the report and take appropriate action.")
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         dismiss()
                     } label: {

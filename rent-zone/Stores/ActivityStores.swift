@@ -142,24 +142,52 @@ class NotificationStore {
     }
 
     func acceptRequest(id: String) {
-        if let index = notifications.firstIndex(where: { $0.id == id }) {
-            notifications[index].status = .accepted
-            notifications[index].isRead = true
-        }
+        guard let index = notifications.firstIndex(where: { $0.id == id }) else { return }
+        
+        let previousStatus = notifications[index].status
+        let previousIsRead = notifications[index].isRead
+        
+        notifications[index].status = .accepted
+        notifications[index].isRead = true
         _refreshUnread()
+        
         Task {
-            try? await NotificationService.shared.respondToRentalRequest(notificationId: id, accept: true)
+            do {
+                try await NotificationService.shared.respondToRentalRequest(notificationId: id, accept: true)
+            } catch {
+                await MainActor.run {
+                    if let currentIndex = self.notifications.firstIndex(where: { $0.id == id }) {
+                        self.notifications[currentIndex].status = previousStatus
+                        self.notifications[currentIndex].isRead = previousIsRead
+                        self._refreshUnread()
+                    }
+                }
+            }
         }
     }
 
     func rejectRequest(id: String) {
-        if let index = notifications.firstIndex(where: { $0.id == id }) {
-            notifications[index].status = .rejected
-            notifications[index].isRead = true
-        }
+        guard let index = notifications.firstIndex(where: { $0.id == id }) else { return }
+        
+        let previousStatus = notifications[index].status
+        let previousIsRead = notifications[index].isRead
+        
+        notifications[index].status = .rejected
+        notifications[index].isRead = true
         _refreshUnread()
+        
         Task {
-            try? await NotificationService.shared.respondToRentalRequest(notificationId: id, accept: false)
+            do {
+                try await NotificationService.shared.respondToRentalRequest(notificationId: id, accept: false)
+            } catch {
+                await MainActor.run {
+                    if let currentIndex = self.notifications.firstIndex(where: { $0.id == id }) {
+                        self.notifications[currentIndex].status = previousStatus
+                        self.notifications[currentIndex].isRead = previousIsRead
+                        self._refreshUnread()
+                    }
+                }
+            }
         }
     }
 }
