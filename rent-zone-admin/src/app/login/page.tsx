@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { ShirtIcon, Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { auth } from "@/lib/auth";
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -18,13 +20,13 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    await new Promise((r) => setTimeout(r, 1200));
-
-    if (email === "admin@rentzone.com" && password === "admin123") {
-      document.cookie = "admin_session=mock_admin_token; max-age=86400; path=/";
+    try {
+      await auth.login(email, password);
+      // Verify admin status
+      await auth.getMe();
       router.push("/dashboard");
-    } else {
-      setError("Invalid credentials. Try admin@rentzone.com / admin123");
+    } catch (err: any) {
+      setError(err.message || "Invalid credentials.");
       setLoading(false);
     }
   };

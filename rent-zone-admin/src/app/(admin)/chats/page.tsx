@@ -1,145 +1,126 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Flag, Archive, Ban, MessageSquare } from "lucide-react";
-import { mockChats } from "@/lib/mock-data";
-import { formatRelativeTime, getInitials, cn } from "@/lib/utils";
-import type { Chat } from "@/types";
+import { useState, useEffect } from "react";
+import { MessageSquare, Users } from "lucide-react";
+import { adminService } from "@/services/admin";
+import { formatRelativeTime, getInitials } from "@/lib/utils";
 
 export default function ChatsPage() {
-  const [chats, setChats] = useState<Chat[]>(mockChats);
-  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const [search, setSearch] = useState("");
+  const [chats, setChats] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [selectedChat, setSelectedChat] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
-  const filtered = chats.filter((c) => {
-    const q = search.toLowerCase();
-    return c.participants.some((p) => p.name.toLowerCase().includes(q)) ||
-      c.product?.name.toLowerCase().includes(q ?? "") ||
-      c.lastMessage?.content.toLowerCase().includes(q ?? "");
-  });
+  const fetchChats = async () => {
+    setLoading(true);
+    try {
+      const res = await adminService.chats.list({ page, limit: 20 });
+      setChats(res.chats);
+      setTotal(res.total);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleFlag = (id: string) => setChats((prev) => prev.map((c) => c.id === id ? { ...c, isFlagged: !c.isFlagged } : c));
-  const handleArchive = (id: string) => setChats((prev) => prev.map((c) => c.id === id ? { ...c, isArchived: !c.isArchived } : c));
+  useEffect(() => { fetchChats(); }, [page]);
+
+  const openChat = async (chat: any) => {
+    setSelectedChat(chat);
+    setLoadingMessages(true);
+    try {
+      const msgs = await adminService.chats.getMessages(chat.id);
+      setMessages(msgs);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
 
   return (
-    <div className="space-y-5 max-w-[1400px]">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Chat Monitoring</h2>
-        <p className="text-sm text-gray-500">{chats.filter((c) => c.isFlagged).length} flagged conversations</p>
+        <h2 className="text-2xl font-bold text-gray-900">Chat Monitoring</h2>
+        <p className="text-sm text-gray-500 mt-1">View conversations between users on the platform.</p>
       </div>
 
-      <div className="flex gap-4 h-[600px]">
-        {/* Chat List */}
-        <div className="admin-card flex flex-col w-80 flex-shrink-0">
-          <div className="p-4 border-b border-gray-50">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input type="text" placeholder="Search chats..." value={search} onChange={(e) => setSearch(e.target.value)} className="form-input pl-9 text-sm" />
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[600px]">
+        {/* Conversation List */}
+        <div className="admin-card overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100">
+            <p className="section-title">Conversations ({total})</p>
           </div>
-          <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
-            {filtered.map((chat) => (
-              <div
-                key={chat.id}
-                onClick={() => setSelectedChat(chat)}
-                className={cn(
-                  "p-4 cursor-pointer hover:bg-purple-50/40 transition-colors",
-                  selectedChat?.id === chat.id && "bg-purple-50",
-                  chat.isFlagged && "border-l-4 border-l-red-400"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="relative flex-shrink-0">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold">
-                      {getInitials(chat.participants[0].name)}
+          <div className="overflow-y-auto max-h-[550px]">
+            {loading ? (
+              <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div></div>
+            ) : chats.length === 0 ? (
+              <div className="py-10 text-center text-gray-500 text-sm">No conversations found.</div>
+            ) : (
+              chats.map((chat) => {
+                const participants = chat.participants?.map((p: any) => p.user?.name).filter(Boolean).join(" & ");
+                return (
+                  <button
+                    key={chat.id}
+                    onClick={() => openChat(chat)}
+                    className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-purple-50/50 transition-colors ${selectedChat?.id === chat.id ? 'bg-purple-50' : ''}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        <Users size={16} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-gray-900 truncate">{participants || "Unknown"}</p>
+                        <p className="text-xs text-gray-400">{chat._count?.messages || 0} messages · {formatRelativeTime(chat.updatedAt)}</p>
+                      </div>
                     </div>
-                    {chat.isFlagged && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-800 truncate">
-                        {chat.participants.map((p) => p.name).join(" & ")}
-                      </p>
-                      <p className="text-[10px] text-gray-400 flex-shrink-0 ml-1">
-                        {chat.lastMessage ? formatRelativeTime(chat.lastMessage.createdAt) : ""}
-                      </p>
-                    </div>
-                    {chat.product && <p className="text-[10px] text-purple-500 font-medium truncate">{chat.product.name}</p>}
-                    <p className="text-xs text-gray-400 truncate mt-0.5">{chat.lastMessage?.content}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
 
-        {/* Chat Detail */}
-        <div className="admin-card flex-1 flex flex-col">
-          {selectedChat ? (
+        {/* Message View */}
+        <div className="admin-card lg:col-span-2 overflow-hidden flex flex-col">
+          {!selectedChat ? (
+            <div className="flex-1 flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <MessageSquare size={40} className="mx-auto mb-3 opacity-30" />
+                <p className="text-sm">Select a conversation to view messages</p>
+              </div>
+            </div>
+          ) : (
             <>
-              {/* Header */}
-              <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-gray-800">
-                    {selectedChat.participants.map((p) => p.name).join(" ↔ ")}
-                  </p>
-                  {selectedChat.product && (
-                    <p className="text-xs text-purple-500">re: {selectedChat.product.name}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {selectedChat.isFlagged && <span className="badge badge-red">Flagged</span>}
-                  <button onClick={() => handleFlag(selectedChat.id)} className={cn("p-1.5 rounded-lg transition-colors", selectedChat.isFlagged ? "bg-red-50 text-red-500" : "hover:bg-amber-50 text-gray-400 hover:text-amber-500")}>
-                    <Flag size={15} />
-                  </button>
-                  <button onClick={() => handleArchive(selectedChat.id)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
-                    <Archive size={15} />
-                  </button>
-                  <button className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
-                    <Ban size={15} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-gray-50/40">
-                {selectedChat.messages?.map((msg) => {
-                  const sender = selectedChat.participants.find((p) => p.id === msg.senderId);
-                  const isFirst = selectedChat.participants[0].id === msg.senderId;
-                  return (
-                    <div key={msg.id} className={cn("flex items-end gap-2", isFirst ? "flex-row" : "flex-row-reverse")}>
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
-                        {getInitials(sender?.name ?? "?")}
-                      </div>
-                      <div className={cn(
-                        "max-w-[70%] px-3.5 py-2.5 rounded-2xl text-sm",
-                        isFirst ? "bg-white border border-gray-100 text-gray-700 rounded-bl-sm" : "bg-purple-600 text-white rounded-br-sm"
-                      )}>
-                        {msg.content}
-                        <p className={cn("text-[10px] mt-1 opacity-60")}>{formatRelativeTime(msg.createdAt)}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Admin note */}
-              <div className="p-4 border-t border-gray-100 bg-amber-50/60">
-                <p className="text-xs text-amber-600 font-medium">
-                  👁 You are viewing this conversation in admin monitoring mode. No messages can be sent.
+              <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-3">
+                <p className="section-title">
+                  {selectedChat.participants?.map((p: any) => p.user?.name).filter(Boolean).join(" & ")}
                 </p>
               </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-purple-50 flex items-center justify-center mb-4">
-                <MessageSquare className="w-7 h-7 text-purple-300" />
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 max-h-[500px]">
+                {loadingMessages ? (
+                  <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div></div>
+                ) : messages.length === 0 ? (
+                  <div className="text-center text-gray-400 text-sm py-10">No messages in this conversation.</div>
+                ) : (
+                  messages.map((msg) => (
+                    <div key={msg.id} className="flex gap-3">
+                      <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 text-[10px] font-bold flex-shrink-0 mt-0.5">
+                        {msg.senderId?.slice(-2)?.toUpperCase()}
+                      </div>
+                      <div className="bg-gray-50 rounded-xl px-4 py-2 max-w-[80%]">
+                        <p className="text-sm text-gray-800">{msg.content}</p>
+                        <p className="text-[10px] text-gray-400 mt-1">{formatRelativeTime(msg.createdAt)}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-              <p className="text-sm font-medium text-gray-600">Select a conversation</p>
-              <p className="text-xs text-gray-400 mt-1">Choose a chat from the left to view messages</p>
-            </div>
+            </>
           )}
         </div>
       </div>

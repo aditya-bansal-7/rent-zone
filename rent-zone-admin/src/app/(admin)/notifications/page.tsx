@@ -1,131 +1,128 @@
 "use client";
 
-import { useState } from "react";
-import { Bell, Plus, Send, Archive, Check, Megaphone } from "lucide-react";
-import { mockNotifications } from "@/lib/mock-data";
-import { formatRelativeTime, cn } from "@/lib/utils";
-import type { Notification, NotificationType } from "@/types";
-
-const TYPE_ICON: Record<string, string> = {
-  rentalRequest: "📦", rentalApproved: "✅", rentalReturned: "↩️",
-  review: "⭐", report: "⚑", system: "⚙️", broadcast: "📢",
-};
-
-const TYPE_COLORS: Record<string, string> = {
-  rentalRequest: "badge-blue", rentalApproved: "badge-green", rentalReturned: "badge-gray",
-  review: "badge-yellow", report: "badge-red", system: "badge-purple", broadcast: "badge-indigo",
-};
+import { useState, useEffect } from "react";
+import { Bell, Send } from "lucide-react";
+import { adminService } from "@/services/admin";
+import { formatRelativeTime } from "@/lib/utils";
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
-  const [showBroadcastForm, setShowBroadcastForm] = useState(false);
-  const [broadcastForm, setBroadcastForm] = useState({ title: "", content: "", segment: "all" });
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [showBroadcast, setShowBroadcast] = useState(false);
+  const [broadcastTitle, setBroadcastTitle] = useState("");
+  const [broadcastContent, setBroadcastContent] = useState("");
+  const [sending, setSending] = useState(false);
 
-  const handleMarkRead = (id: string) => setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, isRead: true } : n));
-  const handleArchive = (id: string) => setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, isArchived: true } : n));
-  const handleSendBroadcast = () => {
-    if (!broadcastForm.title || !broadcastForm.content) return;
-    const newNotif: Notification = {
-      id: `n${Date.now()}`, title: broadcastForm.title, content: broadcastForm.content,
-      type: "broadcast", isRead: false, isArchived: false, isBroadcast: true,
-      targetSegment: broadcastForm.segment, createdAt: new Date().toISOString(),
-    };
-    setNotifications((prev) => [newNotif, ...prev]);
-    setBroadcastForm({ title: "", content: "", segment: "all" });
-    setShowBroadcastForm(false);
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      const res = await adminService.notifications.list({ page, limit: 15 });
+      setNotifications(res.notifications);
+      setTotal(res.total);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const active = notifications.filter((n) => !n.isArchived);
-  const unread = active.filter((n) => !n.isRead);
+  useEffect(() => { fetchNotifications(); }, [page]);
+
+  const handleBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSending(true);
+    try {
+      await adminService.notifications.broadcast({ title: broadcastTitle, content: broadcastContent });
+      setShowBroadcast(false);
+      setBroadcastTitle("");
+      setBroadcastContent("");
+      fetchNotifications();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
-    <div className="space-y-5 max-w-[900px]">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Notifications</h2>
-          <p className="text-sm text-gray-500">{unread.length} unread · {active.length} active</p>
+          <h2 className="text-2xl font-bold text-gray-900">Notifications</h2>
+          <p className="text-sm text-gray-500 mt-1">View platform notifications and broadcast messages.</p>
         </div>
-        <button onClick={() => setShowBroadcastForm(true)} className="btn-primary">
-          <Megaphone size={15} /> Send Broadcast
+        <button onClick={() => setShowBroadcast(true)} className="btn-primary">
+          <Send size={16} /> Broadcast
         </button>
       </div>
 
-      {/* Broadcast Form */}
-      {showBroadcastForm && (
-        <div className="admin-card p-5 border-purple-200 bg-purple-50/40">
-          <p className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Megaphone size={16} className="text-purple-600" /> New Broadcast Notification
-          </p>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
-              <input type="text" value={broadcastForm.title} onChange={(e) => setBroadcastForm((p) => ({ ...p, title: e.target.value }))} className="form-input" placeholder="Notification title..." />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Message</label>
-              <textarea rows={3} value={broadcastForm.content} onChange={(e) => setBroadcastForm((p) => ({ ...p, content: e.target.value }))} className="form-input resize-none" placeholder="Notification content..." />
-            </div>
-            <div className="flex gap-3 items-end">
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-gray-600 mb-1">Target Segment</label>
-                <select value={broadcastForm.segment} onChange={(e) => setBroadcastForm((p) => ({ ...p, segment: e.target.value }))} className="form-select">
-                  <option value="all">All Users</option>
-                  <option value="verified">Verified Only</option>
-                  <option value="unverified">Unverified Only</option>
-                  <option value="renters">Active Renters</option>
-                  <option value="sellers">Active Sellers</option>
-                </select>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={handleSendBroadcast} className="btn-primary py-2 gap-1.5"><Send size={14} /> Send</button>
-                <button onClick={() => setShowBroadcastForm(false)} className="btn-secondary py-2">Cancel</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Notification List */}
-      <div className="admin-card overflow-hidden">
+      <div className="admin-card">
         <div className="divide-y divide-gray-50">
-          {active.map((notif) => (
-            <div key={notif.id} className={cn("px-5 py-4 hover:bg-gray-50/60 transition-colors", !notif.isRead && "bg-purple-50/30")}>
-              <div className="flex items-start gap-4">
-                <div className="text-xl flex-shrink-0 w-8 text-center">{TYPE_ICON[notif.type] ?? "🔔"}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className={cn("text-sm font-semibold", !notif.isRead ? "text-gray-900" : "text-gray-700")}>{notif.title}</p>
-                      <span className={`badge ${TYPE_COLORS[notif.type] ?? "badge-gray"}`}>{notif.type}</span>
-                      {notif.isBroadcast && <span className="badge badge-indigo">Broadcast</span>}
-                      {!notif.isRead && <span className="w-2 h-2 bg-purple-500 rounded-full" />}
-                    </div>
-                    <p className="text-xs text-gray-400 flex-shrink-0">{formatRelativeTime(notif.createdAt)}</p>
+          {loading ? (
+            <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div></div>
+          ) : notifications.length === 0 ? (
+            <div className="py-10 text-center text-gray-500 text-sm">No notifications yet.</div>
+          ) : (
+            notifications.map((notif) => (
+              <div key={notif.id} className="px-5 py-4 hover:bg-gray-50/50 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${notif.isRead ? 'bg-gray-100' : 'bg-purple-50'}`}>
+                    <Bell size={16} className={notif.isRead ? 'text-gray-400' : 'text-purple-600'} />
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">{notif.content}</p>
-                  {notif.targetSegment && <p className="text-xs text-purple-500 mt-1">→ {notif.targetSegment}</p>}
-                </div>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {!notif.isRead && (
-                    <button onClick={() => handleMarkRead(notif.id)} className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors" title="Mark read">
-                      <Check size={14} />
-                    </button>
-                  )}
-                  <button onClick={() => handleArchive(notif.id)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors" title="Archive">
-                    <Archive size={14} />
-                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{notif.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{notif.content}</p>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <span className="text-[10px] text-gray-400">{formatRelativeTime(notif.createdAt)}</span>
+                      <span className="text-[10px] text-gray-400">To: {notif.user?.name || 'All users'}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
-        {active.length === 0 && (
-          <div className="empty-state py-16">
-            <div className="empty-state-icon"><Bell size={24} /></div>
-            <p className="text-sm font-medium text-gray-600">No active notifications</p>
+
+        {!loading && total > 0 && (
+          <div className="flex justify-between items-center p-4 text-sm text-gray-500 border-t border-gray-100">
+            <span>Showing {(page - 1) * 15 + 1} to {Math.min(page * 15, total)} of {total}</span>
+            <div className="flex gap-2">
+              <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50">Prev</button>
+              <button disabled={page * 15 >= total} onClick={() => setPage(p => p + 1)} className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50">Next</button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Broadcast Modal */}
+      {showBroadcast && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-modal animate-slide-in">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="font-bold text-gray-900">Broadcast Notification</h3>
+              <button onClick={() => setShowBroadcast(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <form onSubmit={handleBroadcast} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input required type="text" className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400" value={broadcastTitle} onChange={e => setBroadcastTitle(e.target.value)} placeholder="Notification title..." />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+                <textarea required className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400 h-24 resize-none" value={broadcastContent} onChange={e => setBroadcastContent(e.target.value)} placeholder="Message content..." />
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowBroadcast(false)} className="btn-secondary">Cancel</button>
+                <button type="submit" disabled={sending} className="btn-primary">
+                  {sending ? "Sending..." : "Send to All Users"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

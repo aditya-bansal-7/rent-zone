@@ -2,41 +2,73 @@
 
 import {
   Users, Package, CalendarCheck, Flag, MessageSquare,
-  Star, Wand2, TrendingUp, TrendingDown, ArrowRight,
-  IndianRupee, AlertTriangle, CheckCircle, Clock,
+  Star, Wand2, ArrowRight, IndianRupee,
 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
-  LineChart, Line, AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  AreaChart, Area, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
 } from "recharts";
-import {
-  mockKpiData, mockAnalyticsData, mockRevenueData, mockCategoryData,
-  mockRentals, mockReports, mockAuditLogs,
-} from "@/lib/mock-data";
+import { adminService } from "@/services/admin";
 import { formatCurrency, formatNumber, formatRelativeTime, rentalStatusColors } from "@/lib/utils";
 
 const PIE_COLORS = ["#7c3aed", "#a855f7", "#c084fc", "#6366f1", "#818cf8", "#93c5fd"];
 
-const kpiCards = [
-  { label: "Total Users",       value: mockKpiData.totalUsers,      icon: Users,         color: "text-purple-600", bg: "bg-purple-50",   trend: +12.4, trendLabel: "vs last month" },
-  { label: "Active Listings",   value: mockKpiData.activeListings,  icon: Package,       color: "text-violet-600", bg: "bg-violet-50",   trend: +8.1,  trendLabel: "vs last month" },
-  { label: "Total Rentals",     value: mockKpiData.totalRentals,    icon: CalendarCheck, color: "text-indigo-600", bg: "bg-indigo-50",   trend: +15.6, trendLabel: "vs last month" },
-  { label: "Monthly Revenue",   value: mockKpiData.monthlyRevenue,  icon: IndianRupee,   color: "text-emerald-600",bg: "bg-emerald-50",  trend: +22.3, trendLabel: "vs last month", isCurrency: true },
-  { label: "Pending Reports",   value: mockKpiData.pendingReports,  icon: Flag,          color: "text-red-500",    bg: "bg-red-50",      trend: -3.2,  trendLabel: "vs last month" },
-  { label: "Unread Chats",      value: mockKpiData.unreadChats,     icon: MessageSquare, color: "text-blue-600",   bg: "bg-blue-50",     trend: +5.8,  trendLabel: "vs last month" },
-  { label: "Total Reviews",     value: mockKpiData.totalReviews,    icon: Star,          color: "text-amber-500",  bg: "bg-amber-50",    trend: +9.2,  trendLabel: "vs last month" },
-  { label: "Try-On Requests",   value: mockKpiData.tryOnRequests,   icon: Wand2,         color: "text-pink-600",   bg: "bg-pink-50",     trend: +31.4, trendLabel: "vs last month" },
-];
-
 const quickActions = [
-  { label: "Review Reports",    href: "/reports",   icon: Flag,      color: "text-red-500",    bg: "bg-red-50",    badge: 12 },
-  { label: "Verify Users",      href: "/users",     icon: Users,     color: "text-purple-600", bg: "bg-purple-50", badge: 8 },
-  { label: "Moderate Listings", href: "/products",  icon: Package,   color: "text-violet-600", bg: "bg-violet-50", badge: 5 },
-  { label: "Monitor Chats",     href: "/chats",     icon: MessageSquare, color: "text-blue-600", bg: "bg-blue-50", badge: 34 },
+  { label: "Review Reports",    href: "/reports",   icon: Flag,      color: "text-red-500",    bg: "bg-red-50",    key: "pendingReports" },
+  { label: "Verify Users",      href: "/users",     icon: Users,     color: "text-purple-600", bg: "bg-purple-50", key: "totalUsers" },
+  { label: "Moderate Listings", href: "/products",  icon: Package,   color: "text-violet-600", bg: "bg-violet-50", key: "totalProducts" },
+  { label: "Monitor Chats",     href: "/chats",     icon: MessageSquare, color: "text-blue-600", bg: "bg-blue-50", key: "totalChats" },
 ];
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<any>(null);
+  const [rentals, setRentals] = useState<any[]>([]);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, rentalsRes, logsRes] = await Promise.all([
+          adminService.dashboard.getStats(),
+          adminService.rentals.list({ limit: 5 }),
+          adminService.auditLogs.list({ limit: 7 })
+        ]);
+        setStats(statsRes);
+        setRentals(rentalsRes.rentals || []);
+        setLogs(logsRes.logs || []);
+      } catch (err) {
+        console.error("Failed to load dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[500px]">
+        <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!stats) return <div>Failed to load dashboard.</div>;
+
+  const kpiCards = [
+    { label: "Total Users",       value: stats.totalUsers,      icon: Users,         color: "text-purple-600", bg: "bg-purple-50" },
+    { label: "Active Listings",   value: stats.totalProducts,  icon: Package,       color: "text-violet-600", bg: "bg-violet-50" },
+    { label: "Total Rentals",     value: stats.totalRentals,    icon: CalendarCheck, color: "text-indigo-600", bg: "bg-indigo-50" },
+    { label: "Monthly Revenue",   value: stats.monthlyRevenue,  icon: IndianRupee,   color: "text-emerald-600",bg: "bg-emerald-50", isCurrency: true },
+    { label: "Pending Reports",   value: stats.pendingReports,  icon: Flag,          color: "text-red-500",    bg: "bg-red-50" },
+    { label: "Total Chats",       value: stats.totalChats,      icon: MessageSquare, color: "text-blue-600",   bg: "bg-blue-50" },
+    { label: "Total Reviews",     value: stats.totalReviews,    icon: Star,          color: "text-amber-500",  bg: "bg-amber-50" },
+    { label: "Try-On Requests",   value: stats.totalTryOns,   icon: Wand2,         color: "text-pink-600",   bg: "bg-pink-50" },
+  ];
+
   return (
     <div className="space-y-6 max-w-[1400px]">
       {/* Header */}
@@ -55,16 +87,12 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {kpiCards.map((kpi) => {
           const Icon = kpi.icon;
-          const isUp = kpi.trend > 0;
           return (
             <div key={kpi.label} className="admin-card p-5 hover:shadow-card-hover transition-shadow">
               <div className="flex items-start justify-between mb-3">
                 <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center`}>
                   <Icon className={`w-5 h-5 ${kpi.color}`} />
                 </div>
-                <span className={isUp ? "stat-up" : "stat-down"}>
-                  {isUp ? "↑" : "↓"} {Math.abs(kpi.trend)}%
-                </span>
               </div>
               <p className="text-2xl font-bold text-gray-900">
                 {kpi.isCurrency ? formatCurrency(kpi.value) : formatNumber(kpi.value)}
@@ -82,11 +110,11 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <p className="section-title">Platform Growth</p>
-              <p className="section-subtitle">Users, products & rentals over time</p>
+              <p className="section-subtitle">Users, products & rentals</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={mockAnalyticsData}>
+            <AreaChart data={stats.recentMonths}>
               <defs>
                 <linearGradient id="usersGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.15} />
@@ -122,8 +150,8 @@ export default function DashboardPage() {
           <p className="section-subtitle mb-4">Listings by category</p>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
-              <Pie data={mockCategoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" paddingAngle={3}>
-                {mockCategoryData.map((_, i) => (
+              <Pie data={stats.categoryBreakdown} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" paddingAngle={3}>
+                {stats.categoryBreakdown.map((_: any, i: number) => (
                   <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                 ))}
               </Pie>
@@ -131,7 +159,7 @@ export default function DashboardPage() {
             </PieChart>
           </ResponsiveContainer>
           <div className="space-y-1.5 mt-2">
-            {mockCategoryData.slice(0, 4).map((d, i) => (
+            {stats.categoryBreakdown.slice(0, 4).map((d: any, i: number) => (
               <div key={d.name} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i] }} />
@@ -154,12 +182,11 @@ export default function DashboardPage() {
               <p className="section-subtitle">Total platform earnings</p>
             </div>
             <div className="text-right">
-              <p className="text-xl font-bold text-gray-900">₹2.84L</p>
-              <p className="stat-up text-xs">↑ 22.3% this month</p>
+              <p className="text-xl font-bold text-gray-900">{formatCurrency(stats.monthlyRevenue)}</p>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={mockRevenueData} barSize={28}>
+            <BarChart data={stats.revenueByMonth} barSize={28}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
               <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
@@ -187,7 +214,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-800">{action.label}</p>
-                    <p className="text-xs text-gray-400">{action.badge} items pending</p>
+                    <p className="text-xs text-gray-400">{stats[action.key] || 0} items</p>
                   </div>
                   <ArrowRight size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
                 </Link>
@@ -217,7 +244,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {mockRentals.slice(0, 5).map((rental) => (
+                {rentals.map((rental) => (
                   <tr key={rental.id}>
                     <td className="font-medium text-gray-800">{rental.product.name}</td>
                     <td className="text-gray-600">{rental.rentedBy.name}</td>
@@ -228,12 +255,15 @@ export default function DashboardPage() {
                     </td>
                     <td className="font-semibold text-gray-800">{formatCurrency(rental.totalPrice)}</td>
                     <td>
-                      <span className={`badge ${rentalStatusColors[rental.status]}`}>
+                      <span className={`badge ${rentalStatusColors[rental.status] || 'badge-gray'}`}>
                         {rental.status}
                       </span>
                     </td>
                   </tr>
                 ))}
+                {rentals.length === 0 && (
+                  <tr><td colSpan={5} className="text-center text-gray-500 py-4">No recent rentals</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -246,19 +276,22 @@ export default function DashboardPage() {
             <Link href="/audit-logs" className="text-xs text-purple-600 hover:underline font-medium">View all</Link>
           </div>
           <div className="px-5 py-3 space-y-3 max-h-72 overflow-y-auto">
-            {mockAuditLogs.slice(0, 7).map((log) => (
+            {logs.map((log) => (
               <div key={log.id} className="flex items-start gap-3">
                 <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-2 flex-shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs text-gray-700">
                     <span className="font-medium">{log.adminName}</span>{" "}
                     {log.action.replace(/_/g, " ")} —{" "}
-                    <span className="text-purple-600">{log.targetName}</span>
+                    <span className="text-purple-600">{log.entityName || log.entityId || log.entity}</span>
                   </p>
                   <p className="text-[10px] text-gray-400 mt-0.5">{formatRelativeTime(log.createdAt)}</p>
                 </div>
               </div>
             ))}
+            {logs.length === 0 && (
+              <p className="text-center text-gray-500 text-sm py-4">No recent activity</p>
+            )}
           </div>
         </div>
       </div>

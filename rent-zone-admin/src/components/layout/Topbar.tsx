@@ -2,8 +2,9 @@
 
 import { Bell, Search, ChevronDown, LogOut, User, Settings } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn, getInitials } from "@/lib/utils";
+import { auth } from "@/lib/auth";
 
 const pageTitles: Record<string, string> = {
   "/dashboard":     "Dashboard",
@@ -26,16 +27,22 @@ export default function Topbar() {
   const pathname = usePathname();
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [adminName, setAdminName] = useState("Admin");
+  const [adminEmail, setAdminEmail] = useState("");
 
   const title = Object.entries(pageTitles).find(([k]) =>
     pathname === k || pathname.startsWith(k + "/")
   )?.[1] ?? "Admin";
 
-  const adminName = "Super Admin";
-  const adminEmail = "admin@rentzone.com";
+  useEffect(() => {
+    auth.getMe().then((me) => {
+      setAdminName(me.name || "Admin");
+      setAdminEmail(me.email || "");
+    }).catch(() => {});
+  }, []);
 
   const handleLogout = () => {
-    document.cookie = "admin_session=; max-age=0; path=/";
+    auth.logout();
     router.push("/login");
   };
 

@@ -1,201 +1,166 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Filter, Plus, MoreHorizontal, Eye, Ban, CheckCircle, XCircle, Trash2, Shield, UserCheck } from "lucide-react";
-import Link from "next/link";
-import { mockUsers } from "@/lib/mock-data";
-import { formatDate, formatRelativeTime, getInitials, userStatusColors, cn } from "@/lib/utils";
-import type { User } from "@/types";
-
-type StatusFilter = "all" | "active" | "suspended" | "banned";
-type VerifiedFilter = "all" | "verified" | "unverified";
+import { useState, useEffect } from "react";
+import { Search, Filter, MoreHorizontal, CheckCircle, Ban, RefreshCw, XCircle, Package } from "lucide-react";
+import { adminService } from "@/services/admin";
+import { formatDate, userStatusColors } from "@/lib/utils";
 
 export default function UsersPage() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [verifiedFilter, setVerifiedFilter] = useState<VerifiedFilter>("all");
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [status, setStatus] = useState("all");
 
-  const filtered = users.filter((u) => {
-    const q = search.toLowerCase();
-    const matchSearch = u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.location.toLowerCase().includes(q);
-    const matchStatus = statusFilter === "all" || u.status === statusFilter;
-    const matchVerified = verifiedFilter === "all" || (verifiedFilter === "verified" ? u.isVerified : !u.isVerified);
-    return matchSearch && matchStatus && matchVerified;
-  });
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await adminService.users.list({ page, limit: 10, search, status });
+      setUsers(res.users);
+      setTotal(res.total);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const toggleRow = (id: string) =>
-    setSelectedRows((prev) => prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]);
-  const toggleAll = () =>
-    setSelectedRows(selectedRows.length === filtered.length ? [] : filtered.map((u) => u.id));
+  useEffect(() => {
+    fetchUsers();
+  }, [page, search, status]);
 
-  const handleAction = (userId: string, action: string) => {
-    setUsers((prev) => prev.map((u) => {
-      if (u.id !== userId) return u;
-      if (action === "verify") return { ...u, isVerified: true };
-      if (action === "unverify") return { ...u, isVerified: false };
-      if (action === "suspend") return { ...u, status: "suspended" };
-      if (action === "ban") return { ...u, status: "banned" };
-      if (action === "restore") return { ...u, status: "active" };
-      return u;
-    }));
+  const handleAction = async (id: string, action: "verify" | "suspend" | "ban" | "restore") => {
+    try {
+      await adminService.users[action](id);
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
-    <div className="space-y-5 max-w-[1400px]">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-[1400px]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Users</h2>
-          <p className="text-sm text-gray-500">{users.length} total users on the platform</p>
+          <h2 className="text-2xl font-bold text-gray-900">Users</h2>
+          <p className="text-sm text-gray-500 mt-1">Manage platform users and their accounts.</p>
         </div>
-        <button className="btn-primary">
-          <Plus size={15} /> Invite Admin
-        </button>
       </div>
 
-      {/* Filters */}
       <div className="admin-card p-4">
-        <div className="flex flex-wrap gap-3 items-center">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
+          <div className="relative max-w-md w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search by name, email, location..."
+              placeholder="Search users by name or location..."
+              className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-400"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="form-input pl-9"
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             />
           </div>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as StatusFilter)} className="form-select w-auto">
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="suspended">Suspended</option>
-            <option value="banned">Banned</option>
-          </select>
-          <select value={verifiedFilter} onChange={(e) => setVerifiedFilter(e.target.value as VerifiedFilter)} className="form-select w-auto">
-            <option value="all">All Verification</option>
-            <option value="verified">Verified</option>
-            <option value="unverified">Unverified</option>
-          </select>
-          {selectedRows.length > 0 && (
-            <div className="flex items-center gap-2 ml-auto">
-              <span className="text-xs text-gray-500">{selectedRows.length} selected</span>
-              <button className="btn-secondary text-xs py-1.5">Bulk Suspend</button>
-              <button className="btn-danger text-xs py-1.5">Bulk Ban</button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="admin-card overflow-hidden">
-        {filtered.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon"><Search size={24} /></div>
-            <p className="text-sm font-medium text-gray-700">No users found</p>
-            <p className="text-xs text-gray-400 mt-1">Try adjusting your search or filters</p>
+          <div className="flex items-center gap-3">
+            <select 
+              className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+              value={status}
+              onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+              <option value="banned">Banned</option>
+            </select>
+            <button className="btn-secondary whitespace-nowrap">
+              <Filter size={16} /> Filters
+            </button>
           </div>
-        ) : (
-          <div className="overflow-x-auto">
+        </div>
+
+        <div className="overflow-x-auto">
+          {loading ? (
+             <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div></div>
+          ) : (
             <table className="data-table">
               <thead>
                 <tr>
-                  <th className="w-10">
-                    <input type="checkbox" checked={selectedRows.length === filtered.length && filtered.length > 0} onChange={toggleAll} className="rounded" />
-                  </th>
                   <th>User</th>
                   <th>Location</th>
-                  <th>Provider</th>
-                  <th>Listings</th>
-                  <th>Rentals</th>
-                  <th>Verified</th>
                   <th>Status</th>
                   <th>Joined</th>
-                  <th></th>
+                  <th>Stats</th>
+                  <th className="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((user) => (
+                {users.map((user) => (
                   <tr key={user.id}>
                     <td>
-                      <input type="checkbox" checked={selectedRows.includes(user.id)} onChange={() => toggleRow(user.id)} className="rounded" />
-                    </td>
-                    <td>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-violet-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                          {getInitials(user.name)}
+                        <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-sm">
+                          {user.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800 text-sm">{user.name}</p>
-                          <p className="text-xs text-gray-400">{user.email}</p>
+                          <p className="font-medium text-gray-900">{user.name} {user.isVerified && <CheckCircle size={12} className="inline text-blue-500" />}</p>
+                          <p className="text-xs text-gray-500">{user.account?.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="text-gray-600 text-sm">{user.location}</td>
+                    <td className="text-gray-600">{user.location}</td>
                     <td>
-                      <span className={cn("badge", user.provider === "google" ? "badge-blue" : user.provider === "apple" ? "badge-gray" : "badge-purple")}>
-                        {user.provider}
+                      <span className={`badge ${userStatusColors[user.status] || "badge-gray"}`}>
+                        {user.status}
                       </span>
                     </td>
-                    <td className="text-gray-700 font-medium">{user._count.products}</td>
-                    <td className="text-gray-700 font-medium">{user._count.rentals}</td>
+                    <td className="text-gray-600">{formatDate(user.createdAt)}</td>
                     <td>
-                      {user.isVerified
-                        ? <span className="flex items-center gap-1 text-emerald-600 text-xs font-medium"><CheckCircle size={13} /> Verified</span>
-                        : <span className="flex items-center gap-1 text-gray-400 text-xs"><XCircle size={13} /> Not verified</span>
-                      }
+                      <div className="flex gap-3 text-xs text-gray-500">
+                        <span title="Products Listed"><Package size={14} className="inline mr-1"/>{user._count?.products || 0}</span>
+                        <span title="Rentals"><RefreshCw size={14} className="inline mr-1"/>{user._count?.rentalsAsRenter || 0}</span>
+                      </div>
                     </td>
-                    <td>
-                      <span className={`badge ${userStatusColors[user.status]}`}>{user.status}</span>
-                    </td>
-                    <td className="text-gray-500 text-xs">{formatDate(user.createdAt)}</td>
-                    <td>
-                      <div className="flex items-center gap-1">
-                        <Link href={`/users/${user.id}`} className="p-1.5 rounded-lg hover:bg-purple-50 text-gray-400 hover:text-purple-600 transition-colors" title="View">
-                          <Eye size={15} />
-                        </Link>
-                        {!user.isVerified && (
-                          <button onClick={() => handleAction(user.id, "verify")} className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors" title="Verify">
-                            <UserCheck size={15} />
+                    <td className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {user.status !== 'suspended' && (
+                          <button onClick={() => handleAction(user.id, "suspend")} className="p-1.5 text-gray-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors" title="Suspend">
+                            <XCircle size={18} />
                           </button>
                         )}
-                        {user.status === "active" && (
-                          <button onClick={() => handleAction(user.id, "suspend")} className="p-1.5 rounded-lg hover:bg-amber-50 text-gray-400 hover:text-amber-600 transition-colors" title="Suspend">
-                            <Ban size={15} />
+                        {user.status !== 'banned' && (
+                          <button onClick={() => handleAction(user.id, "ban")} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Ban">
+                            <Ban size={18} />
                           </button>
                         )}
-                        {user.status !== "banned" && (
-                          <button onClick={() => handleAction(user.id, "ban")} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors" title="Ban">
-                            <Shield size={15} />
+                        {user.status !== 'active' && (
+                          <button onClick={() => handleAction(user.id, "restore")} className="p-1.5 text-gray-400 hover:text-green-500 hover:bg-green-50 rounded-lg transition-colors" title="Restore">
+                            <CheckCircle size={18} />
                           </button>
                         )}
-                        {user.status !== "active" && (
-                          <button onClick={() => handleAction(user.id, "restore")} className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors" title="Restore">
-                            <CheckCircle size={15} />
-                          </button>
-                        )}
+                        <button className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
+                          <MoreHorizontal size={18} />
+                        </button>
                       </div>
                     </td>
                   </tr>
                 ))}
+                {users.length === 0 && (
+                  <tr><td colSpan={6} className="text-center py-10 text-gray-500">No users found.</td></tr>
+                )}
               </tbody>
             </table>
+          )}
+        </div>
+        
+        {/* Basic Pagination UI */}
+        {!loading && total > 0 && (
+          <div className="flex justify-between items-center mt-4 text-sm text-gray-500 px-2">
+            <span>Showing {(page - 1) * 10 + 1} to {Math.min(page * 10, total)} of {total} users</span>
+            <div className="flex gap-2">
+              <button disabled={page === 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50">Prev</button>
+              <button disabled={page * 10 >= total} onClick={() => setPage(p => p + 1)} className="px-3 py-1 border rounded disabled:opacity-50 hover:bg-gray-50">Next</button>
+            </div>
           </div>
         )}
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-gray-500">
-        <p>Showing {filtered.length} of {users.length} users</p>
-        <div className="flex items-center gap-1">
-          {["1","2","3"].map((p) => (
-            <button key={p} className={cn("w-8 h-8 rounded-lg text-sm font-medium transition-colors", p === "1" ? "bg-purple-600 text-white" : "hover:bg-gray-100 text-gray-600")}>
-              {p}
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );
