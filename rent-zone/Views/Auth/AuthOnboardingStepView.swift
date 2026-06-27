@@ -8,28 +8,21 @@ struct AuthOnboardingStepView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            AuthInputField(placeholder: "Your City (e.g. Mumbai)", text: $location, iconName: "mappin.and.ellipse")
+            AuthInputField(placeholder: "Your City (e.g. Noida)", text: $location, iconName: "mappin.and.ellipse")
             AuthInputField(placeholder: "University / College", text: $university, iconName: "graduationcap")
             AuthInputField(placeholder: "Phone Number (Optional)", text: $phoneNumber, iconName: "phone", keyboardType: .phonePad)
             
             VStack(alignment: .leading, spacing: 12) {
                 Text("I'm interested in:")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.gray)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .padding(.leading, 4)
                 
-                HStack(spacing: 12) {
-                    ForEach([CategoryType.men, CategoryType.women], id: \.self) { cat in
-                        Button(action: { selectedCategory = cat }) {
-                            Text(cat.rawValue.capitalized)
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(selectedCategory == cat ? .white : .primary)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 48)
-                                .background(selectedCategory == cat ? Color.primary : Color(UIColor.systemGray6))
-                                .cornerRadius(12)
-                        }
-                    }
+                Picker("Select Category", selection: $selectedCategory) {
+                    Text("Men").tag(CategoryType.men)
+                    Text("Women").tag(CategoryType.women)
                 }
+                .pickerStyle(.segmented)
             }
             .padding(.top, 8)
         }

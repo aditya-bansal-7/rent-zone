@@ -200,8 +200,8 @@ struct ProductDetailEditView: View {
             .navigationTitle("Edit Listing")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") { dismiss() }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(role: .close) { dismiss() }
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {

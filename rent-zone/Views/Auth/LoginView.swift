@@ -14,6 +14,9 @@ struct LoginView: View {
     @State private var phoneNumber = ""
     @State private var selectedCategory: CategoryType = .women
     @State private var otpCode = ""
+    /// True only when the user authenticated via OAuth (Google/Apple) and is completing onboarding.
+    /// Routes the final step through `updateProfile` instead of `register`.
+    @State private var isOAuthOnboarding = false
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
 
@@ -26,8 +29,6 @@ struct LoginView: View {
             
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
-                    subtitle
-                    
                     VStack(spacing: 16) {
                         inputsArea
                         
@@ -48,51 +49,59 @@ struct LoginView: View {
                 }
             }
         }
-        .background(Color(UIColor.systemBackground).edgesIgnoringSafeArea(.all))
+        .background(Color(uiColor: .systemGroupedBackground).edgesIgnoringSafeArea(.all))
         .animation(.easeInOut(duration: 0.3), value: step)
     }
 
     // MARK: - Subviews
     
     private var header: some View {
-        HStack {
-            Text(headerTitle)
-                .font(.system(size: 24, weight: .bold))
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(headerTitle)
+                    .font(.system(size: 34, weight: .bold)) // Apple large title
+                    .foregroundColor(.primary)
+                
+                
+                Text(headerSubtitle)
+                    .font(.system(size: 16))
+                    .foregroundColor(.gray)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+            }.padding(10)
             Spacer()
-            Button(action: { dismiss() }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(.secondary)
+            
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 20))
+                    .foregroundColor(.gray)
+                    .padding(12)
+                    .background(Color.gray.opacity(0.15))
+                    .clipShape(Circle())
             }
+            .padding(.top, 16)
+            .padding(.trailing, 4)
         }
-        .padding(.horizontal, 24)
-        .padding(.top, 32)
+        .padding(.horizontal)
+        .padding(.top, 16)
         .padding(.bottom, 8)
-    }
-    
-    private var subtitle: some View {
-        Text(headerSubtitle)
-            .font(.system(size: 15, weight: .regular))
-            .foregroundColor(.gray)
-            .lineSpacing(4)
-            .padding(.horizontal, 24)
-            .padding(.top, 4)
-            .fixedSize(horizontal: false, vertical: true)
     }
     
     @ViewBuilder
     private var inputsArea: some View {
-        if step != .onboardingExtra {
+        if step != .onboardingExtra && step != .verifyRegistrationOtp {
             AuthInputField(
                 placeholder: "Email address",
                 text: $emailOrMobile,
                 keyboardType: .emailAddress,
-                isDisabled: step != .enterEmailOrMobile,
-                isSuccess: step != .enterEmailOrMobile
+                isDisabled: step != .enterEmailOrMobile && step != .registerDetails,
+                isSuccess: step != .enterEmailOrMobile && step != .registerDetails,
             )
         }
         
-        if step == .verifyOtp {
+        if step == .verifyOtp || step == .verifyRegistrationOtp {
             AuthInputField(
                 placeholder: "Verification Code",
                 text: $otpCode,
@@ -146,18 +155,6 @@ struct LoginView: View {
                     onGoogleAction: handleGoogleSignIn
                 )
                 
-                Button(action: { 
-                    if emailOrMobile.contains("@") && emailOrMobile.count > 5 {
-                        withAnimation { step = .enterPassword }
-                    } else {
-                        errorMessage = "Please enter your email first to login with password"
-                    }
-                }) {
-                    Text("Login with Password")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.brandPurple)
-                }
-                .padding(.top, 4)
                 
                 Button(action: { withAnimation { step = .registerDetails } }) {
                     HStack(spacing: 4) {
@@ -183,7 +180,6 @@ struct LoginView: View {
                     Button(action: { withAnimation { step = .enterPassword } }) {
                         Text("Use Password instead")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.brandPurple)
                     }
                     .padding(.top, 4)
                 }
@@ -203,12 +199,14 @@ struct LoginView: View {
     // MARK: - Logic Handlers
     
     private func handleGoBack() {
-        if step == .onboardingExtra {
-            step = .registerDetails
-        } else {
-            step = .enterEmailOrMobile
-        }
         errorMessage = nil
+        if step == .verifyRegistrationOtp {
+            withAnimation { step = .onboardingExtra }
+        } else if step == .onboardingExtra {
+            withAnimation { step = .registerDetails }
+        } else {
+            withAnimation { step = .enterEmailOrMobile }
+        }
     }
 
     private func handlePrimaryAction() {
@@ -235,7 +233,14 @@ struct LoginView: View {
             }
             withAnimation { step = .onboardingExtra }
         case .onboardingExtra:
-            Task { await performRegister() }
+            // Send OTP to verify email before creating the account
+            Task { await performSendRegistrationOtp() }
+        case .verifyRegistrationOtp:
+            guard otpCode.count == 6 else {
+                errorMessage = "Please enter the 6-digit verification code"
+                return
+            }
+            Task { await performVerifyRegistrationOtpAndRegister() }
         }
     }
 
@@ -246,6 +251,23 @@ struct LoginView: View {
             await MainActor.run {
                 self.isLoading = false
                 withAnimation { self.step = .verifyOtp }
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func performSendRegistrationOtp() async {
+        isLoading = true
+        do {
+            try await AuthService.shared.sendOtp(email: emailOrMobile)
+            await MainActor.run {
+                self.isLoading = false
+                self.otpCode = ""
+                withAnimation { self.step = .verifyRegistrationOtp }
             }
         } catch {
             await MainActor.run {
@@ -312,7 +334,9 @@ struct LoginView: View {
     private func performRegister() async {
         isLoading = true
         do {
-            if TokenStorage.isLoggedIn {
+            // OAuth users (Google/Apple) already have an account — update their profile.
+            // Fresh email signups always use register, regardless of any stale token.
+            if isOAuthOnboarding {
                 _ = try await appStore.userStore.updateProfile(
                     name: name,
                     location: location.isEmpty ? "Unknown" : location,
@@ -339,12 +363,42 @@ struct LoginView: View {
         } catch let error as APIError {
             await MainActor.run {
                 self.isLoading = false
-                if case .serverError(let msg) = error as? APIError {
+                if case .serverError(let msg) = error {
                     self.errorMessage = msg
                 } else {
                     self.errorMessage = error.localizedDescription
                 }
             }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    /// Verifies the registration OTP then immediately creates the account.
+    private func performVerifyRegistrationOtpAndRegister() async {
+        isLoading = true
+        do {
+            // The backend verifyOtp call will return isNewUser:true and no tokens for a new email.
+            // We only need it to confirm the code is valid — then proceed to register.
+            let result = try await AuthService.shared.verifyOtp(email: emailOrMobile, code: otpCode)
+            // If the email already has an account (isNewUser == false), tokens were returned — log in.
+            if result.isNewUser == false {
+                await MainActor.run {
+                    self.isLoading = false
+                    self.errorMessage = "This email is already registered. Logging you in instead."
+                }
+                Task {
+                    await appStore.refreshAfterLogin()
+                    await MainActor.run { dismiss() }
+                }
+                return
+            }
+            // New user — proceed to create the account.
+            await MainActor.run { self.otpCode = "" }
+            await performRegister()
         } catch {
             await MainActor.run {
                 self.isLoading = false
@@ -383,9 +437,8 @@ struct LoginView: View {
                                          (authResult.user.university ?? "").isEmpty
                     
                     if needsOnboarding {
-                        withAnimation {
-                            self.step = .onboardingExtra
-                        }
+                        self.isOAuthOnboarding = true
+                        withAnimation { self.step = .onboardingExtra }
                     } else {
                         dismiss()
                     }
@@ -433,9 +486,8 @@ struct LoginView: View {
                                              (result.user.university ?? "").isEmpty
                         
                         if needsOnboarding {
-                            withAnimation {
-                                self.step = .onboardingExtra
-                            }
+                            self.isOAuthOnboarding = true
+                            withAnimation { self.step = .onboardingExtra }
                         } else {
                             dismiss()
                         }
@@ -460,7 +512,8 @@ struct LoginView: View {
         case .verifyOtp: return "Verify Code"
         case .enterPassword: return "Sign In"
         case .registerDetails: return "Continue"
-        case .onboardingExtra: return "Create Account"
+        case .onboardingExtra: return "Send Verification Code"
+        case .verifyRegistrationOtp: return "Verify & Create Account"
         }
     }
 
@@ -471,6 +524,7 @@ struct LoginView: View {
         case .enterPassword: return password.isEmpty
         case .registerDetails: return name.isEmpty
         case .onboardingExtra: return location.isEmpty || university.isEmpty
+        case .verifyRegistrationOtp: return otpCode.count < 6
         }
     }
 
@@ -481,6 +535,7 @@ struct LoginView: View {
         case .enterPassword: return "Welcome Back"
         case .registerDetails: return "Create Account"
         case .onboardingExtra: return "Final Touches"
+        case .verifyRegistrationOtp: return "Verify Your Email"
         }
     }
 
@@ -491,6 +546,7 @@ struct LoginView: View {
         case .enterPassword: return "Enter the password for \(emailOrMobile)."
         case .registerDetails: return "Enter your name and password to create an account."
         case .onboardingExtra: return "Tell us a bit more about yourself to personalize your experience."
+        case .verifyRegistrationOtp: return "We've sent a 6-digit code to \(emailOrMobile). Verify your email to complete account creation."
         }
     }
 }

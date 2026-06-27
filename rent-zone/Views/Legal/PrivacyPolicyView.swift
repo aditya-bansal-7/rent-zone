@@ -57,7 +57,7 @@ struct PrivacyPolicyView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                    Button(role: .close) {
                         dismiss()
                     }
                     .fontWeight(.semibold)
