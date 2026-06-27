@@ -8,4 +8,6 @@ enum LoginStep: Equatable {
     case onboardingExtra
     /// OTP gate shown after onboarding — user must verify email before account is created.
     case verifyRegistrationOtp
+    case verifyForgotPasswordOtp
+    case resetPassword
 }

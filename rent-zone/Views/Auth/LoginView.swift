@@ -19,6 +19,7 @@ struct LoginView: View {
     @State private var isOAuthOnboarding = false
     @State private var isLoading = false
     @State private var errorMessage: String? = nil
+    @State private var resetToken = ""
 
     @Environment(\.dismiss) private var dismiss
     @Environment(AppStore.self) private var appStore
@@ -91,17 +92,17 @@ struct LoginView: View {
     
     @ViewBuilder
     private var inputsArea: some View {
-        if step != .onboardingExtra && step != .verifyRegistrationOtp {
+        if step != .onboardingExtra && step != .verifyRegistrationOtp && step != .verifyForgotPasswordOtp && step != .resetPassword {
             AuthInputField(
                 placeholder: "Email address",
                 text: $emailOrMobile,
                 keyboardType: .emailAddress,
                 isDisabled: step != .enterEmailOrMobile && step != .registerDetails,
-                isSuccess: step != .enterEmailOrMobile && step != .registerDetails,
+                isSuccess: step != .enterEmailOrMobile && step != .registerDetails
             )
         }
         
-        if step == .verifyOtp || step == .verifyRegistrationOtp {
+        if step == .verifyOtp || step == .verifyRegistrationOtp || step == .verifyForgotPasswordOtp {
             AuthInputField(
                 placeholder: "Verification Code",
                 text: $otpCode,
@@ -118,8 +119,8 @@ struct LoginView: View {
             .padding(.top, -8)
         }
         
-        if step == .enterPassword || step == .registerDetails {
-            AuthInputField(placeholder: "Password", text: $password, isSecure: true)
+        if step == .enterPassword || step == .registerDetails || step == .resetPassword {
+            AuthInputField(placeholder: step == .resetPassword ? "New Password" : "Password", text: $password, isSecure: true)
                 .transition(.move(edge: .top).combined(with: .opacity))
         }
         
@@ -185,10 +186,19 @@ struct LoginView: View {
                 }
                 
                 if step == .enterPassword {
-                    Button(action: { Task { await performSendOtp() } }) {
-                        Text("Use OTP instead")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.brandPurple)
+                    HStack {
+                        Button(action: { Task { await performSendOtp() } }) {
+                            Text("Use OTP instead")
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        
+                        Spacer()
+                        
+                        Button(action: { Task { await performSendForgotPasswordOtp() } }) {
+                            Text("Forgot Password?")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.gray)
+                        }
                     }
                     .padding(.top, 4)
                 }
@@ -204,6 +214,10 @@ struct LoginView: View {
             withAnimation { step = .onboardingExtra }
         } else if step == .onboardingExtra {
             withAnimation { step = .registerDetails }
+        } else if step == .verifyForgotPasswordOtp {
+            withAnimation { step = .enterPassword }
+        } else if step == .resetPassword {
+            withAnimation { step = .enterPassword }
         } else {
             withAnimation { step = .enterEmailOrMobile }
         }
@@ -217,7 +231,7 @@ struct LoginView: View {
                 errorMessage = "Please enter a valid email address"
                 return
             }
-            Task { await performSendOtp() }
+            withAnimation { step = .enterPassword }
         case .verifyOtp:
             guard otpCode.count == 6 else {
                 errorMessage = "Please enter the 6-digit code"
@@ -241,6 +255,18 @@ struct LoginView: View {
                 return
             }
             Task { await performVerifyRegistrationOtpAndRegister() }
+        case .verifyForgotPasswordOtp:
+            guard otpCode.count == 6 else {
+                errorMessage = "Please enter the 6-digit code"
+                return
+            }
+            Task { await performVerifyForgotPasswordOtp() }
+        case .resetPassword:
+            guard password.count >= 6 else {
+                errorMessage = "Password must be at least 6 characters"
+                return
+            }
+            Task { await performResetPassword() }
         }
     }
 
@@ -250,7 +276,25 @@ struct LoginView: View {
             try await AuthService.shared.sendOtp(email: emailOrMobile)
             await MainActor.run {
                 self.isLoading = false
+                self.otpCode = ""
                 withAnimation { self.step = .verifyOtp }
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func performSendForgotPasswordOtp() async {
+        isLoading = true
+        do {
+            try await AuthService.shared.sendOtp(email: emailOrMobile)
+            await MainActor.run {
+                self.isLoading = false
+                self.otpCode = ""
+                withAnimation { self.step = .verifyForgotPasswordOtp }
             }
         } catch {
             await MainActor.run {
@@ -377,7 +421,6 @@ struct LoginView: View {
         }
     }
 
-    /// Verifies the registration OTP then immediately creates the account.
     private func performVerifyRegistrationOtpAndRegister() async {
         isLoading = true
         do {
@@ -399,6 +442,43 @@ struct LoginView: View {
             // New user — proceed to create the account.
             await MainActor.run { self.otpCode = "" }
             await performRegister()
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func performVerifyForgotPasswordOtp() async {
+        isLoading = true
+        do {
+            let token = try await AuthService.shared.verifyForgotPasswordOtp(email: emailOrMobile, code: otpCode)
+            await MainActor.run {
+                self.isLoading = false
+                self.resetToken = token
+                self.password = ""
+                withAnimation { self.step = .resetPassword }
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func performResetPassword() async {
+        isLoading = true
+        do {
+            try await AuthService.shared.resetPassword(resetToken: resetToken, newPassword: password)
+            // Log them in automatically with the new password
+            _ = try await appStore.userStore.login(email: emailOrMobile, password: password)
+            await appStore.refreshAfterLogin()
+            await MainActor.run {
+                self.isLoading = false
+                dismiss()
+            }
         } catch {
             await MainActor.run {
                 self.isLoading = false
@@ -514,6 +594,8 @@ struct LoginView: View {
         case .registerDetails: return "Continue"
         case .onboardingExtra: return "Send Verification Code"
         case .verifyRegistrationOtp: return "Verify & Create Account"
+        case .verifyForgotPasswordOtp: return "Verify Code"
+        case .resetPassword: return "Reset & Sign In"
         }
     }
 
@@ -525,6 +607,8 @@ struct LoginView: View {
         case .registerDetails: return name.isEmpty
         case .onboardingExtra: return location.isEmpty || university.isEmpty
         case .verifyRegistrationOtp: return otpCode.count < 6
+        case .verifyForgotPasswordOtp: return otpCode.count < 6
+        case .resetPassword: return password.count < 6
         }
     }
 
@@ -536,6 +620,8 @@ struct LoginView: View {
         case .registerDetails: return "Create Account"
         case .onboardingExtra: return "Final Touches"
         case .verifyRegistrationOtp: return "Verify Your Email"
+        case .verifyForgotPasswordOtp: return "Reset Password"
+        case .resetPassword: return "New Password"
         }
     }
 
@@ -547,6 +633,8 @@ struct LoginView: View {
         case .registerDetails: return "Enter your name and password to create an account."
         case .onboardingExtra: return "Tell us a bit more about yourself to personalize your experience."
         case .verifyRegistrationOtp: return "We've sent a 6-digit code to \(emailOrMobile). Verify your email to complete account creation."
+        case .verifyForgotPasswordOtp: return "We've sent a 6-digit code to \(emailOrMobile)."
+        case .resetPassword: return "Create a new strong password."
         }
     }
 }

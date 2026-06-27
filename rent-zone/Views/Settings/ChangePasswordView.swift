@@ -299,7 +299,8 @@ struct ChangePasswordView: View {
         isLoading = true
         Task {
             do {
-                try await AuthService.shared.resetPassword(email: email, code: otpCode, newPassword: newPassword)
+                let token = try await AuthService.shared.verifyForgotPasswordOtp(email: email, code: otpCode)
+                try await AuthService.shared.resetPassword(resetToken: token, newPassword: newPassword)
                 await MainActor.run {
                     isLoading = false
                     showBanner("Password reset successfully!", isError: false)

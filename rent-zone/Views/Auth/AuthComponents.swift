@@ -64,7 +64,6 @@ struct PrimaryAuthButton: View {
             .frame(height: 54)
             .background(isDisabled ? Color(uiColor: .tertiarySystemFill) : Color.brandPurple)
             .cornerRadius(16)
-            .shadow(color: isDisabled ? .clear : Color.brandPurple.opacity(0.2), radius: 8, x: 0, y: 4)
         }
         .disabled(isDisabled || isLoading)
     }
