@@ -16,6 +16,8 @@ import notificationRoutes from './modules/notifications/notification.routes';
 import reportRoutes from './modules/reports/report.routes';
 import tryonRoutes from './modules/virtual-tryon/tryon.routes';
 
+import adminRoutes from './modules/admin/admin.routes';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -38,6 +40,7 @@ app.use('/api/chats', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/tryon', tryonRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ── 404 ────────────────────────────────────────────────────────────────────────
 app.use((_req, res) => res.status(404).json({ success: false, message: 'Route not found' }));

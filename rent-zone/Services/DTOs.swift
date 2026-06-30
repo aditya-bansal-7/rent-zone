@@ -360,6 +360,12 @@ struct ChatMessageDTO: Decodable, Identifiable {
 }
 
 // MARK: - Virtual Try-On DTO
+struct TryOnProductDTO: Decodable {
+    let id: String
+    let name: String
+    let imageURLs: [String]
+}
+
 struct TryOnDTO: Decodable, Identifiable {
     let id: String
     let userId: String
@@ -367,4 +373,5 @@ struct TryOnDTO: Decodable, Identifiable {
     let resultImageURL: String
     let modelUsed: String?
     let createdAt: String?
+    let product: TryOnProductDTO?
 }
