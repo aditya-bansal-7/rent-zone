@@ -28,9 +28,6 @@ struct SettingsView: View {
                     Toggle(isOn: $locationServicesEnabled) {
                         Label("Location Services", systemImage: "location")
                     }
-                    NavigationLink(destination: LanguageSettingsView()) {
-                        Label("Language", systemImage: "globe")
-                    }
                 }
                 
                 Section(header: Text("Support & Legal").font(.subheadline).foregroundColor(.gray)) {
@@ -65,9 +62,7 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                    DismissButton(action: { dismiss() })
                 }
             }
             .alert("Delete Account", isPresented: $showDeleteAlert) {

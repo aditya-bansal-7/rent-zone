@@ -175,40 +175,57 @@ struct ChangePasswordView: View {
                             requestOTP()
                         } label: {
                             HStack {
+                                Spacer()
                                 if isSendingOTP {
                                     ProgressView()
                                         .progressViewStyle(.circular)
                                         .scaleEffect(0.85)
                                 }
                                 Text(isSendingOTP ? "Sending code…" : "Forgot Current Password?")
+                                    .font(.subheadline)
                                     .foregroundStyle(isSendingOTP ? Color.secondary : Color.brandPurple)
+                                Spacer()
                             }
                         }
                         .disabled(isSendingOTP)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                     } else {
                         Button {
                             requestOTP()
                         } label: {
                             HStack {
+                                Spacer()
                                 if isSendingOTP {
                                     ProgressView()
                                         .progressViewStyle(.circular)
                                         .scaleEffect(0.85)
                                 }
                                 Text(isSendingOTP ? "Sending…" : "Resend Code")
+                                    .font(.subheadline)
                                     .foregroundStyle(isSendingOTP ? Color.secondary : Color.brandPurple)
+                                Spacer()
                             }
                         }
                         .disabled(isSendingOTP)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
 
                         Button {
                             withAnimation { mode = .change }
                             otpCode = ""
                             fieldError = nil
                         } label: {
-                            Text("Use Current Password Instead")
-                                .foregroundStyle(Color.brandPurple)
+                            HStack {
+                                Spacer()
+                                Text("Use Current Password Instead")
+                                    .font(.subheadline)
+                                    .foregroundStyle(Color.brandPurple)
+                                Spacer()
+                            }
                         }
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
                     }
                 }
             }

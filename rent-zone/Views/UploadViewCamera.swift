@@ -51,7 +51,7 @@ struct UploadViewCamera: View {
                         Text(selectedImages.isEmpty ? "Upload Photo" : "Edit Photos")
                             .font(.system(size: 16, weight: .medium))
                     }
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primary)
                     .padding(.horizontal, 70)
                     .padding(.vertical, 14)
                     .background(
@@ -83,10 +83,10 @@ struct UploadViewCamera: View {
                     }) {
                         Text("Continue")
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Color.purple.opacity(0.15))
+                            .background(Color.brandPurple)
                             .cornerRadius(30)
                     }
                     .padding(.horizontal, 40)

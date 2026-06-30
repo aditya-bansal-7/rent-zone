@@ -41,15 +41,18 @@ struct CategoriesView: View {
     var currentCategories: [Category] {
         if selectedGender == .women {
             return [
-                
+                Category(id: "w9", name: "Lehenga", images: "w_lehenga", type: .women),
                 Category(id: "w2", name: "Shirts", images: "w_shirt", type: .women),
                 Category(id: "w3", name: "Dresses", images: "w_dress", type: .women),
                 Category(id: "w8", name: "Party Wear", images: "w_party", type: .women),
                 Category(id: "w5", name: "Kurtis & Kurtas", images: "w_kurti", type: .women),
                 Category(id: "w6", name: "Sarees", images: "w_saree", type: .women),
-                Category(id: "w7", name: "Blazers & Formal Wear", images: "w_blazer", type: .women)
-               
-            ]
+                Category(id: "w7", name: "Blazers", images: "w_blazer", type: .women),
+                Category(id: "w10", name: "Sharara", images: "w_sharara", type: .women),
+                Category(id: "w11", name: "Formal Pants", images: "w_formal_pants", type: .women),
+                Category(id: "w12", name: "Gown", images: "w_gown", type: .women)
+                ]
+
         } else {
             return [
                 Category(id: "m10", name: "Blazers and Suits", images: "m_blazer", type: .men),
@@ -58,19 +61,15 @@ struct CategoriesView: View {
                 Category(id: "m6", name: "Denims", images: "m_jacket", type: .men),
                 Category(id: "m3", name: "Formal Shirts", images: "m_formal_shirt", type: .men),
                 Category(id: "m2", name: "Party Shirts", images: "m_shirt", type: .men),
-                Category(id: "m12", name: "Co-ords & Sets", images: "m_coord", type: .men),
                 Category(id: "m4", name: "Hoodies & Sweatshirts", images: "m_hoodie", type: .men),
                 Category(id: "m5", name: "Kurtas", images: "m_kurta", type: .men),
                 
                 Category(id: "m8", name: "Leather Jacket", images: "m_leather", type: .men),
                 Category(id: "m9", name: "Bombers", images: "m_bomber", type: .men),
                 Category(id: "m11", name: "Tuxedo", images: "m_tuxedo", type: .men),
-                Category(id: "m14", name: "Baggy Jeans", images: "m_baggy_jeans", type: .men),
-                Category(id: "m15", name: "Ripped Jeans", images: "m_ripped_jeans", type: .men),
+                Category(id: "m14", name: "Jeans", images: "m_baggy_jeans", type: .men),
                 Category(id: "m16", name: "Cargos", images: "m_cargos", type: .men),
-                Category(id: "m17", name: "Parachute Pants", images: "m_parachute", type: .men),
                 Category(id: "m18", name: "Formal Pants", images: "m_formal_pants", type: .men),
-                Category(id: "m19", name: "Pleated Trousers", images: "m_pleated", type: .men),
                 Category(id: "m20", name: "Ethnic Bottoms", images: "m_ethnic_bottoms", type: .men)
             ]
         }
@@ -189,14 +188,17 @@ struct DressCategoryCardView: View {
         // Women
         case "Tops & Tees": return ("Casual, Crop,\nOversized & more", "tshirt", .purple)
         case "Shirts & Blouses": return ("Casual, Formal,\nSatin & more", "tshirt", .blue)
-        case "Dresses": return ("Mini, Midi,\nParty & more", "figure.dress", .pink)
+        case "Dresses": return ("Mini, Midi,\nParty & more", "tshirt", .pink)
         case "Co-ord Sets": return ("Matching Sets,\nTrendy & more", "tshirt", .orange)
         case "Kurtis & Kurtas": return ("Ethnic, Festive,\nTraditional & more", "tshirt", .green)
         case "Sarees": return ("Traditional,\nFarewell,\nFestive & more", "tshirt", .pink)
-        case "Blazers & Formal Wear": return ("Interview, Placement, & more", "suitcase", .purple)
-        case "Party Wear": return ("Night Out,\nEvents,\nPremium & more", "party.popper", .pink)
+        case "Blazers": return ("Interview, Placement,\n& more", "tshirt", .purple)
+        case "Party Wear": return ("Night Out,\nEvents,\nPremium & more", "tshirt", .pink)
+        case "Lehenga": return ("Bridal, Festive,\nParty & more", "tshirt", .pink)
+        case "Sharara": return ("Ethnic, Festive,\nWedding & more", "tshirt", .orange)
+        case "Gown": return ("Party, Prom,\nWedding & more", "tshirt", .purple)
         
-        // Men
+        // Men & Unisex
         case "T-Shirts & Polos": return ("Casual, Printed,\nOversized & more", "tshirt", .purple)
         case "Shirts": return ("Casual, Formal,\nChecked & more", "tshirt", .blue)
         case "Formal Shirts": return ("Solid, Satin,\nOffice Wear & more", "tshirt", .blue)
@@ -207,24 +209,22 @@ struct DressCategoryCardView: View {
         case "Varsity Jacket": return ("College, Trendy,\nCasual & more", "tshirt", .red)
         case "Leather Jacket": return ("Biker, Casual,\nPremium & more", "tshirt", .black)
         case "Bombers": return ("Casual, Winter,\nStylish & more", "tshirt", .orange)
-        case "Blazers & Suits": return ("Formal, Party,\nWedding & more", "suitcase", .blue)
+        case "Blazers and Suits": return ("Formal, Party,\nWedding & more", "tshirt", .blue)
         case "Tuxedo": return ("Premium, Wedding,\nBlack Tie & more", "tshirt", .black)
-        case "Co-ords & Sets": return ("Matching Sets,\nCo-ords & more", "tshirt", .orange)
         case "Vests & Tanks": return ("Vests, Tank Tops,\nSleeveless & more", "tshirt", .red)
-        case "Baggy Jeans": return ("Streetwear, Fests,\nRelaxed & more", "pants_icon", .blue)
-        case "Ripped Jeans": return ("Concerts, Edgy,\nCasual & more", "pants_icon", .gray)
+        case "Jeans": return ("Streetwear, Fests,\nRelaxed & more", "pants_icon", .blue)
         case "Cargos": return ("Utility, Techwear,\nTrendy & more", "pants_icon", .green)
-        case "Parachute Pants": return ("Streetwear, Dance,\nFests & more", "pants_icon", .orange)
         case "Formal Pants": return ("Smart Casual, Dates,\nEvents & more", "pants_icon", .yellow)
-        case "Pleated Trousers": return ("Old Money, Upscale,\nEvents & more", "pants_icon", .purple)
         case "Ethnic Bottoms": return ("Dhotis, Pyjamas,\nCultural & more", "pants_icon", .red)
         
         default: return ("Discover more styles", "tshirt", .gray)
         }
     }
     var imageScale: CGFloat {
-        if category.name == "Co-ord Sets" || category.name == "Blazers & Formal Wear" {
+        if category.name == "Co-ord Sets" || category.name == "Blazers" {
             return 1.35
+        } else if category.name == "Ethnic Bottoms" {
+            return 0.85
         } else if category.name == "Party Shirts" {
             return 0.75
         }
@@ -239,12 +239,25 @@ struct DressCategoryCardView: View {
                     .fill(Color(uiColor: .secondarySystemGroupedBackground))
                 
                 // Image positioned at right side, scaled up
-                Image(category.images)
-                    .resizable()
-                    .scaledToFit()
-                    .scaleEffect(imageScale)
-                    .frame(width: geo.size.width * 0.85, height: geo.size.height * 0.95)
-                    .position(x: geo.size.width * 0.7, y: geo.size.height * 0.55)
+                if let uiImage = UIImage(named: category.images) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                        .scaleEffect(imageScale)
+                        .frame(width: geo.size.width * 0.85, height: geo.size.height * 0.95)
+                        .position(x: geo.size.width * 0.7, y: geo.size.height * 0.55)
+                } else {
+                    // Image Placeholder
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray6))
+                        Image(systemName: "photo.on.rectangle")
+                            .foregroundColor(.gray)
+                            .font(.system(size: 24))
+                    }
+                    .frame(width: 80, height: 100)
+                    .position(x: geo.size.width * 0.75, y: geo.size.height * 0.5)
+                }
                 
                 // Content strictly limited to left side (52% width)
                 VStack(alignment: .leading, spacing: 0) {

@@ -782,6 +782,7 @@ struct ProductDetailView: View {
         .cornerRadius(16)
     }
 
+
     private func descriptionRow(title: String, value: String) -> some View {
         HStack(alignment: .top, spacing: 4) {
             Text(title)
@@ -831,6 +832,7 @@ struct CrossLineShape: Shape {
         return path
     }
 }
+
 
 // MARK: - Review Item View
 struct ReviewItemView: View {

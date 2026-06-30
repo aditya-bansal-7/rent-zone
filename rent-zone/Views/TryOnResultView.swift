@@ -6,9 +6,7 @@ struct TryOnResultView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppStore.self) private var appStore
     @State private var isSaved = false
-    @State private var isRequestingRent = false
-    @State private var showRentConfirmation = false
-    @State private var rentError: String? = nil
+    @State private var showProductDetail = false
 
     private let lavender = Color(red: 220/255, green: 208/255, blue: 255/255)
 
@@ -88,51 +86,24 @@ struct TryOnResultView: View {
                             .padding(.top, 16)
                         }
 
-                        // MARK: - Request to Rent Button
+                        // MARK: - View Outfit Details Button
                         Button(action: {
-                            Task {
-                                await handleRentRequest()
-                            }
+                            showProductDetail = true
                         }) {
-                            ZStack {
-                                if isRequestingRent {
-                                    HStack(spacing: 10) {
-                                        ProgressView()
-                                            .progressViewStyle(CircularProgressViewStyle(tint: .black))
-                                        Text("Sending...")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(.primary)
-                                    }
-                                } else {
-                                    Text("Request to Rent")
-                                        .font(.system(size: 17, weight: .bold))
-                                        .foregroundColor(.primary)
-                                }
+                            HStack(spacing: 8) {
+                                Text("View Details")
+                                    .font(.system(size: 17, weight: .bold))
                             }
+                            .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 18)
-                            .background {
-                                Group {
-                                    if #available(iOS 26.0, *) {
-                                        Color.clear
-                                    } else {
-                                        Capsule()
-                                            .fill(lavender)
-                                    }
-                                }
-                            }
-                            .if26GlassEffect(cornerRadius: 28)
+                            .background(Color.brandPurple)
                             .clipShape(Capsule())
                         }
-                        .disabled(isRequestingRent)
-                        .padding(.horizontal, 50)
-
-                        // Error message
-                        if let rentError {
-                            Text(rentError)
-                                .font(.system(size: 13))
-                                .foregroundColor(.red)
-                                .padding(.horizontal, 20)
+                        .padding(.horizontal, 30)
+                        .fullScreenCover(isPresented: $showProductDetail) {
+                            ProductDetailView(product: product)
+                                .environment(appStore)
                         }
 
                         // MARK: - Save & Share Row
@@ -153,18 +124,9 @@ struct TryOnResultView: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background {
-                                    Group {
-                                        if #available(iOS 26.0, *) {
-                                            Color.clear
-                                        } else {
-                                            Capsule()
-                                                .fill(Color(.systemGray6))
-                                        }
-                                    }
-                                }
-                                .if26GlassEffect(cornerRadius: 25)
-                                .clipShape(Capsule())
+                                .background(
+                                    Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                                )
                             }
 
                             // Share Button
@@ -180,18 +142,9 @@ struct TryOnResultView: View {
                                 .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
-                                .background {
-                                    Group {
-                                        if #available(iOS 26.0, *) {
-                                            Color.clear
-                                        } else {
-                                            Capsule()
-                                                .fill(Color(.systemGray6))
-                                        }
-                                    }
-                                }
-                                .if26GlassEffect(cornerRadius: 25)
-                                .clipShape(Capsule())
+                                .background(
+                                    Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                                )
                             }
                         }
                         .padding(.horizontal, 20)
@@ -201,50 +154,8 @@ struct TryOnResultView: View {
             }
         }
         .navigationBarHidden(true)
-        .alert("Request Sent! 🎉", isPresented: $showRentConfirmation) {
-            Button("OK", role: .cancel) {
-                dismiss()
-            }
-        } message: {
-            Text("Your rental request for \(product.name) has been sent to the owner.")
-        }
     }
 
-    // MARK: - Actions
-
-    private func handleRentRequest() async {
-        guard appStore.userStore.currentUser != nil else {
-            rentError = "Please sign in to request a rental"
-            return
-        }
-        isRequestingRent = true
-        rentError = nil
-        do {
-            let startDate = Date()
-            let endDate = Calendar.current.date(byAdding: .day, value: 1, to: startDate) ?? Date()
-            
-            let components = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: startDate), to: Calendar.current.startOfDay(for: endDate))
-            let days = max(1, components.day ?? 1)
-            let totalPrice = Double(days) * product.rentPricePerDay
-            
-            let rental = try await RentalService.shared.createRental(
-                productId: product.id,
-                startDate: startDate,
-                endDate: endDate,
-                totalPrice: totalPrice
-            )
-            appStore.rentalStore.addItem(rental)
-            await MainActor.run {
-                self.isRequestingRent = false
-                self.showRentConfirmation = true
-            }
-        } catch {
-            await MainActor.run {
-                self.isRequestingRent = false
-                self.rentError = error.localizedDescription
-            }
-        }
-    }
 
     private func shareResult() {
         let shareText = "Check out how \(product.name) looks on me! 👗 via RentZone"

@@ -6,6 +6,13 @@ struct rent_zoneApp: App {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("isDarkMode") private var isDarkMode = false
     
+    init() {
+        // Reset the system language back to default English
+        // (Clears the override left behind by the deleted LanguageManager)
+        UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        UserDefaults.standard.removeObject(forKey: "appLanguage")
+    }
+    
     var body: some Scene {
         WindowGroup {
             if hasCompletedOnboarding {

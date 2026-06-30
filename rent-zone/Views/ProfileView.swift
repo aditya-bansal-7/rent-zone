@@ -9,7 +9,6 @@ struct ProfileView: View {
     @State private var isFavoritesPresented = false
     @State private var isSettingsPresented = false
     @State private var isHelpPresented = false
-    @State private var isLanguagePresented = false
     @State private var isSigningOut = false
     @State private var isMyRentalsPresented = false
     @State private var isTryOnHistoryPresented = false
@@ -123,9 +122,6 @@ struct ProfileView: View {
         .sheet(isPresented: $isMyRentalsPresented) {
             MyRentalsView()
         }
-        .sheet(isPresented: $isLanguagePresented) {
-            LanguageSettingsView()
-        }
         .sheet(isPresented: $isTryOnHistoryPresented) {
             VirtualTryOnHistoryView()
         }
@@ -143,7 +139,6 @@ struct ProfileView: View {
                     ProfileMenuRow(icon: "heart", title: "Favourites", action: { isFavoritesPresented = true })
                     ProfileMenuRow(icon: "gearshape", title: "Settings", action: { isSettingsPresented = true })
                     ProfileMenuRow(icon: "questionmark.circle", title: "Help & Support", action: { isHelpPresented = true })
-                    ProfileMenuRow(icon: "textformat.size", title: "Language", action: { isLanguagePresented = true })
 
                     Button(action: handleSignOut) {
                         HStack {
@@ -174,7 +169,6 @@ struct ProfileView: View {
                 ProfileMenuRowLegacy(icon: "heart", title: "Favourites", action: { isFavoritesPresented = true })
                 ProfileMenuRowLegacy(icon: "gearshape", title: "Settings", action: { isSettingsPresented = true })
                 ProfileMenuRowLegacy(icon: "questionmark.circle", title: "Help & Support", action: { isHelpPresented = true })
-                ProfileMenuRowLegacy(icon: "textformat.size", title: "Language", action: { isLanguagePresented = true })
 
                 Button(action: handleSignOut) {
                     HStack {
