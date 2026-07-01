@@ -269,7 +269,7 @@ export const getAuditLogs = async (filters: PaginationParams) => {
 };
 
 export const createAuditLog = (data: AuditLogEntry) => 
-  prisma.auditLog.create({ data });
+  prisma.auditLog.create({ data: data as any });
 
 // ── Categories ─────────────────────────────────────────────────────────────
 export const getCategories = async () => {
