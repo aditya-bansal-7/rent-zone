@@ -15,6 +15,14 @@ struct UploadViewCamera: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                HStack(spacing: 2) {
+                    Text("Upload Photos")
+                        .font(.title)
+                        .bold()
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical,8)
                 Spacer()
 
                 // Show selected images in slider or default illustration
@@ -97,7 +105,7 @@ struct UploadViewCamera: View {
 
                 Spacer().frame(height: 40)
             }
-            .navigationTitle("Upload Photos")
+            .navigationBarHidden(true)
             .sheet(isPresented: $isLoggedInRequired) {
                 LoginView()
                     .presentationDetents([.fraction(0.85), .large])

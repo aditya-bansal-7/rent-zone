@@ -10,7 +10,15 @@ struct ChatListView: View {
         @Bindable var bindableAppStore = appStore
         
         NavigationStack{
-        VStack( spacing: 0) {
+        VStack {
+            HStack( spacing: 2) {
+                Text("Chat")
+                    .font(.title)
+                    .bold()
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical,8)
             // Chat list
             List {
                 ForEach(chatService.conversations) { conversation in
@@ -50,7 +58,7 @@ struct ChatListView: View {
             .listStyle(.plain)
         }
             .background(Color(UIColor.systemBackground))
-            .navigationTitle("Chat")
+            .navigationBarHidden(true)
             .navigationDestination(item: $bindableAppStore.selectedChatConversation) { conversation in
                 PersonalChatView(conversation: conversation)
             }
