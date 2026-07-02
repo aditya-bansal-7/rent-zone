@@ -90,12 +90,13 @@ model Account {
 }
 
 model Category {
-  id       String       @id @default(auto()) @map("_id") @db.ObjectId
-  name     String
-  image    String
-  type     CategoryType
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  image     String
+  type      CategoryType
+  isDeleted Boolean?     @default(false)
 
-  products Product[]
+  products  Product[]
 }
 
 model Product {

@@ -274,13 +274,19 @@ export const createAuditLog = (data: AuditLogEntry) =>
 // ── Categories ─────────────────────────────────────────────────────────────
 export const getCategories = async () => {
   return prisma.category.findMany({
+    where: { 
+      OR: [
+        { isDeleted: false },
+        { isDeleted: { isSet: false } }
+      ]
+    },
     include: { _count: { select: { products: true } } }
   });
 };
 
 export const createCategory = (data: Prisma.CategoryCreateInput) => prisma.category.create({ data });
 export const updateCategory = (id: string, data: Prisma.CategoryUpdateInput) => prisma.category.update({ where: { id }, data });
-export const deleteCategory = (id: string) => prisma.category.delete({ where: { id } });
+export const deleteCategory = (id: string) => prisma.category.update({ where: { id }, data: { isDeleted: true } });
 
 // ── Reviews ────────────────────────────────────────────────────────────────
 export const getReviews = async (filters: AdminReviewFilters) => {

@@ -3,7 +3,13 @@ import prisma from '../../config/db';
 
 export const getCategories = (type?: CategoryType) =>
   prisma.category.findMany({
-    where: type ? { type } : undefined,
+    where: {
+      ...(type ? { type } : {}),
+      OR: [
+        { isDeleted: false },
+        { isDeleted: { isSet: false } }
+      ]
+    },
     include: { _count: { select: { products: true } } },
   });
 
