@@ -243,6 +243,8 @@ struct NotificationDTO: Decodable, Identifiable {
     let productId: String?
     let fromUserId: String?
     let rentalDate: String?
+    let rentalEndDate: String?
+    let rentalDays: Int?
     let totalPrice: Double?
     let productImageName: String?
     let productName: String?
@@ -275,6 +277,8 @@ struct NotificationDTO: Decodable, Identifiable {
             productId: productId,
             fromUserId: fromUserId,
             rentalDate: rentalDate.flatMap { fmt.date(from: $0) ?? fallbackFmt.date(from: $0) },
+            rentalEndDate: rentalEndDate.flatMap { fmt.date(from: $0) ?? fallbackFmt.date(from: $0) },
+            rentalDays: rentalDays,
             totalPrice: totalPrice,
             productImageName: productImageName,
             productName: productName,

@@ -113,33 +113,41 @@ struct ProductDetailView: View {
                         Spacer()
 
                         if showMenu {
-                            HStack(spacing: 24) {
-
+                            VStack(spacing: 0) {
                                 Button(action: { handleFavoriteToggle() }) {
-
-                                    VStack(spacing: 4) {
+                                    HStack(spacing: 10) {
                                         Image(systemName: isFavorite ? "heart.fill" : "heart")
-                                            .font(.system(size: 22, weight: .medium))
+                                            .font(.system(size: 18, weight: .medium))
                                             .foregroundColor(isFavorite ? .red : .primary)
+                                            .frame(width: 24)
                                         Text("Favourite")
-                                            .font(.system(size: 10, weight: .medium))
+                                            .font(.system(size: 14, weight: .medium))
                                             .foregroundColor(.primary)
                                     }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 16)
                                 }
+
+                                Divider()
 
                                 Button(action: {
                                     shareProduct()
                                 }) {
-                                    VStack(spacing: 4) {
+                                    HStack(spacing: 10) {
                                         Image(systemName: "square.and.arrow.up")
-                                            .font(.system(size: 22, weight: .medium))
+                                            .font(.system(size: 18, weight: .medium))
+                                            .frame(width: 24)
                                         Text("Share")
-                                            .font(.system(size: 10, weight: .medium))
+                                            .font(.system(size: 14, weight: .medium))
                                     }
                                     .foregroundColor(.primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 16)
                                 }
                             }
-                            .padding(.horizontal, 20)
+                            .frame(width: 160)
                             .padding(.vertical, 10)
                             .background {
                                 Group {

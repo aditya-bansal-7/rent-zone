@@ -24,6 +24,8 @@ struct AppNotification: Identifiable, Hashable {
     var productId: String?
     var fromUserId: String?
     var rentalDate: Date?
+    var rentalEndDate: Date?
+    var rentalDays: Int?
     var totalPrice: Double?
     var productImageName: String?
     var productName: String?

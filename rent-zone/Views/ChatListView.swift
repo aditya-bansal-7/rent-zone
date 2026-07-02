@@ -5,6 +5,16 @@ struct ChatListView: View {
     @Environment(AppStore.self) private var appStore
     
     @StateObject private var chatService = ChatService.shared
+    @State private var searchText = ""
+    
+    private var filteredConversations: [ChatConversation] {
+        if searchText.isEmpty {
+            return chatService.conversations
+        }
+        return chatService.conversations.filter {
+            $0.participantName.localizedCaseInsensitiveContains(searchText)
+        }
+    }
     
     var body: some View {
         @Bindable var bindableAppStore = appStore
@@ -13,7 +23,7 @@ struct ChatListView: View {
         VStack( spacing: 0) {
             // Chat list
             List {
-                ForEach(chatService.conversations) { conversation in
+                ForEach(filteredConversations) { conversation in
                     Button {
                         // Mark as read and navigate
                         if let index = chatService.conversations.firstIndex(where: { $0.id == conversation.id }) {
@@ -51,6 +61,7 @@ struct ChatListView: View {
         }
             .background(Color(UIColor.systemBackground))
             .navigationTitle("Chat")
+            .searchable(text: $searchText, prompt: "Search conversations")
             .navigationDestination(item: $bindableAppStore.selectedChatConversation) { conversation in
                 PersonalChatView(conversation: conversation)
             }
