@@ -7,6 +7,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/', chatController.getConversations);
+router.get('/search', chatController.searchConversations);
 router.post('/', chatController.startConversation);
 router.get('/:id/messages', chatController.getMessages);
 router.post('/:id/messages', chatController.sendMessage);

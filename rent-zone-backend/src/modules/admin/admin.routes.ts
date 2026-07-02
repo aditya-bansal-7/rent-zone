@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as adminController from './admin.controller';
 import { authenticate } from '../../middleware/auth.middleware';
 import { requireAdmin } from '../../middleware/admin.middleware';
+import { upload } from '../../middleware/upload.middleware';
 
 const router = Router();
 
@@ -31,8 +32,8 @@ router.delete('/products/:id', adminController.deleteProduct);
 
 // Categories
 router.get('/categories', adminController.getCategories);
-router.post('/categories', adminController.createCategory);
-router.patch('/categories/:id', adminController.updateCategory);
+router.post('/categories', upload.single('image'), adminController.createCategory);
+router.patch('/categories/:id', upload.single('image'), adminController.updateCategory);
 router.delete('/categories/:id', adminController.deleteCategory);
 
 // Rentals

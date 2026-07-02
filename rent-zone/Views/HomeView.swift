@@ -35,6 +35,9 @@ struct HomeView: View {
         NavigationStack {
             ZStack(alignment: .top) {
                 ScrollView(showsIndicators: false) {
+                    VStack {
+                        
+                
                     VStack(alignment: .leading, spacing: 16) {
                         UserHeaderView(showNotifications: $showNotifications)
                             .onTapGesture {
@@ -44,12 +47,39 @@ struct HomeView: View {
                                     isProfileSheet = true
                                 }
                             }
+                        
+                    }
+                    .padding(.horizontal, 16)
+         
+                   
+                        
 
-                        SearchBarView(searchText: $searchText) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 18, weight: .regular))
+                                .foregroundColor(.primary)
+                            
+                            TextField("Search", text: $searchText)
+                                .font(.system(size: 17))
+                            
                             if !searchText.isEmpty {
-                                navigateToSearch = true
+                                Button(action: {
+                                    searchText = ""
+                                }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.secondary)
+                                }
                             }
                         }
+                        .padding(.vertical, 14)
+                        .padding(.horizontal, 16)
+                        .background(
+                            Capsule()
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                        )
+                        .padding(.horizontal)
+                    
+                    VStack(alignment: .leading, spacing: 16) {
 
                         if !searchText.isEmpty {
                             // Search results
@@ -104,6 +134,7 @@ struct HomeView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 20)
+                    }
                 }
                 .navigationDestination(isPresented: $navigateToSearch) {
                     ProductListView(title: "Search Results", searchText: searchText)

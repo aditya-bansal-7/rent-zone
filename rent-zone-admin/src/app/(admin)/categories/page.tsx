@@ -9,8 +9,8 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
-  
-  const [formData, setFormData] = useState({ name: "", type: "women", image: "" });
+  const [formData, setFormData] = useState({ name: "", type: "women", image: "", isDeleted: false });
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -31,10 +31,22 @@ export default function CategoriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const data = new FormData();
+      data.append('name', formData.name);
+      data.append('type', formData.type);
       if (editingCategory) {
-        await adminService.categories.update(editingCategory.id, formData);
+        data.append('isDeleted', String(formData.isDeleted));
+      }
+      if (imageFile) {
+        data.append('image', imageFile);
+      } else if (!imageFile && formData.image && !editingCategory) {
+        data.append('image', formData.image);
+      }
+      
+      if (editingCategory) {
+        await adminService.categories.update(editingCategory.id, data);
       } else {
-        await adminService.categories.create(formData);
+        await adminService.categories.create(data);
       }
       setIsModalOpen(false);
       fetchCategories();
@@ -54,12 +66,13 @@ export default function CategoriesPage() {
   };
 
   const openModal = (category: any = null) => {
+    setImageFile(null);
     if (category) {
       setEditingCategory(category);
-      setFormData({ name: category.name, type: category.type, image: category.image });
+      setFormData({ name: category.name, type: category.type, image: category.image, isDeleted: category.isDeleted || false });
     } else {
       setEditingCategory(null);
-      setFormData({ name: "", type: "women", image: "" });
+      setFormData({ name: "", type: "women", image: "", isDeleted: false });
     }
     setIsModalOpen(true);
   };
@@ -93,12 +106,15 @@ export default function CategoriesPage() {
             <div key={cat.id} className="admin-card p-5 group flex flex-col">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-2xl shadow-sm">
-                    {cat.image}
+                  <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-2xl shadow-sm overflow-hidden">
+                    {cat.image?.startsWith('http') ? <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" /> : cat.image}
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{cat.name}</h3>
-                    <span className="badge badge-indigo capitalize mt-1">{cat.type}</span>
+                    <div className="flex gap-2 mt-1">
+                      <span className="badge badge-indigo capitalize">{cat.type}</span>
+                      {cat.isDeleted && <span className="badge badge-red">Deleted</span>}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -141,9 +157,21 @@ export default function CategoriesPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Image / Emoji</label>
-                <input required type="text" className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/30" value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Image (Upload file or leave blank to keep current)</label>
+                <input type="file" accept="image/*" className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500/30" onChange={e => setImageFile(e.target.files?.[0] || null)} />
+                {editingCategory && formData.image && !imageFile && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+                    <span>Current:</span>
+                    {formData.image.startsWith('http') ? <img src={formData.image} alt="current" className="w-8 h-8 rounded object-cover" /> : <span>{formData.image}</span>}
+                  </div>
+                )}
               </div>
+              {editingCategory && (
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="isDeleted" checked={formData.isDeleted} onChange={e => setFormData({ ...formData, isDeleted: e.target.checked })} className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500" />
+                  <label htmlFor="isDeleted" className="text-sm font-medium text-gray-700">Mark as Deleted</label>
+                </div>
+              )}
               <div className="pt-4 flex justify-end gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="btn-secondary">Cancel</button>
                 <button type="submit" className="btn-primary">{editingCategory ? "Update" : "Create"}</button>

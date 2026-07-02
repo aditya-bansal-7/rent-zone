@@ -10,6 +10,61 @@ export const getMyConversations = (userId: string) =>
     orderBy: { updatedAt: 'desc' },
   });
 
+export const searchMyConversations = async (userId: string, query: string) => {
+  const conversations = await prisma.chatConversation.findMany({
+    where: {
+      participants: { some: { userId } },
+      OR: [
+        {
+          participants: {
+            some: {
+              userId: { not: userId },
+              user: { name: { contains: query, mode: 'insensitive' } }
+            }
+          }
+        },
+        {
+          messages: {
+            some: {
+              content: { contains: query, mode: 'insensitive' }
+            }
+          }
+        }
+      ]
+    },
+    include: {
+      participants: { include: { user: { select: { id: true, name: true, profileImage: true, isVerified: true } } } },
+    },
+    orderBy: { updatedAt: 'desc' },
+  });
+
+  const enrichedConversations = await Promise.all(
+    conversations.map(async (conv) => {
+      let message = await prisma.chatMessage.findFirst({
+        where: {
+          conversationId: conv.id,
+          content: { contains: query, mode: 'insensitive' }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+      
+      if (!message) {
+        message = await prisma.chatMessage.findFirst({
+          where: { conversationId: conv.id },
+          orderBy: { createdAt: 'desc' }
+        });
+      }
+      
+      return {
+        ...conv,
+        messages: message ? [message] : []
+      };
+    })
+  );
+
+  return enrichedConversations;
+};
+
 export const getOrCreateConversation = async (
   userId: string,
   otherUserId: string,

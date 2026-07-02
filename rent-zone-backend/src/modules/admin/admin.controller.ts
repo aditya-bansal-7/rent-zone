@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { sendSuccess, sendError } from '../../utils/response.utils';
 import * as adminService from './admin.service';
 import { AdminRequest } from './admin.types';
+import { uploadToCloudinary } from '../../utils/cloudinary.utils';
 
 // Helper for audit logs
 const logAction = (req: AdminRequest, action: string, entity: string, entityId?: string, entityName?: string, metadata?: any) => {
@@ -275,7 +276,11 @@ export const getCategories = async (req: AdminRequest, res: Response) => {
 
 export const createCategory = async (req: AdminRequest, res: Response) => {
   try {
-    const category = await adminService.createCategory(req.body);
+    const data = { ...req.body };
+    if (req.file) {
+      data.image = await uploadToCloudinary(req.file.buffer, 'rentzone/categories');
+    }
+    const category = await adminService.createCategory(data);
     logAction(req, 'category_created', 'category', category.id, category.name);
     sendSuccess(res, category);
   } catch (err: any) {
@@ -285,7 +290,14 @@ export const createCategory = async (req: AdminRequest, res: Response) => {
 
 export const updateCategory = async (req: AdminRequest, res: Response) => {
   try {
-    const category = await adminService.updateCategory(req.params.id, req.body);
+    const data = { ...req.body };
+    if (data.isDeleted) {
+      data.isDeleted = data.isDeleted === 'true' || data.isDeleted === true;
+    }
+    if (req.file) {
+      data.image = await uploadToCloudinary(req.file.buffer, 'rentzone/categories');
+    }
+    const category = await adminService.updateCategory(req.params.id, data);
     logAction(req, 'category_updated', 'category', category.id, category.name);
     sendSuccess(res, category);
   } catch (err: any) {
