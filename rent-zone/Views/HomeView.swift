@@ -35,9 +35,6 @@ struct HomeView: View {
         NavigationStack {
             ZStack(alignment: .top) {
                 ScrollView(showsIndicators: false) {
-                    VStack {
-                        
-                
                     VStack(alignment: .leading, spacing: 16) {
                         UserHeaderView(showNotifications: $showNotifications)
                             .onTapGesture {
@@ -47,39 +44,12 @@ struct HomeView: View {
                                     isProfileSheet = true
                                 }
                             }
-                        
-                    }
-                    .padding(.horizontal, 16)
-         
-                   
-                        
 
-                        HStack(spacing: 8) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 18, weight: .regular))
-                                .foregroundColor(.primary)
-                            
-                            TextField("Search", text: $searchText)
-                                .font(.system(size: 17))
-                            
+                        SearchBarView(searchText: $searchText) {
                             if !searchText.isEmpty {
-                                Button(action: {
-                                    searchText = ""
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.secondary)
-                                }
+                                navigateToSearch = true
                             }
                         }
-                        .padding(.vertical, 14)
-                        .padding(.horizontal, 16)
-                        .background(
-                            Capsule()
-                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                        )
-                        .padding(.horizontal)
-                    
-                    VStack(alignment: .leading, spacing: 16) {
 
                         if !searchText.isEmpty {
                             // Search results
@@ -134,7 +104,6 @@ struct HomeView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 20)
-                    }
                 }
                 .navigationDestination(isPresented: $navigateToSearch) {
                     ProductListView(title: "Search Results", searchText: searchText)
@@ -148,24 +117,12 @@ struct HomeView: View {
                 .refreshable {
                     await appStore.productStore.fetchItems()
                 }
-
-                // Notification overlay
-                if showNotifications {
-                    Color.black.opacity(0.4)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            withAnimation(.easeOut(duration: 0.25)) {
-                                showNotifications = false
-                            }
-                        }
-
-                    NotificationCentreView(isPresented: $showNotifications)
-                        .padding(.top, 60)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                }
             }
-            .background(Color(uiColor: .systemGroupedBackground))
-            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showNotifications)
+            .navigationDestination(isPresented: $showNotifications) {
+                NotificationCentreView()
+                    .environment(appStore)
+            }
+
             .navigationDestination(for: Product.self) { product in
                 ProductDetailView(product: product)
             }

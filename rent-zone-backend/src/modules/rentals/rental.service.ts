@@ -51,6 +51,7 @@ export const createRental = async (
   });
 
   // Notify owner
+  const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
   const newNotif = await prisma.notification.create({
     data: {
       userId: product.listedByUserId,
@@ -61,6 +62,8 @@ export const createRental = async (
       productId,
       fromUserId: rentedByUserId,
       rentalDate: startDate,
+      rentalEndDate: endDate,
+      rentalDays: daysDiff,
       totalPrice,
       productName: product.name,
       productImageName: product.imageURLs[0] ?? '',
