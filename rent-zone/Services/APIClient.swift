@@ -3,8 +3,8 @@ import Foundation
 // MARK: - Base URL
 enum API {
     // Change this to your server IP/URL when running on a physical device
-    static let baseURL = "https://history-introduced-tables-aim.trycloudflare.com/api"
-//    static let baseURL = "http://localhost:3000/api"
+//    static let baseURL = "https://history-introduced-tables-aim.trycloudflare.com/api"
+    static let baseURL = "http://localhost:3000/api"
 }
 
 // MARK: - API Errors
