@@ -197,6 +197,8 @@ model Notification {
   productId        String?            @db.ObjectId
   fromUserId       String?            @db.ObjectId
   rentalDate       DateTime?
+  rentalEndDate    DateTime?
+  rentalDays       Int?
   totalPrice       Float?
   productImageName String?
   productName      String?

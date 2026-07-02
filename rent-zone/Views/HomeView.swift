@@ -117,23 +117,12 @@ struct HomeView: View {
                 .refreshable {
                     await appStore.productStore.fetchItems()
                 }
-
-                // Notification overlay
-                if showNotifications {
-                    Color.black.opacity(0.4)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            withAnimation(.easeOut(duration: 0.25)) {
-                                showNotifications = false
-                            }
-                        }
-
-                    NotificationCentreView(isPresented: $showNotifications)
-                        .padding(.top, 60)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                }
             }
-            .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showNotifications)
+            .navigationDestination(isPresented: $showNotifications) {
+                NotificationCentreView()
+                    .environment(appStore)
+            }
+
             .navigationDestination(for: Product.self) { product in
                 ProductDetailView(product: product)
             }
