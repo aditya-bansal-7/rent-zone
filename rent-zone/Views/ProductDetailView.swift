@@ -330,10 +330,6 @@ struct ProductDetailView: View {
                                             RoundedRectangle(cornerRadius: 10)
                                                 .stroke(Color.primary, lineWidth: 1.5)
                                         )
-                                        .overlay(
-                                            CrossLineShape()
-                                                .stroke(Color.primary, lineWidth: isBooked ? 1.5 : 0)
-                                        )
                                         .opacity(isBooked ? 0.4 : 1.0)
                                     }
                                     .disabled(isBooked)
@@ -512,7 +508,7 @@ struct ProductDetailView: View {
         .ignoresSafeArea(edges: .top)
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
-        .background(Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all))
+        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
         .task {
             // Initialize favourite state from user's actual favourites
             if let favorites = appStore.userStore.currentUser?.favouriteProducts {

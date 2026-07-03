@@ -12,6 +12,7 @@ struct UploadViewCamera: View {
 
     @State private var selectedItems: [PhotosPickerItem] = []
     @State private var selectedImages: [UIImage] = []
+    @State private var currentPage = 0
     @State private var isLoggedInRequired = false
     @State private var navigateToUpload = false
     @State private var showInfoSheet = false
@@ -30,6 +31,7 @@ struct UploadViewCamera: View {
                 Spacer()
 
                 // Show selected images in slider or default illustration
+                Group {
                 if selectedImages.isEmpty {
                     Image("upload_photo_illustration")
                         .resizable()
@@ -183,6 +185,7 @@ struct UploadViewCamera: View {
                         
                     }
                     .padding(.bottom, 24)
+                }
                 }
                 .background(Color(red: 242/255, green: 242/255, blue: 247/255))
                 
