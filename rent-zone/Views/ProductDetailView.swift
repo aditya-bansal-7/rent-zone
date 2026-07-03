@@ -120,7 +120,7 @@ struct ProductDetailView: View {
                                             .font(.system(size: 18, weight: .medium))
                                             .foregroundColor(isFavorite ? .red : .primary)
                                             .frame(width: 24)
-                                        Text("Favourite")
+                                        Text(isFavorite ? "Favourited" : "Favourite")
                                             .font(.system(size: 14, weight: .medium))
                                             .foregroundColor(.primary)
                                     }
@@ -601,16 +601,17 @@ struct ProductDetailView: View {
     // MARK: - Actions
 
     private func handleFavoriteToggle() {
-        isFavorite.toggle()
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-            showMenu = false
+        withAnimation(.easeInOut(duration: 0.25)) {
+            isFavorite.toggle()
         }
         Task {
             await appStore.productStore.toggleFavorite(productId: product.id, userStore: appStore.userStore)
             // Sync local state with the store
             await MainActor.run {
                 if let favorites = appStore.userStore.currentUser?.favouriteProducts {
-                    isFavorite = favorites.contains(product.id)
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        isFavorite = favorites.contains(product.id)
+                    }
                 }
             }
         }
