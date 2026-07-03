@@ -50,7 +50,7 @@ struct LoginView: View {
                 }
             }
         }
-        .background(Color(uiColor: .systemGroupedBackground).edgesIgnoringSafeArea(.all))
+        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
         .animation(.easeInOut(duration: 0.3), value: step)
     }
 
