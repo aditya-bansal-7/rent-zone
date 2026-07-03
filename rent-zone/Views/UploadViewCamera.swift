@@ -26,6 +26,7 @@ struct UploadViewCamera: View {
                 Spacer()
 
                 // Show selected images in slider or default illustration
+                Group {
                 if selectedImages.isEmpty {
                     Image("upload_photo_illustration")
                         .resizable()

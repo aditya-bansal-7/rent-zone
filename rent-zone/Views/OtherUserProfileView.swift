@@ -12,7 +12,7 @@ struct OtherUserProfileView: View {
     
     var body: some View {
         ZStack {
-            Color(UIColor.systemGroupedBackground).edgesIgnoringSafeArea(.all)
+            Color(UIColor.systemGroupedBackground).ignoresSafeArea()
             
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {

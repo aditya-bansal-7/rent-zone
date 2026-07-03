@@ -173,10 +173,7 @@ struct CalendarPickerView: View {
                                                 .fill(Color(red: 243/255, green: 236/255, blue: 255/255))
                                         }
                                         
-                                        if booked {
-                                            CrossLineShape()
-                                                .stroke(Color.gray.opacity(0.5), lineWidth: 1)
-                                        }
+
                                     }
                                 )
                         }
