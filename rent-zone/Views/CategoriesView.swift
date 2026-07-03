@@ -16,6 +16,10 @@ struct CategoriesView: View {
     @State private var searchText: String = ""
     @Namespace private var animation
     
+    @State private var categories: [Category] = []
+    @State private var isLoading: Bool = false
+    
+    
     // Mock Data for Event Categories
     var currentEventCategories: [EventCategory] {
         if selectedGender == .women {
@@ -38,64 +42,40 @@ struct CategoriesView: View {
         }
     }
     
-    var currentCategories: [Category] {
-        if selectedGender == .women {
-            return [
-                Category(id: "w9", name: "Lehenga", images: "w_lehenga", type: .women),
-                Category(id: "w2", name: "Shirts", images: "w_shirt", type: .women),
-                Category(id: "w3", name: "Dresses", images: "w_dress", type: .women),
-                Category(id: "w8", name: "Party Wear", images: "w_party", type: .women),
-                Category(id: "w5", name: "Kurtis & Kurtas", images: "w_kurti", type: .women),
-                Category(id: "w6", name: "Sarees", images: "w_saree", type: .women),
-                Category(id: "w7", name: "Blazers", images: "w_blazer", type: .women),
-                Category(id: "w10", name: "Sharara", images: "w_sharara", type: .women),
-                Category(id: "w11", name: "Formal Pants", images: "w_formal_pants", type: .women),
-                Category(id: "w12", name: "Gown", images: "w_gown", type: .women)
-                ]
-
-        } else {
-            return [
-                Category(id: "m10", name: "Blazers and Suits", images: "m_blazer", type: .men),
-                Category(id: "m7", name: "Varsity Jacket", images: "m_varsity", type: .men),
-                
-                Category(id: "m6", name: "Denims", images: "m_jacket", type: .men),
-                Category(id: "m3", name: "Formal Shirts", images: "m_formal_shirt", type: .men),
-                Category(id: "m2", name: "Party Shirts", images: "m_shirt", type: .men),
-                Category(id: "m4", name: "Hoodies & Sweatshirts", images: "m_hoodie", type: .men),
-                Category(id: "m5", name: "Kurtas", images: "m_kurta", type: .men),
-                
-                Category(id: "m8", name: "Leather Jacket", images: "m_leather", type: .men),
-                Category(id: "m9", name: "Bombers", images: "m_bomber", type: .men),
-                Category(id: "m11", name: "Tuxedo", images: "m_tuxedo", type: .men),
-                Category(id: "m14", name: "Jeans", images: "m_baggy_jeans", type: .men),
-                Category(id: "m16", name: "Cargos", images: "m_cargos", type: .men),
-                Category(id: "m18", name: "Formal Pants", images: "m_formal_pants", type: .men),
-                Category(id: "m20", name: "Ethnic Bottoms", images: "m_ethnic_bottoms", type: .men)
-            ]
+    var currentCategories: [Category] { categories }
+    
+    private func fetchCategories() {
+        Task {
+            isLoading = true
+            do {
+                let fetched = try await CategoryService.shared.getCategories(type: selectedGender.rawValue)
+                await MainActor.run {
+                    self.categories = fetched
+                    self.isLoading = false
+                }
+            } catch {
+                print("Failed to fetch categories: \(error)")
+                await MainActor.run {
+                    self.isLoading = false
+                }
+            }
         }
     }
     
     var body: some View {
-        NavigationStack {
+        
+        NavigationStack{
+            
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
                     
-                    // MARK: - Custom Header
-                    HStack(alignment: .top) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Categories")
-                                .font(.system(size: 34, weight: .bold)) // Apple large title
-                                .foregroundColor(.primary)
-                            
-                            Text("What are you renting for?")
-                                .font(.system(size: 16))
-                                .foregroundColor(.gray)
-                        }
-                        
-                        Spacer()
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Categories")
+                            .font(.title)
+                            .bold()
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 16)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical,8)
                     
                     // MARK: - Search Bar
                     HStack(spacing: 8) {
@@ -130,29 +110,49 @@ struct CategoriesView: View {
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal)
+                    .onChange(of: selectedGender) { _ in
+                        fetchCategories()
+                    }
                     
                     // MARK: - Dress Categories (Grid)
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
-                        let filteredCategories = currentCategories.filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
-                        ForEach(filteredCategories) { category in
-                            NavigationLink(destination: ProductListView(title: category.name, categoryId: category.id)) {
-                                DressCategoryCardView(category: category)
-                            }
-                            .buttonStyle(.plain)
+                    if isLoading {
+                        VStack {
+                            ProgressView()
+                                .padding()
+                            Text("Loading categories...")
+                                .foregroundColor(.gray)
                         }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 40)
+                    } else {
+                        LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], spacing: 16) {
+                            let filteredCategories = currentCategories.filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
+                            ForEach(filteredCategories) { category in
+                                NavigationLink(destination: ProductListView(title: category.name, categoryId: category.id)) {
+                                    DressCategoryCardView(category: category)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
                     
-
+                    
                     
                 }
                 .padding(.bottom, 40)
+                
+                // Hide standard navigation bar to use our custom one
+                
             }
-            // Hide standard navigation bar to use our custom one
             .navigationBarHidden(true)
             .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
             .navigationDestination(for: Product.self) { product in
                 ProductDetailView(product: product)
+                
+            }
+            .task {
+                fetchCategories()
             }
         }
     }
@@ -289,13 +289,6 @@ struct DressCategoryCardView: View {
                         .foregroundColor(.primary)
                         .fixedSize(horizontal: false, vertical: true)
                     
-                    Spacer().frame(height: 4)
-                    
-                    Text(categoryDetails.subtitle)
-                        .font(.system(size: 10))
-                        .foregroundColor(.gray)
-                        .fixedSize(horizontal: false, vertical: true)
-                    
                     Spacer()
                 }
                 .padding(.top, 16)
@@ -319,4 +312,6 @@ struct DressCategoryCardView: View {
     CategoriesView()
         .environment(AppStore())
 }
+
+
 

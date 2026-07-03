@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { CategoryType } from '@prisma/client';
 import * as categoryService from './category.service';
 import { sendSuccess, sendError } from '../../utils/response.utils';
+import { uploadToCloudinary } from '../../utils/cloudinary.utils';
 
 export const listCategories = async (req: Request, res: Response) => {
   try {
@@ -15,7 +16,10 @@ export const listCategories = async (req: Request, res: Response) => {
 
 export const createCategory = async (req: Request, res: Response) => {
   try {
-    const { name, image, type } = req.body;
+    let { name, image, type } = req.body;
+    if (req.file) {
+      image = await uploadToCloudinary(req.file.buffer, 'rentzone/categories');
+    }
     if (!name || !image || !type) return sendError(res, 'name, image, and type are required', 400);
     const category = await categoryService.createCategory(name, image, type as CategoryType);
     sendSuccess(res, category, 201, 'Category created');

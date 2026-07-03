@@ -17,6 +17,15 @@ export const sendNotificationToUser = (userId: string, notification: any) => {
   }
 };
 
+export const broadcastToAllUsers = (notification: any) => {
+  const payload = JSON.stringify({ action: 'newNotification', notification });
+  wsClients.forEach((ws) => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(payload);
+    }
+  });
+};
+
 export const setupWebSocket = (server: HttpServer) => {
   const wss = new WebSocketServer({ server });
 

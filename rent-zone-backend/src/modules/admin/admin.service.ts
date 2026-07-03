@@ -274,13 +274,19 @@ export const createAuditLog = (data: AuditLogEntry) =>
 // ── Categories ─────────────────────────────────────────────────────────────
 export const getCategories = async () => {
   return prisma.category.findMany({
+    where: { 
+      OR: [
+        { isDeleted: false },
+        { isDeleted: { isSet: false } }
+      ]
+    },
     include: { _count: { select: { products: true } } }
   });
 };
 
 export const createCategory = (data: Prisma.CategoryCreateInput) => prisma.category.create({ data });
 export const updateCategory = (id: string, data: Prisma.CategoryUpdateInput) => prisma.category.update({ where: { id }, data });
-export const deleteCategory = (id: string) => prisma.category.delete({ where: { id } });
+export const deleteCategory = (id: string) => prisma.category.update({ where: { id }, data: { isDeleted: true } });
 
 // ── Reviews ────────────────────────────────────────────────────────────────
 export const getReviews = async (filters: AdminReviewFilters) => {
@@ -366,6 +372,17 @@ export const broadcastNotification = async (title: string, content: string) => {
   }));
   
   await prisma.notification.createMany({ data });
+
+  // Broadcast to all active WebSocket clients
+  const { broadcastToAllUsers } = require('../../socket');
+  broadcastToAllUsers({
+    title,
+    content,
+    icon: 'bell.fill',
+    type: 'general',
+    createdAt: new Date().toISOString()
+  });
+
   return { success: true, count: users.length };
 };
 

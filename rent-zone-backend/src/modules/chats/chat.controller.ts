@@ -54,3 +54,16 @@ export const deleteConversation = async (req: Request, res: Response) => {
     sendError(res, err.message, code);
   }
 };
+
+export const searchConversations = async (req: Request, res: Response) => {
+  try {
+    const { q } = req.query;
+    if (!q || typeof q !== 'string') {
+      return sendError(res, 'Query parameter q is required', 400);
+    }
+    const conversations = await chatService.searchMyConversations(req.user!.userId, q);
+    sendSuccess(res, conversations);
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};

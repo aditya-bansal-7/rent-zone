@@ -7,23 +7,54 @@ struct ChatListView: View {
     @StateObject private var chatService = ChatService.shared
     @State private var searchText = ""
     
-    private var filteredConversations: [ChatConversation] {
-        if searchText.isEmpty {
-            return chatService.conversations
-        }
-        return chatService.conversations.filter {
-            $0.participantName.localizedCaseInsensitiveContains(searchText)
-        }
-    }
-    
     var body: some View {
         @Bindable var bindableAppStore = appStore
         
         NavigationStack{
-        VStack( spacing: 0) {
+        VStack(spacing: 0) {
+            VStack(spacing: 0) {
+            HStack( spacing: 2) {
+                Text("Chat")
+                    .font(.title)
+                    .bold()
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical,8)
+            
+            // Search Bar
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundColor(.primary)
+                
+                TextField("Search", text: $searchText)
+                    .font(.system(size: 17))
+                
+                if !searchText.isEmpty {
+                    Button(action: {
+                        searchText = ""
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .background(
+                Capsule()
+                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
+            )
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+            }
+            .background(Color(uiColor: .systemGroupedBackground))
+            .zIndex(1)
+            
             // Chat list
             List {
-                ForEach(filteredConversations) { conversation in
+                ForEach(chatService.conversations) { conversation in
                     Button {
                         // Mark as read and navigate
                         if let index = chatService.conversations.firstIndex(where: { $0.id == conversation.id }) {
@@ -34,6 +65,7 @@ struct ChatListView: View {
                     } label: {
                         ChatRowView(conversation: conversation)
                     }
+                 
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button(role: .destructive) {
                             Task {
@@ -57,18 +89,34 @@ struct ChatListView: View {
                     }
                 }
             }
-            .listStyle(.plain)
+            .padding(.top, -20)
+            .zIndex(0)
+            
         }
-            .background(Color(UIColor.systemBackground))
-            .navigationTitle("Chat")
-            .searchable(text: $searchText, prompt: "Search conversations")
+
+            .background(Color(uiColor: .systemGroupedBackground))
+            .navigationBarHidden(true)
             .navigationDestination(item: $bindableAppStore.selectedChatConversation) { conversation in
                 PersonalChatView(conversation: conversation)
             }
             .onAppear {
                 Task {
-                    await chatService.fetchConversations()
+                    if searchText.isEmpty {
+                        await chatService.fetchConversations()
+                    }
                     chatService.startWebSocket()
+                }
+            }
+            .task(id: searchText) {
+                if searchText.isEmpty {
+                    await chatService.fetchConversations()
+                } else {
+                    do {
+                        try await Task.sleep(nanoseconds: 500_000_000)
+                        await chatService.searchConversations(query: searchText)
+                    } catch {
+                        // Task cancelled
+                    }
                 }
             }
         }
@@ -122,6 +170,18 @@ struct ChatRowView: View {
                 Text(conversation.participantName)
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.primary)
+                if let lastMessage = conversation.messages.first {
+                    HStack(spacing: 2) {
+                        Text(lastMessage.isFromCurrentUser ? "You:" : "\(conversation.participantName):")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.primary)
+                        
+                        Text(lastMessage.content)
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                }
                 Text(conversation.lastMessageTime)
                     .font(.system(size: 12, weight: .regular))
                     .foregroundColor(.gray)
@@ -129,12 +189,11 @@ struct ChatRowView: View {
             
             Spacer()
             
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.gray.opacity(0.5))
+            
         }
+      
         .padding(.vertical, 8)
-        .background(Color.clear)
+       
     }
     
 }

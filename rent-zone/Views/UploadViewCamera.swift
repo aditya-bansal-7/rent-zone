@@ -19,43 +19,33 @@ struct UploadViewCamera: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Custom Sticky Navigation Header to prevent overlap and clipping
-                HStack {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.purpleAccent)
-                            .frame(width: 44, height: 44, alignment: .leading)
-                    }
-                    
+                HStack(spacing: 2) {
+                    Text("Upload Photos")
+                        .font(.title)
+                        .bold()
                     Spacer()
-                    
-                    Button(action: { showInfoSheet = true }) {
-                        Image(systemName: "info.circle")
-                            .font(.system(size: 20))
-                            .foregroundColor(.purpleAccent)
-                            .frame(width: 44, height: 44, alignment: .trailing)
-                    }
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .background(Color(red: 242/255, green: 242/255, blue: 247/255))
-                
-                // Scrollable main content
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        
-                        // Header Title Block
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Upload Photos")
-                                .font(.system(size: 34, weight: .bold))
-                                .foregroundColor(.primary)
-                            
-                            Text("Upload clear, high-quality photos of your outfit to attract more renters.")
-                                .font(.system(size: 15))
-                                .foregroundColor(.secondary)
-                                .lineLimit(2)
-                                .fixedSize(horizontal: false, vertical: true)
+                .padding(.vertical,8)
+                Spacer()
+
+                // Show selected images in slider or default illustration
+                if selectedImages.isEmpty {
+                    Image("upload_photo_illustration")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 400, maxHeight: 480)
+                        .padding(.horizontal, 16)
+                } else {
+                    TabView(selection: $currentPage) {
+                        ForEach(selectedImages.indices, id: \.self) { index in
+                            Image(uiImage: selectedImages[index])
+                                .resizable()
+                                .scaledToFill()
+                                .frame(maxWidth: 320, maxHeight: 400)
+                                .clipped()
+                                .cornerRadius(16)
+                                .tag(index)
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
@@ -226,6 +216,7 @@ struct UploadViewCamera: View {
             .navigationDestination(isPresented: $navigateToUpload) {
                 UploadView(selectedImages: selectedImages)
             }
+            .navigationBarHidden(true)
             .sheet(isPresented: $isLoggedInRequired) {
                 LoginView()
                     .presentationDetents([.fraction(0.85), .large])

@@ -23,6 +23,17 @@ class ChatService: ObservableObject {
         }
     }
     
+    func searchConversations(query: String) async {
+        guard let currentUserId = TokenStorage.userId else { return }
+        do {
+            let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            let response: [ChatConversationDTO] = try await APIClient.shared.request(endpoint: "/chats/search?q=\(encodedQuery)", method: "GET", authenticated: true)
+            self.conversations = response.map { $0.toChatConversation(currentUserId: currentUserId) }
+        } catch {
+            print("Error searching conversations: \(error)")
+        }
+    }
+    
     func startConversation(otherUserId: String, productId: String?) async throws -> ChatConversation {
         guard let currentUserId = TokenStorage.userId else { throw APIError.unauthorized }
         var body: [String: Any] = ["otherUserId": otherUserId]
