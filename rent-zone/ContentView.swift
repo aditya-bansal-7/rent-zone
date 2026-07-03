@@ -15,11 +15,11 @@ struct ContentView: View {
                 CategoriesView()
             }
             
-            Tab("Chat", systemImage: "message.fill", value: 2) {
+            Tab("Chat", systemImage: "message", value: 2) {
                 ChatListView()
             }
             
-            Tab("Rent", systemImage: "plus", value: 3) {
+            Tab("Rent", systemImage: "bag.badge.plus", value: 3) {
                 UploadViewCamera()
                     .id(appStore.rentTabResetId)
             }

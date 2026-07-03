@@ -372,6 +372,17 @@ export const broadcastNotification = async (title: string, content: string) => {
   }));
   
   await prisma.notification.createMany({ data });
+
+  // Broadcast to all active WebSocket clients
+  const { broadcastToAllUsers } = require('../../socket');
+  broadcastToAllUsers({
+    title,
+    content,
+    icon: 'bell.fill',
+    type: 'general',
+    createdAt: new Date().toISOString()
+  });
+
   return { success: true, count: users.length };
 };
 

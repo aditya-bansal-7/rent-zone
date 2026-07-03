@@ -216,6 +216,7 @@ struct NotificationRowView: View {
                     Text(statusText)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(statusColor)
+                        .padding(4)
                     
                     Spacer()
                     // Relative time
