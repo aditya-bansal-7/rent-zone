@@ -147,7 +147,7 @@ struct ReportUserView: View {
                     Button {
                         dismiss()
                     } label: {
-                        Image(systemName: "chevron.left")
+                        Image(systemName: "xmark")
                             .font(.body.weight(.semibold))
                             .foregroundColor(.primary)
                     }
