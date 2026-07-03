@@ -54,7 +54,7 @@ struct ChatListView: View {
             
             // Chat list
             List {
-                ForEach(filteredConversations) { conversation in
+                ForEach(chatService.conversations) { conversation in
                     Button {
                         // Mark as read and navigate
                         if let index = chatService.conversations.firstIndex(where: { $0.id == conversation.id }) {

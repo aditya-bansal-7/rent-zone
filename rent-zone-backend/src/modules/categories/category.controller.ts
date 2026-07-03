@@ -8,8 +8,6 @@ export const listCategories = async (req: Request, res: Response) => {
   try {
     const { type } = req.query;
     const categories = await categoryService.getCategories(type as CategoryType);
-
-    console.log(categories)
     sendSuccess(res, categories);
   } catch (err: any) {
     sendError(res, err.message);

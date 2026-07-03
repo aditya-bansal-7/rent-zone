@@ -8,21 +8,21 @@ struct HomeView: View {
     @State private var showNotifications = false
     @State private var isProfileSheet = false
     @State private var navigateToSearch = false
-
+    
     var allProducts: [Product] {
         appStore.productStore.products
     }
-
+    
     var popularProducts: [Product] {
         // Sort by rating descending and take top 4
         allProducts.sorted { $0.rating > $1.rating }.prefix(4).map { $0 }
     }
-
+    
     var recentProducts: [Product] {
         // Array is already sorted by createdAt desc from backend
         allProducts.prefix(4).map { $0 }
     }
-
+    
     var filteredProducts: [Product] {
         if searchText.isEmpty { return allProducts }
         return allProducts.filter {
@@ -30,30 +30,30 @@ struct HomeView: View {
             $0.pickupLocation.localizedCaseInsensitiveContains(searchText)
         }
     }
-
+    
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
                 ScrollView(showsIndicators: false) {
                     VStack {
                         
-                
-                    VStack(alignment: .leading, spacing: 16) {
-                        UserHeaderView(showNotifications: $showNotifications)
-                            .onTapGesture {
-                                if appStore.userStore.currentUser == nil {
-                                    isLoginSheetPresented = true
-                                } else {
-                                    isProfileSheet = true
+                        
+                        VStack(alignment: .leading, spacing: 16) {
+                            UserHeaderView(showNotifications: $showNotifications)
+                                .onTapGesture {
+                                    if appStore.userStore.currentUser == nil {
+                                        isLoginSheetPresented = true
+                                    } else {
+                                        isProfileSheet = true
+                                    }
                                 }
-                            }
+                            
+                        }
+                        .padding(.horizontal, 16)
                         
-                    }
-                    .padding(.horizontal, 16)
-         
-                   
                         
-
+                        
+                        
                         HStack(spacing: 8) {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 18, weight: .regular))
@@ -78,96 +78,98 @@ struct HomeView: View {
                                 .fill(Color(uiColor: .secondarySystemGroupedBackground))
                         )
                         .padding(.horizontal)
-                    
-                    VStack(alignment: .leading, spacing: 16) {
-
-                        if !searchText.isEmpty {
-                            // Search results
-                            SectionHeaderView(title: "SEARCH RESULTS (\(filteredProducts.count))", showViewAll: false)
-                            if filteredProducts.isEmpty {
-                                Text("No outfits match \"\(searchText)\"")
-                                    .foregroundStyle(.secondary)
-                                    .padding()
-                            } else {
-                                ProductGridView(products: filteredProducts, favoriteProductIds: $favoriteProductIds)
-                            }
-                        } else {
-
-                            if appStore.productStore.isLoading {
-                                VStack(spacing: 16) {
-                                    ProgressView()
-                                    Text("Loading outfits...")
-                                        .font(.subheadline)
+                        
+                        VStack(alignment: .leading, spacing: 16) {
+                            
+                            if !searchText.isEmpty {
+                                // Search results
+                                SectionHeaderView(title: "SEARCH RESULTS (\(filteredProducts.count))", showViewAll: false)
+                                if filteredProducts.isEmpty {
+                                    Text("No outfits match \"\(searchText)\"")
                                         .foregroundStyle(.secondary)
+                                        .padding()
+                                } else {
+                                    ProductGridView(products: filteredProducts, favoriteProductIds: $favoriteProductIds)
                                 }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 40)
-                            } else if allProducts.isEmpty {
-                                VStack(spacing: 12) {
-                                    Image(systemName: "tshirt")
-                                        .font(.system(size: 48))
-                                        .foregroundStyle(.gray.opacity(0.5))
-                                    Text("No outfits available yet")
-                                        .font(.headline)
-                                        .foregroundStyle(.secondary)
-                                    Text("Be the first to list your outfit!")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 40)
                             } else {
-                                SectionHeaderView(
-                                    title: "POPULAR OUTFITS",
-                                    destination: ProductListView(title: "Popular Outfits", sortMode: .popular)
-                                )
-                                ProductGridView(products: popularProducts, favoriteProductIds: $favoriteProductIds)
-
-                                // Recent Outfits
-                                SectionHeaderView(
-                                    title: "RECENT OUTFITS",
-                                    destination: ProductListView(title: "Recent Outfits", sortMode: .recent)
-                                )
-                                ProductGridView(products: recentProducts, favoriteProductIds: $favoriteProductIds)
+                                
+                                if appStore.productStore.isLoading {
+                                    VStack(spacing: 16) {
+                                        ProgressView()
+                                        Text("Loading outfits...")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 40)
+                                } else if allProducts.isEmpty {
+                                    VStack(spacing: 12) {
+                                        Image(systemName: "tshirt")
+                                            .font(.system(size: 48))
+                                            .foregroundStyle(.gray.opacity(0.5))
+                                        Text("No outfits available yet")
+                                            .font(.headline)
+                                            .foregroundStyle(.secondary)
+                                        Text("Be the first to list your outfit!")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 40)
+                                } else {
+                                    SectionHeaderView(
+                                        title: "POPULAR OUTFITS",
+                                        destination: ProductListView(title: "Popular Outfits", sortMode: .popular)
+                                    )
+                                    ProductGridView(products: popularProducts, favoriteProductIds: $favoriteProductIds)
+                                    
+                                    // Recent Outfits
+                                    SectionHeaderView(
+                                        title: "RECENT OUTFITS",
+                                        destination: ProductListView(title: "Recent Outfits", sortMode: .recent)
+                                    )
+                                    ProductGridView(products: recentProducts, favoriteProductIds: $favoriteProductIds)
+                                }
                             }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 20)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 20)
+                    
+                    .navigationDestination(isPresented: $navigateToSearch) {
+                        ProductListView(title: "Search Results", searchText: searchText)
+                    }
+                    .sheet(isPresented: $isLoginSheetPresented) {
+                        LoginView()
+                    }
+                    .sheet(isPresented: $isProfileSheet) {
+                        ProfileView()
+                    }
+                    .refreshable {
+                        await appStore.productStore.fetchItems()
                     }
                 }
-                .navigationDestination(isPresented: $navigateToSearch) {
-                    ProductListView(title: "Search Results", searchText: searchText)
+                .background(Color(uiColor: .systemGroupedBackground))
+                .navigationDestination(isPresented: $showNotifications) {
+                    NotificationCentreView()
+                        .environment(appStore)
                 }
-                .sheet(isPresented: $isLoginSheetPresented) {
-                    LoginView()
+                
+                .navigationDestination(for: Product.self) { product in
+                    ProductDetailView(product: product)
                 }
-                .sheet(isPresented: $isProfileSheet) {
-                    ProfileView()
+                .task {
+                    if let favorites = appStore.userStore.currentUser?.favouriteProducts {
+                        favoriteProductIds = Set(favorites)
+                    }
+                    if allProducts.isEmpty {
+                        await appStore.productStore.fetchItems()
+                    }
                 }
-                .refreshable {
-                    await appStore.productStore.fetchItems()
-                }
-            }
-            .navigationDestination(isPresented: $showNotifications) {
-                NotificationCentreView()
-                    .environment(appStore)
-            }
-
-            .navigationDestination(for: Product.self) { product in
-                ProductDetailView(product: product)
-            }
-            .task {
-                if let favorites = appStore.userStore.currentUser?.favouriteProducts {
-                    favoriteProductIds = Set(favorites)
-                }
-                if allProducts.isEmpty {
-                    await appStore.productStore.fetchItems()
-                }
-            }
-            .onChange(of: appStore.userStore.currentUser?.favouriteProducts) { _, newValue in
-                if let newValue {
-                    favoriteProductIds = Set(newValue)
+                .onChange(of: appStore.userStore.currentUser?.favouriteProducts) { _, newValue in
+                    if let newValue {
+                        favoriteProductIds = Set(newValue)
+                    }
                 }
             }
         }
