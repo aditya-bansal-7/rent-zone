@@ -65,7 +65,7 @@ export const respondToRequest = async (notificationId: string, userId: string, a
           fromUserId: userId,
           requesterName: owner?.name ?? 'Owner',
           rentalDate: notif.rentalDate,
-          rentalEndDate: notif.rentalEndDate ?? 0,
+          rentalEndDate: notif.rentalEndDate ?? null,
           rentalDays: notif.rentalDays ?? 0,
           totalPrice: notif.totalPrice,
         }
