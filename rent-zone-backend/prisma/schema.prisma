@@ -181,6 +181,11 @@ model ChatMessage {
   conversationId String           @db.ObjectId
   senderId       String           @db.ObjectId
   content        String
+  messageType    String           @default("text")
+  imageUrl       String?
+  locationLat    Float?
+  locationLng    Float?
+  locationName   String?
   createdAt      DateTime         @default(now())
 
   conversation   ChatConversation @relation(fields: [conversationId], references: [id])
