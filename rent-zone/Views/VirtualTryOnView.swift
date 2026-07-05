@@ -8,7 +8,7 @@ struct VirtualTryOnView: View {
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var uploadedImage: UIImage? = nil
     @State private var isProcessing = false
-    @State private var tryOnPickerItem: PhotosPickerItem? = nil
+    @State private var showNoPhotoError = false
     @State private var showResult = false
     @State private var resultImageURL: String? = nil
     @State private var errorMessage: String? = nil
@@ -119,7 +119,13 @@ struct VirtualTryOnView: View {
                         .padding(.horizontal, 20)
 
                     // MARK: - Start Try-On Button
-                    PhotosPicker(selection: $tryOnPickerItem, matching: .images) {
+                    Button {
+                        if let image = uploadedImage {
+                            Task { await performTryOn(with: image) }
+                        } else {
+                            withAnimation { showNoPhotoError = true }
+                        }
+                    } label: {
                         Text("Start Try-On")
                             .font(.system(size: 17, weight: .bold))
                             .foregroundColor(.primary)
@@ -131,15 +137,30 @@ struct VirtualTryOnView: View {
                                         Color.clear
                                     } else {
                                         Capsule()
-                                            .fill(lavender)
+                                            .fill(uploadedImage != nil ? lavender : Color(.systemGray4))
                                     }
                                 }
                             }
                             .if26GlassEffect(cornerRadius: 28)
                             .clipShape(Capsule())
+                            .opacity(uploadedImage != nil ? 1 : 0.55)
                     }
                     .padding(.horizontal, 40)
-                    .padding(.bottom, 40)
+
+                    // Inline hint shown when tapping Start without a photo
+                    if showNoPhotoError {
+                        Text("Please upload a photo first")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.orange)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                            .onAppear {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                                    withAnimation { showNoPhotoError = false }
+                                }
+                            }
+                    }
+
+                    Spacer().frame(height: 40)
                 }
                 .padding(.top, 8)
             }
@@ -179,16 +200,7 @@ struct VirtualTryOnView: View {
         }
         .navigationBarHidden(true)
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: isProcessing)
-        .onChange(of: tryOnPickerItem) { _, newItem in
-            guard let newItem else { return }
-            Task {
-                if let data = try? await newItem.loadTransferable(type: Data.self),
-                   let image = UIImage(data: data) {
-                    await performTryOn(with: image)
-                    tryOnPickerItem = nil
-                }
-            }
-        }
+
         .fullScreenCover(isPresented: $showResult) {
             if let resultImageURL {
                 TryOnResultView(product: product, resultImageURL: resultImageURL)
