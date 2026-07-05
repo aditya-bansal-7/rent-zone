@@ -6,6 +6,11 @@ struct ChatListView: View {
     
     @StateObject private var chatService = ChatService.shared
     @State private var searchText = ""
+    @State private var showLoginSheet = false
+    
+    private var isLoggedIn: Bool {
+        TokenStorage.isLoggedIn
+    }
     
     var body: some View {
         @Bindable var bindableAppStore = appStore
@@ -22,76 +27,105 @@ struct ChatListView: View {
             .padding(.horizontal, 16)
             .padding(.vertical,8)
             
-            // Search Bar
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 18, weight: .regular))
-                    .foregroundColor(.primary)
-                
-                TextField("Search", text: $searchText)
-                    .font(.system(size: 17))
-                
-                if !searchText.isEmpty {
-                    Button(action: {
-                        searchText = ""
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
+            // Search Bar — only show when logged in and has conversations
+            if isLoggedIn && !chatService.conversations.isEmpty {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 18, weight: .regular))
+                        .foregroundColor(.primary)
+                    
+                    TextField("Search", text: $searchText)
+                        .font(.system(size: 17))
+                    
+                    if !searchText.isEmpty {
+                        Button(action: {
+                            searchText = ""
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
+                .padding(.vertical, 14)
+                .padding(.horizontal, 16)
+                .background(
+                    Capsule()
+                        .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                )
+                .padding(.horizontal)
+                .padding(.vertical, 8)
             }
-            .padding(.vertical, 14)
-            .padding(.horizontal, 16)
-            .background(
-                Capsule()
-                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
-            )
-            .padding(.horizontal)
-            .padding(.vertical, 8)
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .zIndex(1)
             
-            // Chat list
-            List {
-                ForEach(chatService.conversations) { conversation in
-                    Button {
-                        // Mark as read and navigate
-                        if let index = chatService.conversations.firstIndex(where: { $0.id == conversation.id }) {
-                            chatService.conversations[index].hasUnread = false
-                            chatService.conversations[index].isOnline = false
-                            appStore.selectedChatConversation = chatService.conversations[index]
-                        }
-                    } label: {
-                        ChatRowView(conversation: conversation)
-                    }
-                 
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            Task {
-                                await chatService.deleteConversation(conversation.id)
-                            }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                        
+            // Empty state: not logged in
+            if !isLoggedIn {
+                chatEmptyStateView(
+                    title: "Sign in to start chatting",
+                    subtitle: "Connect with other users, negotiate rentals, and manage your conversations.",
+                    showSignInButton: true
+                )
+            } else if chatService.conversations.isEmpty && !searchText.isEmpty {
+                // No search results
+                VStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 36))
+                        .foregroundColor(.gray.opacity(0.4))
+                    Text("No results for \"\(searchText)\"")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(uiColor: .systemGroupedBackground))
+            } else if chatService.conversations.isEmpty {
+                // Logged in but no conversations
+                chatEmptyStateView(
+                    title: "No conversations yet",
+                    subtitle: "Start chatting by browsing products and messaging their owners.",
+                    showSignInButton: false
+                )
+            } else {
+                // Chat list
+                List {
+                    ForEach(chatService.conversations) { conversation in
                         Button {
+                            // Mark as read and navigate
                             if let index = chatService.conversations.firstIndex(where: { $0.id == conversation.id }) {
-                                chatService.conversations[index].hasUnread.toggle()
-                                if !chatService.conversations[index].hasUnread {
-                                    chatService.conversations[index].isOnline = false
-                                }
+                                chatService.conversations[index].hasUnread = false
+                                chatService.conversations[index].isOnline = false
+                                appStore.selectedChatConversation = chatService.conversations[index]
                             }
                         } label: {
-                            Label(conversation.hasUnread ? "Mark Read" : "Mark Unread", systemImage: conversation.hasUnread ? "envelope.open" : "envelope.badge")
+                            ChatRowView(conversation: conversation)
                         }
-                        .tint(.brandPurple)
+                     
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                Task {
+                                    await chatService.deleteConversation(conversation.id)
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            
+                            Button {
+                                if let index = chatService.conversations.firstIndex(where: { $0.id == conversation.id }) {
+                                    chatService.conversations[index].hasUnread.toggle()
+                                    if !chatService.conversations[index].hasUnread {
+                                        chatService.conversations[index].isOnline = false
+                                    }
+                                }
+                            } label: {
+                                Label(conversation.hasUnread ? "Mark Read" : "Mark Unread", systemImage: conversation.hasUnread ? "envelope.open" : "envelope.badge")
+                            }
+                            .tint(.brandPurple)
+                        }
                     }
                 }
+                .padding(.top, -20)
+                .zIndex(0)
             }
-            .padding(.top, -20)
-            .zIndex(0)
-            
         }
 
             .background(Color(uiColor: .systemGroupedBackground))
@@ -99,7 +133,11 @@ struct ChatListView: View {
             .navigationDestination(item: $bindableAppStore.selectedChatConversation) { conversation in
                 PersonalChatView(conversation: conversation)
             }
+            .sheet(isPresented: $showLoginSheet) {
+                LoginView()
+            }
             .onAppear {
+                guard isLoggedIn else { return }
                 Task {
                     if searchText.isEmpty {
                         await chatService.fetchConversations()
@@ -108,6 +146,7 @@ struct ChatListView: View {
                 }
             }
             .task(id: searchText) {
+                guard isLoggedIn else { return }
                 if searchText.isEmpty {
                     await chatService.fetchConversations()
                 } else {
@@ -120,6 +159,53 @@ struct ChatListView: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Empty State with Lottie Animation
+    @ViewBuilder
+    private func chatEmptyStateView(title: String, subtitle: String, showSignInButton: Bool) -> some View {
+        VStack(spacing: 20) {
+            Spacer()
+            
+            LottieView(animationName: "chat_empty")
+                .frame(width: 220, height: 220)
+            
+            VStack(spacing: 8) {
+                Text(title)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.primary)
+                
+                Text(subtitle)
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
+            
+            if showSignInButton {
+                Button {
+                    showLoginSheet = true
+                } label: {
+                    Text("Sign In")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 48)
+                        .background(
+                            LinearGradient(
+                                colors: [.brandPurple, .brandPurple.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .clipShape(Capsule())
+                }
+                .padding(.top, 4)
+            }
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(uiColor: .systemGroupedBackground))
     }
 }
 

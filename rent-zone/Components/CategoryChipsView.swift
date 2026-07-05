@@ -20,8 +20,32 @@ struct CategoryChipsView: View {
             selectedCategory = category.name
         }) {
             HStack(spacing: 6) {
-                Image(systemName: category.images)
-                    .font(.system(size: 13))
+                if category.images.hasPrefix("http"), let url = URL(string: category.images) {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 16, height: 16)
+                                .clipShape(Circle())
+                        } else if case .empty = phase {
+                            ProgressView()
+                                .frame(width: 16, height: 16)
+                        } else {
+                            Image(systemName: "photo")
+                                .font(.system(size: 13))
+                        }
+                    }
+                } else if UIImage(named: category.images) != nil {
+                    Image(category.images)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 16, height: 16)
+                } else {
+                    // Fallback to system name if no local image or URL
+                    Image(systemName: category.images)
+                        .font(.system(size: 13))
+                }
                 Text(category.name)
                     .font(.system(size: 13, weight: .medium))
             }
