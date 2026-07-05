@@ -158,7 +158,7 @@ struct VirtualTryOnView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
-                    Text("This may take up to a minute")
+                    Text("This usually takes 30–60 seconds")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.7))
                 }
@@ -207,19 +207,23 @@ struct VirtualTryOnView: View {
             }
         }
 
-        // Animate through processing stages
+        // Animate through processing stages that match the real backend workflow:
+        // 1. Upload person photo → Cloudinary (~2s)
+        // 2. Upload both images to YCE → file_ids (~4s)
+        // 3. Submit & poll YCE try-on task (~15-20s)
+        // 4. Upload result → Cloudinary, save to DB (~3s)
         Task {
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            try? await Task.sleep(nanoseconds: 4_000_000_000)
             await MainActor.run {
-                if isProcessing { processingStage = "AI is generating your look..." }
+                if isProcessing { processingStage = "Preparing images for AI..." }
             }
-            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            try? await Task.sleep(nanoseconds: 4_000_000_000)
             await MainActor.run {
-                if isProcessing { processingStage = "Applying the garment to your photo..." }
+                if isProcessing { processingStage = "AI is fitting the garment..." }
             }
-            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            try? await Task.sleep(nanoseconds: 12_000_000_000)
             await MainActor.run {
-                if isProcessing { processingStage = "Almost done, adding final touches..." }
+                if isProcessing { processingStage = "Finalising your look..." }
             }
         }
 

@@ -357,12 +357,7 @@ struct LoginView: View {
             await MainActor.run {
                 self.isLoading = false
                 if case .serverError(let msg) = error {
-                    if msg.lowercased().contains("invalid") {
-                        self.errorMessage = "\(msg). New here? Fill in your details to register."
-                        withAnimation { self.step = .registerDetails }
-                    } else {
-                        self.errorMessage = msg
-                    }
+                    self.errorMessage = msg
                 } else {
                     self.errorMessage = error.localizedDescription
                 }
