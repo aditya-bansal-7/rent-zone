@@ -87,4 +87,11 @@ export const adminService = {
   auditLogs: {
     list: (params: any = {}) => api.get<PaginatedResponse<any>>(`/admin/audit-logs?${toQueryString(params)}`),
   },
+
+  yceKeys: {
+    list: (params: any = {}) => api.get<PaginatedResponse<any>>(`/admin/yce-keys?${toQueryString(params)}`),
+    create: (data: any) => api.post<any>('/admin/yce-keys', data),
+    update: (id: string, data: any) => api.patch<any>(`/admin/yce-keys/${id}`, data),
+    delete: (id: string) => api.delete<any>(`/admin/yce-keys/${id}`),
+  },
 };

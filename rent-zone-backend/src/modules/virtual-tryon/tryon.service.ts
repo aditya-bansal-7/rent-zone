@@ -94,13 +94,21 @@ export const createTryOn = async (
   const garmentImageURL = product.imageURLs[0];
   console.log(`[TryOn] Garment URL: ${garmentImageURL}`);
 
-  // 2. Validate API key
-  const apiKey = process.env.PERFECTCORP_API_KEY;
-  if (!apiKey || apiKey === 'your_perfectcorp_api_key_here') {
-    throw new Error('PERFECTCORP_API_KEY is not set in .env');
+  // 2. Get active API keys from the database
+  const activeKeys = await prisma.yceApiKey.findMany({
+    where: { isActive: true, credits: { gte: 2 } }
+  });
+
+  if (activeKeys.length === 0) {
+    throw new Error('No active PerfectCorp API keys available with sufficient credits.');
   }
 
-  // 3. Start YCE task — just 1 API call, no file uploads needed
+  // 3. Randomly select an API key
+  const selectedKeyRecord = activeKeys[Math.floor(Math.random() * activeKeys.length)];
+  const apiKey = selectedKeyRecord.key;
+  console.log(`[TryOn] Using API key ID: ${selectedKeyRecord.id}`);
+
+  // 4. Start YCE task — just 1 API call, no file uploads needed
   const taskId = await startTryOnTask(personImageURL, garmentImageURL, apiKey);
 
   // 4. Poll for the result (typically resolves in ~8–20s)
@@ -116,7 +124,18 @@ export const createTryOn = async (
   const resultImageURL = await uploadToCloudinary(resultBuffer, 'rentzone/tryon');
   console.log(`[TryOn] Result saved to Cloudinary: ${resultImageURL}`);
 
-  // 6. Save to database and return
+  // 6. Deduct credits and deactivate key if needed
+  const newCredits = selectedKeyRecord.credits - 2;
+  await prisma.yceApiKey.update({
+    where: { id: selectedKeyRecord.id },
+    data: {
+      credits: newCredits,
+      isActive: newCredits >= 2, // Deactivate if it falls below 2 credits
+    }
+  });
+  console.log(`[TryOn] Deducted 2 credits from key ${selectedKeyRecord.id}. Remaining: ${newCredits}`);
+
+  // 7. Save to database and return
   return prisma.virtualTryOn.create({
     data: {
       userId,

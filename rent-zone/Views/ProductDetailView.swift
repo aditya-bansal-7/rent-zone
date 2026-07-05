@@ -346,9 +346,15 @@ struct ProductDetailView: View {
                             HStack(spacing: 20) {
                                 dateBlock(title: "PICKUP", date: start, icon: "shippingbox.fill")
                                 
+                                Spacer()
+                                
                                 Image(systemName: "arrow.right")
                                     .foregroundColor(.gray.opacity(0.5))
                                     .font(.system(size: 20, weight: .bold))
+                                
+                                
+                                
+                                Spacer()
                                 
                                 if let end = endDate {
                                     dateBlock(title: "RETURN", date: end, icon: "arrow.uturn.backward.circle.fill")
@@ -382,6 +388,36 @@ struct ProductDetailView: View {
                 .cardStyle()
                 .padding(.top, 10)
 
+                
+                // Request to Rent
+                if let rentError {
+                    Text(rentError)
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
+                }
+
+                Button(action: { Task { await handleRentRequest() } }) {
+                    ZStack {
+                        if isRequestingRent {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Text(rentButtonText)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(startDate != nil && endDate != nil ? Color.brandPurple : Color.gray.opacity(0.1))
+                    .cornerRadius(30)
+                }
+                .disabled(isRequestingRent || startDate == nil || endDate == nil)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 24)
+                
                 // Seller Card
                 Button(action: { showSellerProfile = true }) {
                     HStack(spacing: 14) {
@@ -434,34 +470,6 @@ struct ProductDetailView: View {
                 .cardStyle()
                 .padding(.top, 10)
 
-                // Request to Rent
-                if let rentError {
-                    Text(rentError)
-                        .foregroundStyle(.red)
-                        .font(.caption)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 8)
-                }
-
-                Button(action: { Task { await handleRentRequest() } }) {
-                    ZStack {
-                        if isRequestingRent {
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        } else {
-                            Text(rentButtonText)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 18)
-                    .background(startDate != nil && endDate != nil ? Color.brandPurple : Color.gray.opacity(0.1))
-                    .cornerRadius(30)
-                }
-                .disabled(isRequestingRent || startDate == nil || endDate == nil)
-                .padding(.horizontal, 20)
-                .padding(.top, 24)
 
                 // Reviews Card
                 VStack(alignment: .leading, spacing: 20) {
