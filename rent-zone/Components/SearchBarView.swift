@@ -24,16 +24,6 @@ struct SearchBarView: View {
                     .focused($isFocused)
                     .submitLabel(.search)
                 
-                if !text.isEmpty {
-                    Button(action: {
-                        withAnimation(.easeOut(duration: 0.15)) {
-                            text = ""
-                        }
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
-                    }
-                }
             }
             .padding(.vertical, isCapsule ? 14 : 10)
             .padding(.horizontal, 16)

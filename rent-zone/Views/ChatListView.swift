@@ -27,8 +27,8 @@ struct ChatListView: View {
             .padding(.horizontal, 16)
             .padding(.vertical,8)
             
-            // Search Bar — only show when logged in and has conversations
-            if isLoggedIn && !chatService.conversations.isEmpty {
+            // Search Bar — only show when logged in and has conversations or active search
+            if isLoggedIn && (!chatService.conversations.isEmpty || !searchText.isEmpty) {
                 SearchBarView(text: $searchText, placeholder: "Search")
                     .padding(.vertical, 8)
             }

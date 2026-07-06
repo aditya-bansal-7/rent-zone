@@ -60,12 +60,13 @@ struct HomeView: View {
                             
                             if !searchText.isEmpty {
                                 // Search results
-                                SectionHeaderView(title: "SEARCH RESULTS (\(filteredProducts.count))", showViewAll: false)
                                 if filteredProducts.isEmpty {
                                     Text("No outfits match \"\(searchText)\"")
                                         .foregroundStyle(.secondary)
-                                        .padding()
+                                        .padding(.vertical, 40)
+                                        .frame(maxWidth: .infinity, alignment: .center)
                                 } else {
+                                    SectionHeaderView(title: "SEARCH RESULTS (\(filteredProducts.count))", showViewAll: false)
                                     ProductGridView(products: filteredProducts, favoriteProductIds: $favoriteProductIds)
                                 }
                             } else {

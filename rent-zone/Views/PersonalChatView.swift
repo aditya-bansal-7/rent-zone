@@ -302,10 +302,14 @@ struct PersonalChatView: View {
         .onAppear {
             Task {
                 await chatService.fetchMessages(for: conversation.id)
+                await chatService.markConversationAsRead(conversation.id)
             }
         }
         .onDisappear {
             chatService.activeConversationId = nil
+            Task {
+                await chatService.markConversationAsRead(conversation.id)
+            }
         }
     }
 }
