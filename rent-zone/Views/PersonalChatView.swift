@@ -1,4 +1,7 @@
 import SwiftUI
+import PhotosUI
+import CoreLocation
+import MapKit
 
 struct PersonalChatView: View {
     let conversation: ChatConversation
@@ -7,6 +10,23 @@ struct PersonalChatView: View {
     @State private var messageText = ""
     @State private var showReport = false
     @State private var showAttachmentMenu = false
+    
+    // Camera
+    @State private var showCamera = false
+    @State private var cameraImage: UIImage?
+    
+    // Photos picker
+    @State private var showPhotoPicker = false
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    
+    // Location
+    @State private var showLocationConfirm = false
+    @State private var pendingLocation: CLLocation?
+    @State private var pendingLocationName: String?
+    @State private var isFetchingLocation = false
+    
+    // Scroll
+    @State private var scrollProxy: ScrollViewProxy?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -82,64 +102,118 @@ struct PersonalChatView: View {
             .background(Color(UIColor.systemBackground))
             .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
             
+            // Upload progress bar
+            if chatService.isUploadingAttachment {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Sending attachment…")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(Color(UIColor.systemGroupedBackground))
+            }
+            
+            // Error banner
+            if let error = chatService.attachmentError {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text(error)
+                        .font(.system(size: 12))
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Button("Dismiss") { chatService.attachmentError = nil }
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.brandPurple)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.orange.opacity(0.1))
+            }
+            
             // Messages
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 16) {
-                    // Product context card
-                    if let product = conversation.productContext {
-                        HStack(spacing: 12) {
-                            Image(product.productImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 60, height: 70)
-                                .cornerRadius(10)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(product.productName)
-                                    .font(.system(size: 16, weight: .bold))
-                                HStack(alignment: .bottom, spacing: 2) {
-                                    Text("₹\(Int(product.pricePerDay))")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.primary)
-                                    Text("/day")
-                                        .font(.system(size: 11, weight: .medium))
-                                        .foregroundColor(.gray)
+            ScrollViewReader { proxy in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 16) {
+                        // Product context card
+                        if let product = conversation.productContext {
+                            HStack(spacing: 12) {
+                                Image(product.productImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 60, height: 70)
+                                    .cornerRadius(10)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(product.productName)
+                                        .font(.system(size: 16, weight: .bold))
+                                    HStack(alignment: .bottom, spacing: 2) {
+                                        Text("₹\(Int(product.pricePerDay))")
+                                            .font(.system(size: 14, weight: .bold))
+                                            .foregroundColor(.primary)
+                                        Text("/day")
+                                            .font(.system(size: 11, weight: .medium))
+                                            .foregroundColor(.gray)
+                                    }
+                                    Text("Need on \(product.needDate)")
+                                        .font(.system(size: 12, weight: .regular))
+                                        .foregroundColor(.secondary)
                                 }
-                                Text("Need on \(product.needDate)")
-                                    .font(.system(size: 12, weight: .regular))
-                                    .foregroundColor(.secondary)
                             }
+                            .padding(14)
+                            .frame(maxWidth: 280, alignment: .leading)
+                            .background(Color.brandPurple.opacity(0.15))
+                            .cornerRadius(18)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
                         }
-                        .padding(14)
-                        .frame(maxWidth: 280, alignment: .leading)
-                        .background(Color.brandPurple.opacity(0.15))
-                        .cornerRadius(18)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        
+                        // Chat messages
+                        ForEach(chatService.activeConversationMessages) { message in
+                            ChatBubbleView(message: message)
+                                .id(message.id)
+                        }
                     }
-                    
-                    // Chat messages
-                    ForEach(chatService.activeConversationMessages) { message in
-                        ChatBubbleView(message: message)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    .padding(.bottom, 20)
+                }
+                .background(Color(UIColor.systemGroupedBackground))
+                .onChange(of: chatService.activeConversationMessages.count) { _ in
+                    if let lastId = chatService.activeConversationMessages.last?.id {
+                        withAnimation { proxy.scrollTo(lastId, anchor: .bottom) }
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 20)
+                .onAppear {
+                    if let lastId = chatService.activeConversationMessages.last?.id {
+                        proxy.scrollTo(lastId, anchor: .bottom)
+                    }
+                }
             }
-            .background(Color(UIColor.systemGroupedBackground))
             
             // Attachment menu
             if showAttachmentMenu {
                 VStack(spacing: 0) {
-                    AttachmentMenuRow(label: "Camera", action: { showAttachmentMenu = false }) {
+                    AttachmentMenuRow(label: "Camera", action: {
+                        showAttachmentMenu = false
+                        showCamera = true
+                    }) {
                         CameraIconView()
                     }
                     Divider().overlay(Color.gray.opacity(0.3))
-                    AttachmentMenuRow(label: "Photos", action: { showAttachmentMenu = false }) {
+                    AttachmentMenuRow(label: "Photos", action: {
+                        showAttachmentMenu = false
+                        showPhotoPicker = true
+                    }) {
                         PhotosIconView()
                     }
                     Divider().overlay(Color.gray.opacity(0.3))
-                    AttachmentMenuRow(label: "Location", action: { showAttachmentMenu = false }) {
+                    AttachmentMenuRow(label: "Location", action: {
+                        showAttachmentMenu = false
+                        fetchAndSendLocation()
+                    }) {
                         LocationIconView()
                     }
                 }
@@ -187,6 +261,56 @@ struct PersonalChatView: View {
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .background(Color(UIColor.systemGroupedBackground))
+        // Camera sheet
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPickerView(selectedImage: $cameraImage)
+                .ignoresSafeArea()
+        }
+        // Photos picker
+        .photosPicker(isPresented: $showPhotoPicker, selection: $selectedPhotoItem, matching: .images)
+        .onChange(of: selectedPhotoItem) { newItem in
+            guard let newItem else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: data) {
+                    await chatService.sendImageMessage(image: uiImage, conversationId: conversation.id)
+                }
+                selectedPhotoItem = nil
+            }
+        }
+        .onChange(of: cameraImage) { newImage in
+            guard let image = newImage else { return }
+            Task {
+                await chatService.sendImageMessage(image: image, conversationId: conversation.id)
+                cameraImage = nil
+            }
+        }
+        // Location confirm alert
+        .alert("Share Location", isPresented: $showLocationConfirm) {
+            Button("Send") {
+                guard let loc = pendingLocation else { return }
+                Task {
+                    await chatService.sendLocationMessage(
+                        latitude: loc.coordinate.latitude,
+                        longitude: loc.coordinate.longitude,
+                        locationName: pendingLocationName,
+                        conversationId: conversation.id
+                    )
+                    pendingLocation = nil
+                    pendingLocationName = nil
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                pendingLocation = nil
+                pendingLocationName = nil
+            }
+        } message: {
+            if let name = pendingLocationName {
+                Text("Send your location: \(name)?")
+            } else if let loc = pendingLocation {
+                Text("Send your location: \(loc.coordinate.latitude.formatted(.number.precision(.fractionLength(4)))), \(loc.coordinate.longitude.formatted(.number.precision(.fractionLength(4))))?")
+            }
+        }
         .sheet(isPresented: $showReport) {
             ReportUserView(reportedUserName: conversation.participantName, reportedUserImage: conversation.participantImage, reportedUserLocation: nil)
                 .environment(AppStore())
@@ -200,25 +324,61 @@ struct PersonalChatView: View {
             chatService.activeConversationId = nil
         }
     }
+    
+    // MARK: - Location Fetch
+    
+    private func fetchAndSendLocation() {
+        isFetchingLocation = true
+        chatService.requestCurrentLocation { location in
+            isFetchingLocation = false
+            // Reverse geocode to get a nice name
+            let geocoder = CLGeocoder()
+            geocoder.reverseGeocodeLocation(location) { placemarks, _ in
+                let placemark = placemarks?.first
+                let name = [placemark?.name, placemark?.locality, placemark?.administrativeArea]
+                    .compactMap { $0 }
+                    .joined(separator: ", ")
+                pendingLocation = location
+                pendingLocationName = name.isEmpty ? nil : name
+                showLocationConfirm = true
+            }
+        }
+    }
 }
+
+// MARK: - Chat Bubble View
 
 struct ChatBubbleView: View {
     let message: ChatMessage
     
     var body: some View {
         VStack(alignment: message.isFromCurrentUser ? .trailing : .leading, spacing: 6) {
-            Text(message.content)
-                .font(.system(size: 15, weight: .regular))
-                .foregroundColor(message.isFromCurrentUser ? .white : .primary)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(
-                    message.isFromCurrentUser
-                    ? Color.brandPurple
-                    : Color(UIColor.secondarySystemBackground)
+            switch message.messageType {
+            case .text:
+                Text(message.content)
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(message.isFromCurrentUser ? .white : .primary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(
+                        message.isFromCurrentUser
+                        ? Color.brandPurple
+                        : Color(UIColor.secondarySystemBackground)
+                    )
+                    .cornerRadius(18)
+                    .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
+                
+            case .image:
+                ImageBubbleView(imageUrl: message.imageUrl, isFromCurrentUser: message.isFromCurrentUser)
+                
+            case .location:
+                LocationBubbleView(
+                    lat: message.locationLat ?? 0,
+                    lng: message.locationLng ?? 0,
+                    locationName: message.locationName,
+                    isFromCurrentUser: message.isFromCurrentUser
                 )
-                .cornerRadius(18)
-                .shadow(color: .black.opacity(0.03), radius: 4, x: 0, y: 2)
+            }
             
             Text(message.timestamp)
                 .font(.system(size: 10, weight: .regular))
@@ -227,6 +387,237 @@ struct ChatBubbleView: View {
         .frame(maxWidth: .infinity, alignment: message.isFromCurrentUser ? .trailing : .leading)
     }
 }
+
+// MARK: - Image Bubble
+
+struct ImageBubbleView: View {
+    let imageUrl: String?
+    let isFromCurrentUser: Bool
+    @State private var showFullScreen = false
+    
+    var body: some View {
+        Group {
+            if let urlString = imageUrl, let url = URL(string: urlString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: 220, maxHeight: 280)
+                            .clipped()
+                            .cornerRadius(16)
+                            .onTapGesture { showFullScreen = true }
+                    case .failure:
+                        failedImagePlaceholder
+                    default:
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(UIColor.secondarySystemBackground))
+                                .frame(width: 180, height: 180)
+                            ProgressView()
+                        }
+                    }
+                }
+            } else {
+                failedImagePlaceholder
+            }
+        }
+        .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
+        .sheet(isPresented: $showFullScreen) {
+            FullScreenImageView(imageUrl: imageUrl)
+        }
+    }
+    
+    private var failedImagePlaceholder: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(UIColor.secondarySystemBackground))
+                .frame(width: 180, height: 120)
+            VStack(spacing: 6) {
+                Image(systemName: "photo.slash")
+                    .font(.system(size: 28))
+                    .foregroundColor(.gray)
+                Text("Image unavailable")
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+            }
+        }
+    }
+}
+
+// MARK: - Full Screen Image
+
+struct FullScreenImageView: View {
+    let imageUrl: String?
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Color.black.ignoresSafeArea()
+            
+            if let urlString = imageUrl, let url = URL(string: urlString) {
+                AsyncImage(url: url) { phase in
+                    if case .success(let image) = phase {
+                        image
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        ProgressView().tint(.white)
+                    }
+                }
+            }
+            
+            Button(action: { dismiss() }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundColor(.white)
+                    .padding(20)
+            }
+        }
+    }
+}
+
+// MARK: - Location Bubble
+
+struct LocationBubbleView: View {
+    let lat: Double
+    let lng: Double
+    let locationName: String?
+    let isFromCurrentUser: Bool
+    
+    @State private var showMap = false
+    
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: lat, longitude: lng)
+    }
+    
+    var body: some View {
+        Button(action: { showMap = true }) {
+            VStack(alignment: .leading, spacing: 0) {
+                // Mini map snapshot
+                Map(coordinateRegion: .constant(MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                )), annotationItems: [LocationPin(coordinate: coordinate)]) { pin in
+                    MapMarker(coordinate: pin.coordinate, tint: .brandPurple)
+                }
+                .frame(width: 220, height: 120)
+                .cornerRadius(14)
+                .disabled(true)
+                
+                HStack(spacing: 6) {
+                    Image(systemName: "location.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(isFromCurrentUser ? .white.opacity(0.9) : .brandPurple)
+                    Text(locationName ?? "\(lat.formatted(.number.precision(.fractionLength(4)))), \(lng.formatted(.number.precision(.fractionLength(4))))")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(isFromCurrentUser ? .white : .primary)
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(isFromCurrentUser ? Color.brandPurple : Color(UIColor.secondarySystemBackground))
+                .cornerRadius(14)
+            }
+        }
+        .buttonStyle(.plain)
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
+        .sheet(isPresented: $showMap) {
+            FullScreenMapView(coordinate: coordinate, locationName: locationName)
+        }
+    }
+}
+
+struct LocationPin: Identifiable {
+    let id = UUID()
+    let coordinate: CLLocationCoordinate2D
+}
+
+// MARK: - Full Screen Map
+
+struct FullScreenMapView: View {
+    let coordinate: CLLocationCoordinate2D
+    let locationName: String?
+    @Environment(\.dismiss) private var dismiss
+    
+    @State private var region: MKCoordinateRegion
+    
+    init(coordinate: CLLocationCoordinate2D, locationName: String?) {
+        self.coordinate = coordinate
+        self.locationName = locationName
+        _region = State(initialValue: MKCoordinateRegion(
+            center: coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+        ))
+    }
+    
+    var body: some View {
+        NavigationView {
+            Map(coordinateRegion: $region, annotationItems: [LocationPin(coordinate: coordinate)]) { pin in
+                MapMarker(coordinate: pin.coordinate, tint: .brandPurple)
+            }
+            .ignoresSafeArea(edges: .bottom)
+            .navigationTitle(locationName ?? "Location")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: openInMaps) {
+                        Label("Open in Maps", systemImage: "map")
+                    }
+                }
+            }
+        }
+    }
+    
+    private func openInMaps() {
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = locationName ?? "Shared Location"
+        mapItem.openInMaps()
+    }
+}
+
+// MARK: - Camera Picker
+
+struct CameraPickerView: UIViewControllerRepresentable {
+    @Binding var selectedImage: UIImage?
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        let parent: CameraPickerView
+        init(_ parent: CameraPickerView) { self.parent = parent }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.selectedImage = image
+            }
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
+    }
+}
+
+// MARK: - Attachment Menu Helpers
 
 struct AttachmentMenuRow<Icon: View>: View {
     let label: String
@@ -380,4 +771,3 @@ struct LocationIconView: View {
         )
     ))
 }
-

@@ -239,7 +239,34 @@ struct DressCategoryCardView: View {
                     .fill(Color(uiColor: .secondarySystemGroupedBackground))
                 
                 // Image positioned at right side, scaled up
-                if let uiImage = UIImage(named: category.images) {
+                if category.images.hasPrefix("http"), let url = URL(string: category.images) {
+                    AsyncImage(url: url) { phase in
+                        if case .success(let image) = phase {
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .scaleEffect(imageScale)
+                                .frame(width: geo.size.width * 0.85, height: geo.size.height * 0.95)
+                                .position(x: geo.size.width * 0.7, y: geo.size.height * 0.55)
+                        } else if case .empty = phase {
+                            // Loading state
+                            ProgressView()
+                                .frame(width: 80, height: 100)
+                                .position(x: geo.size.width * 0.75, y: geo.size.height * 0.5)
+                        } else {
+                            // Image Placeholder
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemGray6))
+                                Image(systemName: "photo.on.rectangle")
+                                    .foregroundColor(.gray)
+                                    .font(.system(size: 24))
+                            }
+                            .frame(width: 80, height: 100)
+                            .position(x: geo.size.width * 0.75, y: geo.size.height * 0.5)
+                        }
+                    }
+                } else if let uiImage = UIImage(named: category.images) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .scaledToFit()

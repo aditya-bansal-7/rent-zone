@@ -343,3 +343,52 @@ export const getAuditLogs = async (req: AdminRequest, res: Response) => {
     sendError(res, err.message);
   }
 };
+
+// ── YCE API Keys ────────────────────────────────────────────────────────────
+export const getYceKeys = async (req: AdminRequest, res: Response) => {
+  try {
+    const result = await adminService.getYceKeys(req.query);
+    sendSuccess(res, result);
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};
+
+export const createYceKey = async (req: AdminRequest, res: Response) => {
+  try {
+    if (!req.body.key) {
+      return sendError(res, 'Key is required', 400);
+    }
+    const result = await adminService.createYceKey(req.body, {
+      id: req.user!.userId,
+      name: (req.user as any).name || 'Admin'
+    });
+    sendSuccess(res, result, 201, 'YCE API Key created successfully');
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};
+
+export const updateYceKey = async (req: AdminRequest, res: Response) => {
+  try {
+    const result = await adminService.updateYceKey(req.params.id, req.body, {
+      id: req.user!.userId,
+      name: (req.user as any).name || 'Admin'
+    });
+    sendSuccess(res, result, 200, 'YCE API Key updated successfully');
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};
+
+export const deleteYceKey = async (req: AdminRequest, res: Response) => {
+  try {
+    const result = await adminService.deleteYceKey(req.params.id, {
+      id: req.user!.userId,
+      name: (req.user as any).name || 'Admin'
+    });
+    sendSuccess(res, result, 200, 'YCE API Key deleted successfully');
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};

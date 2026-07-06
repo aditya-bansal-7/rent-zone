@@ -268,6 +268,106 @@ export const getAuditLogs = async (filters: PaginationParams) => {
   return { logs, total, page, limit, totalPages: Math.ceil(total / limit) };
 };
 
+// ==========================================
+// YCE API Keys
+// ==========================================
+
+export const getYceKeys = async (query: any) => {
+  const { page = 1, limit = 10, isActive } = query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const where: any = {};
+  if (isActive !== undefined) {
+    where.isActive = isActive === 'true';
+  }
+
+  const keys = await prisma.yceApiKey.findMany({
+    where,
+    skip,
+    take: Number(limit),
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const total = await prisma.yceApiKey.count({ where });
+
+  // Get aggregated stats
+  const activeKeys = await prisma.yceApiKey.count({ where: { isActive: true } });
+  
+  const stats = await prisma.yceApiKey.aggregate({
+    where: { isActive: true },
+    _sum: { credits: true },
+  });
+  
+  const totalCredits = stats._sum.credits || 0;
+
+  return { 
+    keys, 
+    total, 
+    page: Number(page), 
+    limit: Number(limit),
+    stats: {
+      activeKeys,
+      totalCredits,
+      estimatedTryOns: Math.floor(totalCredits / 2)
+    }
+  };
+};
+
+export const createYceKey = async (data: { key: string; name?: string; credits?: number; isActive?: boolean }, adminInfo: any) => {
+  const newKey = await prisma.yceApiKey.create({
+    data: {
+      key: data.key,
+      name: data.name,
+      credits: data.credits ?? 540,
+      isActive: data.isActive ?? true,
+    }
+  });
+
+  await createAuditLog({
+    adminId: adminInfo.id,
+    adminName: adminInfo.name,
+    action: 'CREATE',
+    entity: 'YCE_KEY',
+    entityId: newKey.id,
+    entityName: newKey.name || 'Unnamed Key'
+  });
+  return newKey;
+};
+
+export const updateYceKey = async (id: string, data: { credits?: number; isActive?: boolean; name?: string }, adminInfo: any) => {
+  const key = await prisma.yceApiKey.update({
+    where: { id },
+    data
+  });
+
+  await createAuditLog({
+    adminId: adminInfo.id,
+    adminName: adminInfo.name,
+    action: 'UPDATE',
+    entity: 'YCE_KEY',
+    entityId: key.id,
+    entityName: key.name || 'Unnamed Key'
+  });
+  return key;
+};
+
+export const deleteYceKey = async (id: string, adminInfo: any) => {
+  const key = await prisma.yceApiKey.findUnique({ where: { id } });
+  if (!key) throw new Error('Key not found');
+
+  await prisma.yceApiKey.delete({ where: { id } });
+  
+  await createAuditLog({
+    adminId: adminInfo.id,
+    adminName: adminInfo.name,
+    action: 'DELETE',
+    entity: 'YCE_KEY',
+    entityId: id,
+    entityName: key.name || 'Unnamed Key'
+  });
+  return { message: 'Key deleted successfully' };
+};
+
 export const createAuditLog = (data: AuditLogEntry) => 
   prisma.auditLog.create({ data: data as any });
 

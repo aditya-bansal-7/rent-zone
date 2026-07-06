@@ -181,6 +181,11 @@ model ChatMessage {
   conversationId String           @db.ObjectId
   senderId       String           @db.ObjectId
   content        String
+  messageType    String           @default("text")
+  imageUrl       String?
+  locationLat    Float?
+  locationLng    Float?
+  locationName   String?
   createdAt      DateTime         @default(now())
 
   conversation   ChatConversation @relation(fields: [conversationId], references: [id])
@@ -255,4 +260,14 @@ model AuditLog {
   entityName String?
   metadata   Json?    @default("{}")
   createdAt  DateTime @default(now())
+}
+
+model YceApiKey {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  name      String?
+  credits   Int      @default(540)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

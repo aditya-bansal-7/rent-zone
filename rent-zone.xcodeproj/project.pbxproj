@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		84AE0CCB2F63D4CE0009175B /* UploadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84AE0CCA2F63D4CE0009175B /* UploadView.swift */; };
+		C21B59522FFA7FBF00A18924 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = C21B59512FFA7FBF00A18924 /* Lottie */; };
 		C23285902F9F5F8A0054BFAC /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = C232858F2F9F5F8A0054BFAC /* GoogleSignIn */; };
 		C23285922F9F5F8A0054BFAC /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = C23285912F9F5F8A0054BFAC /* GoogleSignInSwift */; };
 /* End PBXBuildFile section */
@@ -49,17 +50,26 @@
 			files = (
 				C23285902F9F5F8A0054BFAC /* GoogleSignIn in Frameworks */,
 				C23285922F9F5F8A0054BFAC /* GoogleSignInSwift in Frameworks */,
+				C21B59522FFA7FBF00A18924 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C21B59552FFA7FFF00A18924 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		C249AC6F2F62973B005ADE41 = {
 			isa = PBXGroup;
 			children = (
 				84AE0CCA2F63D4CE0009175B /* UploadView.swift */,
 				C249AC7A2F62973B005ADE41 /* rent-zone */,
+				C21B59552FFA7FFF00A18924 /* Frameworks */,
 				C249AC792F62973B005ADE41 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -114,6 +124,7 @@
 			packageProductDependencies = (
 				C232858F2F9F5F8A0054BFAC /* GoogleSignIn */,
 				C23285912F9F5F8A0054BFAC /* GoogleSignInSwift */,
+				C21B59512FFA7FBF00A18924 /* Lottie */,
 			);
 			productName = "rent-zone";
 			productReference = C249AC782F62973B005ADE41 /* rent-zone.app */;
@@ -146,6 +157,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				C232858E2F9F5F8A0054BFAC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				C21B59502FFA7FBF00A18924 /* XCRemoteSwiftPackageReference "lottie-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C249AC792F62973B005ADE41 /* Products */;
@@ -323,12 +335,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 9R932U4TUH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "rent-zone/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = RentZone;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -357,12 +372,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 9R932U4TUH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "rent-zone/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = RentZone;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -410,6 +428,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		C21B59502FFA7FBF00A18924 /* XCRemoteSwiftPackageReference "lottie-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.6.1;
+			};
+		};
 		C232858E2F9F5F8A0054BFAC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
@@ -421,6 +447,12 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		C21B59512FFA7FBF00A18924 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C21B59502FFA7FBF00A18924 /* XCRemoteSwiftPackageReference "lottie-ios" */;
+			productName = Lottie;
+		};
+
 		C232858F2F9F5F8A0054BFAC /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = C232858E2F9F5F8A0054BFAC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;

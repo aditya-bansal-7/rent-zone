@@ -68,4 +68,10 @@ router.get('/tryons', adminController.getTryOns);
 // Audit Logs
 router.get('/audit-logs', adminController.getAuditLogs);
 
+// YCE API Keys
+router.get('/yce-keys', adminController.getYceKeys);
+router.post('/yce-keys', adminController.createYceKey);
+router.patch('/yce-keys/:id', adminController.updateYceKey);
+router.delete('/yce-keys/:id', adminController.deleteYceKey);
+
 export default router;

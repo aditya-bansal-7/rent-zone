@@ -1,5 +1,11 @@
 import Foundation
 
+enum ChatMessageType: String, Codable {
+    case text
+    case image
+    case location
+}
+
 struct ChatConversation: Codable, Identifiable, Hashable {
     var id: String = UUID().uuidString
     let participantName: String
@@ -18,6 +24,11 @@ struct ChatMessage: Codable, Identifiable, Hashable {
     let content: String
     let isFromCurrentUser: Bool
     let timestamp: String
+    var messageType: ChatMessageType = .text
+    var imageUrl: String?
+    var locationLat: Double?
+    var locationLng: Double?
+    var locationName: String?
     var productContext: ChatProductContext?
 }
 

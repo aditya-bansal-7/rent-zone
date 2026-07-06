@@ -342,6 +342,11 @@ struct ChatMessageDTO: Decodable, Identifiable {
     let conversationId: String
     let senderId: String
     let content: String
+    let messageType: String?
+    let imageUrl: String?
+    let locationLat: Double?
+    let locationLng: Double?
+    let locationName: String?
     let createdAt: String?
     
     func toChatMessage(currentUserId: String) -> ChatMessage {
@@ -354,11 +359,24 @@ struct ChatMessageDTO: Decodable, Identifiable {
         displayFormatter.dateFormat = "h:mm a"
         let timeString = displayFormatter.string(from: date)
         
+        let msgType: ChatMessageType = {
+            switch messageType {
+            case "image": return .image
+            case "location": return .location
+            default: return .text
+            }
+        }()
+        
         return ChatMessage(
             id: id,
             content: content,
             isFromCurrentUser: senderId == currentUserId,
-            timestamp: timeString
+            timestamp: timeString,
+            messageType: msgType,
+            imageUrl: imageUrl,
+            locationLat: locationLat,
+            locationLng: locationLng,
+            locationName: locationName
         )
     }
 }

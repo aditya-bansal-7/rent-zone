@@ -21,6 +21,7 @@ const navItems = [
   { href: "/chats",        label: "Chats",           icon: MessageSquare },
   { href: "/notifications",label: "Notifications",   icon: Bell },
   { href: "/try-ons",      label: "Virtual Try-Ons", icon: Wand2 },
+  { href: "/yce-keys",     label: "YCE API Keys",    icon: Settings },
   { href: "/analytics",    label: "Analytics",       icon: BarChart3 },
   { href: "/audit-logs",   label: "Audit Logs",      icon: Shield },
   { href: "/settings",     label: "Settings",        icon: Settings },

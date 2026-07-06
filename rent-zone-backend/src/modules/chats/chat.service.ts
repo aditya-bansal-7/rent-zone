@@ -117,12 +117,71 @@ export const sendMessage = async (
   if (!participant) throw new Error('Not a participant in this conversation');
 
   const [message] = await prisma.$transaction([
-    prisma.chatMessage.create({ data: { conversationId, senderId, content } }),
+    prisma.chatMessage.create({ data: { conversationId, senderId, content, messageType: 'text' } }),
     prisma.chatConversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } }),
   ]);
 
   return message;
 };
+
+export const sendImageMessage = async (
+  conversationId: string,
+  senderId: string,
+  imageUrl: string
+) => {
+  const participant = await prisma.chatParticipant.findFirst({
+    where: { conversationId, userId: senderId },
+  });
+  if (!participant) throw new Error('Not a participant in this conversation');
+
+  const [message] = await prisma.$transaction([
+    prisma.chatMessage.create({
+      data: {
+        conversationId,
+        senderId,
+        content: '📷 Photo',
+        messageType: 'image',
+        imageUrl,
+      },
+    }),
+    prisma.chatConversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } }),
+  ]);
+
+  return message;
+};
+
+export const sendLocationMessage = async (
+  conversationId: string,
+  senderId: string,
+  locationLat: number,
+  locationLng: number,
+  locationName?: string
+) => {
+  const participant = await prisma.chatParticipant.findFirst({
+    where: { conversationId, userId: senderId },
+  });
+  if (!participant) throw new Error('Not a participant in this conversation');
+
+  const displayName = locationName || `${locationLat.toFixed(4)}, ${locationLng.toFixed(4)}`;
+
+  const [message] = await prisma.$transaction([
+    prisma.chatMessage.create({
+      data: {
+        conversationId,
+        senderId,
+        content: `📍 ${displayName}`,
+        messageType: 'location',
+        locationLat,
+        locationLng,
+        locationName: displayName,
+      },
+    }),
+    prisma.chatConversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } }),
+  ]);
+
+  return message;
+};
+
 
 export const deleteConversation = async (
   conversationId: string,
