@@ -29,31 +29,8 @@ struct ChatListView: View {
             
             // Search Bar — only show when logged in and has conversations
             if isLoggedIn && !chatService.conversations.isEmpty {
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 18, weight: .regular))
-                        .foregroundColor(.primary)
-                    
-                    TextField("Search", text: $searchText)
-                        .font(.system(size: 17))
-                    
-                    if !searchText.isEmpty {
-                        Button(action: {
-                            searchText = ""
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                .padding(.vertical, 14)
-                .padding(.horizontal, 16)
-                .background(
-                    Capsule()
-                        .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                )
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+                SearchBarView(text: $searchText, placeholder: "Search")
+                    .padding(.vertical, 8)
             }
             }
             .background(Color(uiColor: .systemGroupedBackground))

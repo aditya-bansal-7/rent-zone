@@ -18,7 +18,6 @@ struct ProductListView: View {
     
     @State private var showSortSheet = false
     @State private var showFilterSheet = false
-    @State private var showSearchBar = false
     @State private var hasFetchedCategory = false
     
     // Sort & Filter State
@@ -113,10 +112,8 @@ struct ProductListView: View {
             // MARK: - Navigation Bar
             navBar
             
-            // MARK: - Search Bar (toggleable)
-            if showSearchBar {
-                searchBar
-            }
+            // MARK: - Search Bar
+            searchBar
             
             // MARK: - Sort & Filter Buttons
             sortFilterBar
@@ -166,7 +163,7 @@ struct ProductListView: View {
                 }
             }
         }
-        .background(Color(UIColor.systemBackground))
+        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .tabBar)
         .navigationDestination(for: Product.self) { product in
@@ -210,9 +207,6 @@ struct ProductListView: View {
             if let favorites = appStore.userStore.currentUser?.favouriteProducts {
                 favoriteProductIds = Set(favorites)
             }
-            if !searchText.isEmpty {
-                showSearchBar = true
-            }
             // Fetch category-filtered products from the API if needed
             if let categoryId = categoryId, !hasFetchedCategory {
                 hasFetchedCategory = true
@@ -240,43 +234,20 @@ struct ProductListView: View {
             
             Spacer()
             
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.25)) {
-                    showSearchBar.toggle()
-                    if !showSearchBar { searchText = "" }
-                }
-            }) {
-                Image(systemName: "magnifyingglass")
-                    .font(.title3.weight(.semibold))
-                    .foregroundColor(.primary)
-            }
+            Color.clear
+                .frame(width: 24, height: 24)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color(UIColor.systemBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
     }
     
     private var searchBar: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.gray)
-            
-            TextField("Search outfits…", text: $searchText)
-                .font(.subheadline)
-            
-            if !searchText.isEmpty {
-                Button(action: { searchText = "" }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
-                }
-            }
-        }
-        .padding(10)
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
-        .padding(.horizontal, 16)
+        SearchBarView(
+            text: $searchText,
+            placeholder: "Search outfits…"
+        )
         .padding(.bottom, 4)
-        .transition(.opacity.combined(with: .move(edge: .top)))
     }
     
     private var sortFilterBar: some View {
@@ -330,7 +301,7 @@ struct ProductListView: View {
             Spacer()
         }
         .padding(.vertical, 8)
-        .background(Color(UIColor.systemBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
     }
 }
 

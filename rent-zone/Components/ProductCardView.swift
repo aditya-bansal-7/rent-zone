@@ -13,10 +13,8 @@ struct ProductCardView: View {
         product.imageURLs.first
     }
 
-    // Responsive card width for 2-column grid
-    private var cardWidth: CGFloat {
-        UIScreen.main.bounds.width / 2 - 24
-    }
+    // Responsive card width — updated from actual geometry, never uses UIScreen
+    @State private var cardWidth: CGFloat = 160
 
     var body: some View {
         NavigationLink(destination: ProductDetailView(product: product)) {
@@ -105,21 +103,27 @@ struct ProductCardView: View {
                     HStack(spacing: 3) {
                         Image(systemName: "star.fill")
                             .font(.system(size: 10))
-                            .foregroundColor(.orange)
+                            .foregroundColor(product.rating > 0 ? .orange : Color(.systemGray4))
 
                         Text(
-                            product.rating.formatted(
-                                .number.precision(.fractionLength(0...1))
-                            )
+                            product.rating > 0 ?
+                            product.rating.formatted(.number.precision(.fractionLength(0...1))) : "0"
                         )
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.primary)
+                        .foregroundColor(product.rating > 0 ? .primary : .secondary)
                     }
                 }
             }
             .frame(width: cardWidth, alignment: .leading)
         }
         .buttonStyle(.plain)
+        .background(
+            GeometryReader { geo in
+                Color.clear.onAppear {
+                    cardWidth = geo.size.width
+                }
+            }
+        )
     }
 
     // MARK: - Placeholder View

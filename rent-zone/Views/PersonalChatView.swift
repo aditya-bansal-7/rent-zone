@@ -181,7 +181,7 @@ struct PersonalChatView: View {
                     .padding(.bottom, 20)
                 }
                 .background(Color(UIColor.systemGroupedBackground))
-                .onChange(of: chatService.activeConversationMessages.count) { _ in
+                .onChange(of: chatService.activeConversationMessages.count) { _, _ in
                     if let lastId = chatService.activeConversationMessages.last?.id {
                         withAnimation { proxy.scrollTo(lastId, anchor: .bottom) }
                     }
@@ -268,7 +268,7 @@ struct PersonalChatView: View {
         }
         // Photos picker
         .photosPicker(isPresented: $showPhotoPicker, selection: $selectedPhotoItem, matching: .images)
-        .onChange(of: selectedPhotoItem) { newItem in
+        .onChange(of: selectedPhotoItem) { _, newItem in
             guard let newItem else { return }
             Task {
                 if let data = try? await newItem.loadTransferable(type: Data.self),
@@ -278,7 +278,7 @@ struct PersonalChatView: View {
                 selectedPhotoItem = nil
             }
         }
-        .onChange(of: cameraImage) { newImage in
+        .onChange(of: cameraImage) { _, newImage in
             guard let image = newImage else { return }
             Task {
                 await chatService.sendImageMessage(image: image, conversationId: conversation.id)
@@ -331,16 +331,18 @@ struct PersonalChatView: View {
         isFetchingLocation = true
         chatService.requestCurrentLocation { location in
             isFetchingLocation = false
-            // Reverse geocode to get a nice name
-            let geocoder = CLGeocoder()
-            geocoder.reverseGeocodeLocation(location) { placemarks, _ in
+            Task {
+                let geocoder = CLGeocoder()
+                let placemarks = try? await geocoder.reverseGeocodeLocation(location)
                 let placemark = placemarks?.first
                 let name = [placemark?.name, placemark?.locality, placemark?.administrativeArea]
                     .compactMap { $0 }
                     .joined(separator: ", ")
-                pendingLocation = location
-                pendingLocationName = name.isEmpty ? nil : name
-                showLocationConfirm = true
+                await MainActor.run {
+                    pendingLocation = location
+                    pendingLocationName = name.isEmpty ? nil : name
+                    showLocationConfirm = true
+                }
             }
         }
     }
@@ -501,11 +503,12 @@ struct LocationBubbleView: View {
         Button(action: { showMap = true }) {
             VStack(alignment: .leading, spacing: 0) {
                 // Mini map snapshot
-                Map(coordinateRegion: .constant(MKCoordinateRegion(
+                Map(position: .constant(.region(MKCoordinateRegion(
                     center: coordinate,
                     span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                )), annotationItems: [LocationPin(coordinate: coordinate)]) { pin in
-                    MapMarker(coordinate: pin.coordinate, tint: .brandPurple)
+                )))) {
+                    Marker("Location", coordinate: coordinate)
+                        .tint(Color.brandPurple)
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 140)
@@ -552,21 +555,22 @@ struct FullScreenMapView: View {
     let locationName: String?
     @Environment(\.dismiss) private var dismiss
     
-    @State private var region: MKCoordinateRegion
+    @State private var position: MapCameraPosition
     
     init(coordinate: CLLocationCoordinate2D, locationName: String?) {
         self.coordinate = coordinate
         self.locationName = locationName
-        _region = State(initialValue: MKCoordinateRegion(
+        _position = State(initialValue: .region(MKCoordinateRegion(
             center: coordinate,
             span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-        ))
+        )))
     }
     
     var body: some View {
         NavigationView {
-            Map(coordinateRegion: $region, annotationItems: [LocationPin(coordinate: coordinate)]) { pin in
-                MapMarker(coordinate: pin.coordinate, tint: .brandPurple)
+            Map(position: $position) {
+                Marker("Location", coordinate: coordinate)
+                    .tint(Color.brandPurple)
             }
             .ignoresSafeArea(edges: .bottom)
             .navigationTitle(locationName ?? "Location")

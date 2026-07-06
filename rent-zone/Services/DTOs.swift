@@ -306,7 +306,7 @@ struct ChatConversationDTO: Decodable, Identifiable {
     
     func toChatConversation(currentUserId: String) -> ChatConversation {
         let otherParticipant = participants?.first(where: { $0.userId != currentUserId })?.user
-        let latestMsg = messages?.last
+        _ = messages?.last
         
         let fmt = ISO8601DateFormatter()
         fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

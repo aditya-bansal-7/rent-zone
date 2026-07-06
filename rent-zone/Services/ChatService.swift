@@ -274,17 +274,23 @@ class ChatService: NSObject, ObservableObject, CLLocationManagerDelegate {
             case .failure(let error):
                 print("WS Error: \(error)")
             case .success(let msg):
+                let text: String?
                 switch msg {
-                case .string(let text):
-                    self?.handleIncomingMessage(text)
+                case .string(let str):
+                    text = str
                 case .data(let data):
-                    if let text = String(data: data, encoding: .utf8) {
+                    text = String(data: data, encoding: .utf8)
+                @unknown default:
+                    text = nil
+                }
+                if let text {
+                    Task { @MainActor [weak self] in
                         self?.handleIncomingMessage(text)
                     }
-                @unknown default:
-                    break
                 }
-                self?.receiveWSMessage()
+                Task { @MainActor [weak self] in
+                    self?.receiveWSMessage()
+                }
             }
         }
     }
