@@ -247,8 +247,12 @@ struct LoginView: View {
             }
             withAnimation { step = .onboardingExtra }
         case .onboardingExtra:
-            // Send OTP to verify email before creating the account
-            Task { await performSendRegistrationOtp() }
+            if isOAuthOnboarding {
+                Task { await performRegister() }
+            } else {
+                // Send OTP to verify email before creating the account
+                Task { await performSendRegistrationOtp() }
+            }
         case .verifyRegistrationOtp:
             guard otpCode.count == 6 else {
                 errorMessage = "Please enter the 6-digit verification code"
@@ -556,6 +560,9 @@ struct LoginView: View {
                     
                     await MainActor.run {
                         self.isLoading = false
+                        self.name = result.user.name.isEmpty ? "User" : result.user.name
+                        self.emailOrMobile = result.user.email ?? ""
+                        self.password = UUID().uuidString.prefix(8).description
                         let needsOnboarding = result.isNewUser || 
                                              result.user.location.isEmpty || 
                                              (result.user.university ?? "").isEmpty
@@ -587,7 +594,7 @@ struct LoginView: View {
         case .verifyOtp: return "Verify Code"
         case .enterPassword: return "Sign In"
         case .registerDetails: return "Continue"
-        case .onboardingExtra: return "Send Verification Code"
+        case .onboardingExtra: return isOAuthOnboarding ? "Complete Registration" : "Send Verification Code"
         case .verifyRegistrationOtp: return "Verify & Create Account"
         case .verifyForgotPasswordOtp: return "Verify Code"
         case .resetPassword: return "Reset & Sign In"

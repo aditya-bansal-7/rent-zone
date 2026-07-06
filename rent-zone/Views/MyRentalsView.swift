@@ -10,6 +10,8 @@ struct MyRentalsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppStore.self) var appStore
 
+    var showCloseButton: Bool = true
+
     @State private var selectedTab: RentalTab = .rented
     @State private var hasFetched = false
     @State private var productCache: [String: Product] = [:]
@@ -87,8 +89,10 @@ struct MyRentalsView: View {
             .navigationTitle("My Rentals")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    DismissButton(action: { dismiss() })
+                if showCloseButton {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        DismissButton(action: { dismiss() })
+                    }
                 }
             }
             .task {

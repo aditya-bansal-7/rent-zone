@@ -80,6 +80,14 @@ class ChatService: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
+    func markConversationAsRead(_ conversationId: String) async {
+        do {
+            let _: EmptyResponse = try await APIClient.shared.request(endpoint: "/chats/\(conversationId)/read", method: "PUT", authenticated: true)
+        } catch {
+            print("Error marking conversation as read: \(error)")
+        }
+    }
+    
     // MARK: - Send Text Message
     
     func sendMessage(_ content: String, conversationId: String) {
@@ -274,17 +282,23 @@ class ChatService: NSObject, ObservableObject, CLLocationManagerDelegate {
             case .failure(let error):
                 print("WS Error: \(error)")
             case .success(let msg):
+                let text: String?
                 switch msg {
-                case .string(let text):
-                    self?.handleIncomingMessage(text)
+                case .string(let str):
+                    text = str
                 case .data(let data):
-                    if let text = String(data: data, encoding: .utf8) {
+                    text = String(data: data, encoding: .utf8)
+                @unknown default:
+                    text = nil
+                }
+                if let text {
+                    Task { @MainActor [weak self] in
                         self?.handleIncomingMessage(text)
                     }
-                @unknown default:
-                    break
                 }
-                self?.receiveWSMessage()
+                Task { @MainActor [weak self] in
+                    self?.receiveWSMessage()
+                }
             }
         }
     }
@@ -298,10 +312,11 @@ class ChatService: NSObject, ObservableObject, CLLocationManagerDelegate {
             if action == "newMessage" {
                 guard let msgDict = json["message"] as? [String: Any],
                       let id = msgDict["id"] as? String,
-                      let content = msgDict["content"] as? String,
                       let senderId = msgDict["senderId"] as? String,
                       let conversationId = msgDict["conversationId"] as? String,
                       let createdAt = msgDict["createdAt"] as? String else { return }
+                
+                let content = msgDict["content"] as? String ?? ""
                 
                 let isMine = (senderId == TokenStorage.userId)
                 
@@ -341,8 +356,11 @@ class ChatService: NSObject, ObservableObject, CLLocationManagerDelegate {
                     if let index = self.conversations.firstIndex(where: { $0.id == conversationId }) {
                         var conv = self.conversations[index]
                         conv.lastMessageTime = timestamp
+                        conv.messages.insert(newMsg, at: 0)
+                        
                         if !isMine && self.activeConversationId != conversationId {
                             conv.hasUnread = true
+                            conv.unreadCount += 1
                         }
                         self.conversations[index] = conv
                     }

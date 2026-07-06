@@ -306,7 +306,7 @@ struct ChatConversationDTO: Decodable, Identifiable {
     
     func toChatConversation(currentUserId: String) -> ChatConversation {
         let otherParticipant = participants?.first(where: { $0.userId != currentUserId })?.user
-        let latestMsg = messages?.last
+        _ = messages?.last
         
         let fmt = ISO8601DateFormatter()
         fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -317,13 +317,16 @@ struct ChatConversationDTO: Decodable, Identifiable {
         displayFormatter.dateFormat = "h:mm a"
         let timeString = displayFormatter.string(from: date)
         
+        let currentParticipant = participants?.first(where: { $0.userId == currentUserId })
+
         return ChatConversation(
             id: id,
             participantName: otherParticipant?.name ?? "Unknown",
             participantImage: otherParticipant?.profileImage,
             isOnline: false,
             isVerified: otherParticipant?.isVerified ?? false,
-            hasUnread: false,
+            hasUnread: (currentParticipant?.unreadCount ?? 0) > 0,
+            unreadCount: currentParticipant?.unreadCount ?? 0,
             lastMessageTime: timeString,
             messages: messages?.map { $0.toChatMessage(currentUserId: currentUserId) } ?? [],
             productContext: nil // Can be populated if needed
@@ -335,6 +338,7 @@ struct ChatParticipantDTO: Decodable, Identifiable {
     let id: String
     let userId: String
     let user: ListedByDTO?
+    let unreadCount: Int?
 }
 
 struct ChatMessageDTO: Decodable, Identifiable {

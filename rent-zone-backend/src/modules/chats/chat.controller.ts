@@ -3,6 +3,7 @@ import * as chatService from './chat.service';
 import { sendSuccess, sendError } from '../../utils/response.utils';
 import { uploadToCloudinary } from '../../utils/cloudinary.utils';
 import multer from 'multer';
+import { broadcastMessageToConversation } from '../../socket';
 
 export const upload = multer({ storage: multer.memoryStorage() });
 
@@ -61,6 +62,7 @@ export const sendImageMessage = async (req: Request, res: Response) => {
       req.user!.userId,
       imageUrl
     );
+    await broadcastMessageToConversation(req.params.id, message);
     sendSuccess(res, message, 201, 'Image message sent');
   } catch (err: any) {
     const code = err.message === 'Not a participant in this conversation' ? 403 : 400;
@@ -82,6 +84,7 @@ export const sendLocationMessage = async (req: Request, res: Response) => {
       parseFloat(longitude),
       locationName
     );
+    await broadcastMessageToConversation(req.params.id, message);
     sendSuccess(res, message, 201, 'Location message sent');
   } catch (err: any) {
     const code = err.message === 'Not a participant in this conversation' ? 403 : 400;
@@ -107,6 +110,15 @@ export const searchConversations = async (req: Request, res: Response) => {
     }
     const conversations = await chatService.searchMyConversations(req.user!.userId, q);
     sendSuccess(res, conversations);
+  } catch (err: any) {
+    sendError(res, err.message);
+  }
+};
+
+export const markAsRead = async (req: Request, res: Response) => {
+  try {
+    await chatService.markConversationAsRead(req.params.id, req.user!.userId);
+    sendSuccess(res, null, 200, 'Chat marked as read');
   } catch (err: any) {
     sendError(res, err.message);
   }

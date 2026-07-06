@@ -4,7 +4,6 @@ struct ProductDetailView: View {
     let product: Product
     @Environment(AppStore.self) var appStore
     @Environment(\.dismiss) private var dismiss
-    @State private var showMenu = false
     @State private var currentImageIndex = 0
     @State private var isFavorite = false
     @State private var showRentConfirmation = false
@@ -22,12 +21,11 @@ struct ProductDetailView: View {
 
     @State private var showVirtualTryOn = false
     @State private var showSellerProfile = false
+    @State private var showLoginSheet = false
+    @State private var navigateToMyRentals = false
+    @State private var showCustomMenu = false
 
-    private var safeAreaTop: CGFloat {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows.first?.safeAreaInsets.top ?? 54
-    }
+
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
@@ -56,7 +54,7 @@ struct ProductDetailView: View {
                                             .scaledToFill()
                                     }
                                 }
-                                .frame(width: UIScreen.main.bounds.width, height: 500)
+                                .frame(maxWidth: .infinity, minHeight: 500, maxHeight: 500)
                                 .clipped()
                                 .tag(index)
                             }
@@ -89,98 +87,6 @@ struct ProductDetailView: View {
                         }
                     }
                     .frame(height: 500)
-                    // Tap-to-dismiss layer: above image, below floating buttons
-                    if showMenu {
-                        Color.black.opacity(0.001)
-                            .frame(height: 500)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                    showMenu = false
-                                }
-                            }
-                    }
-                    HStack(alignment: .top) {
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.primary)
-                                .frame(width: 44, height: 44)
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
-                        }
-
-                        Spacer()
-
-                        if showMenu {
-                            VStack(spacing: 0) {
-                                Button(action: { handleFavoriteToggle() }) {
-                                    HStack(spacing: 10) {
-                                        Image(systemName: isFavorite ? "heart.fill" : "heart")
-                                            .font(.system(size: 18, weight: .medium))
-                                            .foregroundColor(isFavorite ? .red : .primary)
-                                            .frame(width: 24)
-                                        Text("Favourite")
-                                            .font(.system(size: 14, weight: .medium))
-                                            .foregroundColor(.primary)
-                                    }
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.vertical, 10)
-                                    .padding(.horizontal, 16)
-                                }
-
-                                Divider()
-
-                                Button(action: {
-                                    shareProduct()
-                                }) {
-                                    HStack(spacing: 10) {
-                                        Image(systemName: "square.and.arrow.up")
-                                            .font(.system(size: 18, weight: .medium))
-                                            .frame(width: 24)
-                                        Text("Share")
-                                            .font(.system(size: 14, weight: .medium))
-                                    }
-                                    .foregroundColor(.primary)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.vertical, 10)
-                                    .padding(.horizontal, 16)
-                                }
-                            }
-                            .frame(width: 160)
-                            .padding(.vertical, 10)
-                            .background {
-                                Group {
-                                    if #available(iOS 26.0, *) {
-                                        Color.clear
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 16)
-                                            .fill(.ultraThinMaterial)
-                                    }
-                                }
-                            }
-                            .if26GlassEffect(cornerRadius: 16)
-                            .shadow(color: .black.opacity(0.08), radius: 10, x: 0, y: 4)
-                            .transition(.scale(scale: 0.3, anchor: .topTrailing).combined(with: .opacity))
-                        } else {
-                            Button(action: {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                                    showMenu = true
-                                }
-                            }) {
-                                Image(systemName: "ellipsis")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.primary)
-                                    .frame(width: 44, height: 44)
-                                    .background(.ultraThinMaterial)
-                                    .clipShape(Circle())
-                                    .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 2)
-                            }
-                            .transition(.scale(scale: 0.3, anchor: .topTrailing).combined(with: .opacity))
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, safeAreaTop)
                 }
 
                 // Product Info Card
@@ -514,7 +420,54 @@ struct ProductDetailView: View {
             }
         }
         .ignoresSafeArea(edges: .top)
-        .navigationBarHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: { withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) { showCustomMenu.toggle() } }) {
+                    Image(systemName: "ellipsis")
+                }
+                .popover(isPresented: $showCustomMenu, arrowEdge: .top) {
+                    VStack(spacing: 0) {
+                        // Favourite row — stays open on tap
+                        Button(action: { handleFavoriteToggle() }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                    .font(.system(size: 17))
+                                    .foregroundColor(isFavorite ? .red : .primary)
+                                    .frame(width: 24)
+                                Text(isFavorite ? "Favourite" : "Favourite")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundColor(isFavorite ? .red : .primary)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 14)
+                        }
+
+                        Divider()
+
+                        // Share row — closes on tap (expected)
+                        Button(action: { showCustomMenu = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { shareProduct() } }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(.system(size: 17))
+                                    .foregroundColor(.primary)
+                                    .frame(width: 24)
+                                Text("Share")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundColor(.primary)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 14)
+                        }
+                    }
+                    .frame(width: 170)
+                    .presentationCompactAdaptation(.popover)
+                }
+            }
+        }
         .toolbar(.hidden, for: .tabBar)
         .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
         .task {
@@ -541,10 +494,14 @@ struct ProductDetailView: View {
                 }
             }
         }
-        .alert("Request Sent! 🎉", isPresented: $showRentConfirmation) {
+        .alert("Request Sent!", isPresented: $showRentConfirmation) {
+            Button("View My Rentals") { navigateToMyRentals = true }
             Button("OK", role: .cancel) { }
         } message: {
-            Text("Your rental request for \(product.name) has been sent to the owner.")
+            Text("Your rental request for \(product.name) has been sent.")
+        }
+        .navigationDestination(isPresented: $navigateToMyRentals) {
+            MyRentalsView(showCloseButton: false)
         }
         .fullScreenCover(isPresented: $showVirtualTryOn) {
             VirtualTryOnView(product: product)
@@ -570,6 +527,9 @@ struct ProductDetailView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showLoginSheet) {
+            LoginView()
         }
     }
 
@@ -678,7 +638,7 @@ struct ProductDetailView: View {
         }
         
         guard appStore.userStore.currentUser != nil else {
-            rentError = "Please sign in to request a rental"
+            showLoginSheet = true
             return
         }
         

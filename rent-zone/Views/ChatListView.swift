@@ -29,31 +29,8 @@ struct ChatListView: View {
             
             // Search Bar — only show when logged in and has conversations
             if isLoggedIn && !chatService.conversations.isEmpty {
-                HStack(spacing: 8) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 18, weight: .regular))
-                        .foregroundColor(.primary)
-                    
-                    TextField("Search", text: $searchText)
-                        .font(.system(size: 17))
-                    
-                    if !searchText.isEmpty {
-                        Button(action: {
-                            searchText = ""
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-                .padding(.vertical, 14)
-                .padding(.horizontal, 16)
-                .background(
-                    Capsule()
-                        .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                )
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+                SearchBarView(text: $searchText, placeholder: "Search")
+                    .padding(.vertical, 8)
             }
             }
             .background(Color(uiColor: .systemGroupedBackground))
@@ -93,8 +70,13 @@ struct ChatListView: View {
                             // Mark as read and navigate
                             if let index = chatService.conversations.firstIndex(where: { $0.id == conversation.id }) {
                                 chatService.conversations[index].hasUnread = false
+                                chatService.conversations[index].unreadCount = 0
                                 chatService.conversations[index].isOnline = false
                                 appStore.selectedChatConversation = chatService.conversations[index]
+                                
+                                Task {
+                                    await chatService.markConversationAsRead(conversation.id)
+                                }
                             }
                         } label: {
                             ChatRowView(conversation: conversation)
@@ -114,6 +96,12 @@ struct ChatListView: View {
                                     chatService.conversations[index].hasUnread.toggle()
                                     if !chatService.conversations[index].hasUnread {
                                         chatService.conversations[index].isOnline = false
+                                        chatService.conversations[index].unreadCount = 0
+                                        Task {
+                                            await chatService.markConversationAsRead(conversation.id)
+                                        }
+                                    } else {
+                                        chatService.conversations[index].unreadCount = 1
                                     }
                                 }
                             } label: {
@@ -239,9 +227,24 @@ struct ChatRowView: View {
                         .foregroundColor(.gray.opacity(0.4))
                 }
                 
-                if conversation.hasUnread || conversation.isOnline {
+                if conversation.hasUnread || conversation.unreadCount > 0 {
+                    ZStack {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 2)
+                            )
+                        
+                        Text("\(conversation.unreadCount > 0 ? conversation.unreadCount : 1)")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .offset(x: 4, y: -4)
+                } else if conversation.isOnline {
                     Circle()
-                        .fill(Color.red)
+                        .fill(Color.green)
                         .frame(width: 12, height: 12)
                         .overlay(
                             Circle()

@@ -195,7 +195,7 @@ class AuthService {
 
     // MARK: Logout
     func logout() async throws {
-        try await APIClient.shared.request(
+        _ = try await APIClient.shared.request(
             endpoint: "/auth/logout",
             method: "POST",
             body: nil,

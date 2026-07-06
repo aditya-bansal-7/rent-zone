@@ -54,30 +54,7 @@ struct HomeView: View {
                         
                         
                         
-                        HStack(spacing: 8) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 18, weight: .regular))
-                                .foregroundColor(.primary)
-                            
-                            TextField("Search", text: $searchText)
-                                .font(.system(size: 17))
-                            
-                            if !searchText.isEmpty {
-                                Button(action: {
-                                    searchText = ""
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                        }
-                        .padding(.vertical, 14)
-                        .padding(.horizontal, 16)
-                        .background(
-                            Capsule()
-                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                        )
-                        .padding(.horizontal)
+                        SearchBarView(text: $searchText, placeholder: "Search")
                         
                         VStack(alignment: .leading, spacing: 16) {
                             
