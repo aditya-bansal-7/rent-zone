@@ -17,11 +17,5 @@
 	</array>
 	<key>GIDClientID</key>
 	<string>869371783531-8q33j3hli32lifvlsgrfme2egctj5u5l.apps.googleusercontent.com</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Rent Zone needs camera access to take photos for chat messages.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Rent Zone needs photo library access to share photos in chat.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Rent Zone needs your location to share it in chat conversations.</string>
 </dict>
 </plist>

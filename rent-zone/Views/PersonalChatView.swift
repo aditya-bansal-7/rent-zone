@@ -263,7 +263,7 @@ struct PersonalChatView: View {
         .background(Color(UIColor.systemGroupedBackground))
         // Camera sheet
         .fullScreenCover(isPresented: $showCamera) {
-            CameraPickerView(selectedImage: $cameraImage)
+            CameraPickerView(selectedImage: $cameraImage, onDismiss: { showCamera = false })
                 .ignoresSafeArea()
         }
         // Photos picker
@@ -493,6 +493,10 @@ struct LocationBubbleView: View {
         CLLocationCoordinate2D(latitude: lat, longitude: lng)
     }
     
+    var displayName: String {
+        locationName ?? "\(lat.formatted(.number.precision(.fractionLength(4)))), \(lng.formatted(.number.precision(.fractionLength(4))))"
+    }
+    
     var body: some View {
         Button(action: { showMap = true }) {
             VStack(alignment: .leading, spacing: 0) {
@@ -503,27 +507,32 @@ struct LocationBubbleView: View {
                 )), annotationItems: [LocationPin(coordinate: coordinate)]) { pin in
                     MapMarker(coordinate: pin.coordinate, tint: .brandPurple)
                 }
-                .frame(width: 220, height: 120)
+                .frame(maxWidth: .infinity)
+                .frame(height: 140)
                 .cornerRadius(14)
                 .disabled(true)
                 
-                HStack(spacing: 6) {
+                // Location label — wraps across multiple lines
+                HStack(alignment: .top, spacing: 6) {
                     Image(systemName: "location.fill")
                         .font(.system(size: 11))
                         .foregroundColor(isFromCurrentUser ? .white.opacity(0.9) : .brandPurple)
-                    Text(locationName ?? "\(lat.formatted(.number.precision(.fractionLength(4)))), \(lng.formatted(.number.precision(.fractionLength(4))))")
-                        .font(.system(size: 12, weight: .medium))
+                        .padding(.top, 1)
+                    Text(displayName)
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(isFromCurrentUser ? .white : .primary)
-                        .lineLimit(1)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .background(isFromCurrentUser ? Color.brandPurple : Color(UIColor.secondarySystemBackground))
-                .cornerRadius(14)
             }
         }
         .buttonStyle(.plain)
-        .cornerRadius(16)
+        .frame(maxWidth: 260)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
         .sheet(isPresented: $showMap) {
             FullScreenMapView(coordinate: coordinate, locationName: locationName)
@@ -587,7 +596,7 @@ struct FullScreenMapView: View {
 
 struct CameraPickerView: UIViewControllerRepresentable {
     @Binding var selectedImage: UIImage?
-    @Environment(\.dismiss) private var dismiss
+    var onDismiss: () -> Void
     
     func makeCoordinator() -> Coordinator { Coordinator(self) }
     
@@ -608,11 +617,14 @@ struct CameraPickerView: UIViewControllerRepresentable {
             if let image = info[.originalImage] as? UIImage {
                 parent.selectedImage = image
             }
-            parent.dismiss()
+            // Dismiss the UIKit picker first, then let SwiftUI react to the binding change
+            picker.dismiss(animated: true)
+            parent.onDismiss()
         }
         
         func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            parent.dismiss()
+            picker.dismiss(animated: true)
+            parent.onDismiss()
         }
     }
 }
