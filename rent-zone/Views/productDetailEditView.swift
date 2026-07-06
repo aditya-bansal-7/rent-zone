@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import PhotosUI
 
 struct ProductDetailEditView: View {
     @Environment(\.dismiss) private var dismiss
@@ -23,6 +24,10 @@ struct ProductDetailEditView: View {
     @State private var errorMessage: String? = nil
     @State private var showDeleteAlert = false
     
+    @State private var existingImageURLs: [String]
+    @State private var newSelectedItems: [PhotosPickerItem] = []
+    @State private var newSelectedImages: [UIImage] = []
+    
     // Map camera position for pickup location
     @State private var mapPosition = MapCameraPosition.region(
         MKCoordinateRegion(
@@ -44,6 +49,8 @@ struct ProductDetailEditView: View {
         _brandDescription = State(initialValue: product.description[.brand] ?? "")
         _styleDescription = State(initialValue: product.description[.style] ?? "")
         _fitDescription = State(initialValue: product.description[.fitAndComfort] ?? "")
+        
+        _existingImageURLs = State(initialValue: product.imageURLs)
     }
     
     var body: some View {
@@ -235,16 +242,68 @@ struct ProductDetailEditView: View {
     private var photoGrid: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(product.imageURLs, id: \.self) { url in
-                    AsyncImage(url: URL(string: url)) { phase in
-                        if let image = phase.image {
-                            image.resizable().scaledToFill()
-                        } else {
-                            Color.gray.opacity(0.2)
+                ForEach(existingImageURLs.indices, id: \.self) { index in
+                    ZStack(alignment: .topTrailing) {
+                        AsyncImage(url: URL(string: existingImageURLs[index])) { phase in
+                            if let image = phase.image {
+                                image.resizable().scaledToFill()
+                            } else {
+                                Color.gray.opacity(0.2)
+                            }
+                        }
+                        .frame(width: 120, height: 120)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        
+                        Button(action: {
+                            existingImageURLs.remove(at: index)
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.white)
+                                .background(Circle().fill(Color.black.opacity(0.5)))
+                                .padding(6)
                         }
                     }
-                    .frame(width: 120, height: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                
+                ForEach(newSelectedImages.indices, id: \.self) { index in
+                    ZStack(alignment: .topTrailing) {
+                        Image(uiImage: newSelectedImages[index])
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 120, height: 120)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        
+                        Button(action: {
+                            newSelectedImages.remove(at: index)
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.white)
+                                .background(Circle().fill(Color.black.opacity(0.5)))
+                                .padding(6)
+                        }
+                    }
+                }
+                
+                PhotosPicker(selection: $newSelectedItems, matching: .images) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray6))
+                            .frame(width: 120, height: 120)
+                        Image(systemName: "plus")
+                            .font(.system(size: 32))
+                            .foregroundColor(.gray)
+                    }
+                }
+                .onChange(of: newSelectedItems) { _, newItems in
+                    Task {
+                        for item in newItems {
+                            if let data = try? await item.loadTransferable(type: Data.self),
+                               let image = UIImage(data: data) {
+                                newSelectedImages.append(image)
+                            }
+                        }
+                        newSelectedItems.removeAll()
+                    }
                 }
             }
         }
@@ -270,14 +329,21 @@ struct ProductDetailEditView: View {
             "condition": selectedCondition.rawValue,
             "size": selectedSize,
             "rentPricePerDay": price,
-            "description": description
+            "description": description,
+            "imageURLs": existingImageURLs
         ]
         
         Task {
             do {
-                let updated = try await ProductService.shared.updateProduct(id: product.id, body: body)
+                var updated = try await ProductService.shared.updateProduct(id: product.id, body: body)
+                
+                if !newSelectedImages.isEmpty {
+                    updated = try await ProductService.shared.uploadImages(productId: product.id, images: newSelectedImages)
+                }
+                
+                let finalUpdated = updated
                 await MainActor.run {
-                    appStore.productStore.updateItem(updated)
+                    appStore.productStore.updateItem(finalUpdated)
                     isLoading = false
                     dismiss()
                 }

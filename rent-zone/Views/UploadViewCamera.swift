@@ -36,13 +36,28 @@ struct UploadViewCamera: View {
                     } else {
                         TabView(selection: $currentPage) {
                             ForEach(selectedImages.indices, id: \.self) { index in
-                                Image(uiImage: selectedImages[index])
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(maxWidth: 320, maxHeight: 400)
-                                    .clipped()
-                                    .cornerRadius(16)
-                                    .tag(index)
+                                ZStack(alignment: .topTrailing) {
+                                    Image(uiImage: selectedImages[index])
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(maxWidth: 320, maxHeight: 400)
+                                        .clipped()
+                                        .cornerRadius(16)
+                                        
+                                    Button(action: {
+                                        selectedImages.remove(at: index)
+                                        if currentPage >= selectedImages.count && currentPage > 0 {
+                                            currentPage -= 1
+                                        }
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(.white)
+                                            .background(Circle().fill(Color.black.opacity(0.5)))
+                                            .padding(10)
+                                    }
+                                }
+                                .tag(index)
                             }
                         }
                         .tabViewStyle(.page(indexDisplayMode: .always))
@@ -57,7 +72,7 @@ struct UploadViewCamera: View {
                         HStack(spacing: 8) {
                             Image(systemName: "camera.fill")
                                 .font(.system(size: 16))
-                            Text(selectedImages.isEmpty ? "Upload Photo" : "Edit Photos")
+                            Text(selectedImages.isEmpty ? "Upload Photo" : "Add more photos")
                                 .font(.system(size: 16, weight: .medium))
                         }
                         .foregroundStyle(.primary)
@@ -120,8 +135,11 @@ struct UploadViewCamera: View {
                                 images.append(image)
                             }
                         }
-                        selectedImages = images
-                        currentPage = 0
+                        selectedImages.append(contentsOf: images)
+                        selectedItems.removeAll()
+                        if !selectedImages.isEmpty {
+                            currentPage = selectedImages.count - 1
+                        }
                     }
                 }
             }
