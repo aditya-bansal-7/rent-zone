@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct UploadView: View {
 
@@ -11,6 +12,8 @@ struct UploadView: View {
     var categories: [Category] {
         appStore.categoryStore.categories
     }
+    
+    @State private var newSelectedItems: [PhotosPickerItem] = []
 
     @State private var name = ""
     @State private var selectedCategoryId = ""
@@ -128,12 +131,45 @@ struct UploadView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 12) {
                             ForEach(selectedImages.indices, id: \.self) { idx in
-                                Image(uiImage: selectedImages[idx])
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 80, height: 80)
-                                    .clipped()
-                                    .cornerRadius(10)
+                                ZStack(alignment: .topTrailing) {
+                                    Image(uiImage: selectedImages[idx])
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 80, height: 80)
+                                        .clipped()
+                                        .cornerRadius(10)
+                                    
+                                    Button(action: {
+                                        selectedImages.remove(at: idx)
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.white)
+                                            .background(Circle().fill(Color.black.opacity(0.5)))
+                                            .padding(4)
+                                    }
+                                }
+                            }
+                            
+                            PhotosPicker(selection: $newSelectedItems, matching: .images) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color(.systemGray6))
+                                        .frame(width: 80, height: 80)
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                            .onChange(of: newSelectedItems) { _, newItems in
+                                Task {
+                                    for item in newItems {
+                                        if let data = try? await item.loadTransferable(type: Data.self),
+                                           let image = UIImage(data: data) {
+                                            selectedImages.append(image)
+                                        }
+                                    }
+                                    newSelectedItems.removeAll()
+                                }
                             }
                         }
                         .padding(.vertical, 4)

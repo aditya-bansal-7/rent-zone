@@ -120,7 +120,7 @@ struct ProductDetailView: View {
                                             .font(.system(size: 18, weight: .medium))
                                             .foregroundColor(isFavorite ? .red : .primary)
                                             .frame(width: 24)
-                                        Text(isFavorite ? "Favourited" : "Favourite")
+                                        Text("Favourite")
                                             .font(.system(size: 14, weight: .medium))
                                             .foregroundColor(.primary)
                                     }
