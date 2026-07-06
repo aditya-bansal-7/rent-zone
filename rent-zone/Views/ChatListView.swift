@@ -27,8 +27,8 @@ struct ChatListView: View {
             .padding(.horizontal, 16)
             .padding(.vertical,8)
             
-            // Search Bar — only show when logged in and has conversations
-            if isLoggedIn && !chatService.conversations.isEmpty {
+            // Search Bar — only show when logged in and has conversations or active search
+            if isLoggedIn && (!chatService.conversations.isEmpty || !searchText.isEmpty) {
                 SearchBarView(text: $searchText, placeholder: "Search")
                     .padding(.vertical, 8)
             }
@@ -129,6 +129,13 @@ struct ChatListView: View {
                 Task {
                     if searchText.isEmpty {
                         await chatService.fetchConversations()
+                        
+                        // Prevent stale backend unread counts from overriding local zero
+                        if let selected = appStore.selectedChatConversation,
+                           let index = chatService.conversations.firstIndex(where: { $0.id == selected.id }) {
+                            chatService.conversations[index].hasUnread = false
+                            chatService.conversations[index].unreadCount = 0
+                        }
                     }
                     chatService.startWebSocket()
                 }

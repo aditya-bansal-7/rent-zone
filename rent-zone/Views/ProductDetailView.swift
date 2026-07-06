@@ -556,7 +556,7 @@ struct ProductDetailView: View {
     private var rentButtonText: String {
         if let start = startDate, let end = endDate {
             let days = Int(end.timeIntervalSince(start) / 86400) + 1
-            let total = Int(product.rentPricePerDay) * days + Int(product.securityDeposit)
+            let _ = Int(product.rentPricePerDay) * days + Int(product.securityDeposit)
             return "Request to Rent"
         }
         return "Request to Rent"

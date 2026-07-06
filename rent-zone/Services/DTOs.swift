@@ -321,6 +321,7 @@ struct ChatConversationDTO: Decodable, Identifiable {
 
         return ChatConversation(
             id: id,
+            participantId: otherParticipant?.id ?? "",
             participantName: otherParticipant?.name ?? "Unknown",
             participantImage: otherParticipant?.profileImage,
             isOnline: false,

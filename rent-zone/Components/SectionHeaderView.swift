@@ -16,7 +16,7 @@ struct SectionHeaderView<Destination: View>: View {
             Text(title)
                 .font(.system(size: 14, weight: .bold))
                 .tracking(0.5)
-            
+            Spacer()
             if showViewAll {
                 if let destination = destination {
                     NavigationLink(destination: destination) {
