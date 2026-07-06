@@ -13,17 +13,13 @@ struct PersonalChatView: View {
     
     // Camera
     @State private var showCamera = false
-    @State private var cameraImage: UIImage?
     
     // Photos picker
     @State private var showPhotoPicker = false
     @State private var selectedPhotoItem: PhotosPickerItem?
     
-    // Location
-    @State private var showLocationConfirm = false
-    @State private var pendingLocation: CLLocation?
-    @State private var pendingLocationName: String?
-    @State private var isFetchingLocation = false
+    // Location picker
+    @State private var showLocationPicker = false
     
     // Scroll
     @State private var scrollProxy: ScrollViewProxy?
@@ -212,7 +208,7 @@ struct PersonalChatView: View {
                     Divider().overlay(Color.gray.opacity(0.3))
                     AttachmentMenuRow(label: "Location", action: {
                         showAttachmentMenu = false
-                        fetchAndSendLocation()
+                        showLocationPicker = true
                     }) {
                         LocationIconView()
                     }
@@ -263,8 +259,29 @@ struct PersonalChatView: View {
         .background(Color(UIColor.systemGroupedBackground))
         // Camera sheet
         .fullScreenCover(isPresented: $showCamera) {
-            CameraPickerView(selectedImage: $cameraImage, onDismiss: { showCamera = false })
-                .ignoresSafeArea()
+            PremiumCameraView(onImageCaptured: { image in
+                showCamera = false
+                Task {
+                    await chatService.sendImageMessage(image: image, conversationId: conversation.id)
+                }
+            }, onDismiss: { showCamera = false })
+            .ignoresSafeArea()
+        }
+        // Location picker
+        .fullScreenCover(isPresented: $showLocationPicker) {
+            LocationPickerView { coordinate, name in
+                showLocationPicker = false
+                Task {
+                    await chatService.sendLocationMessage(
+                        latitude: coordinate.latitude,
+                        longitude: coordinate.longitude,
+                        locationName: name,
+                        conversationId: conversation.id
+                    )
+                }
+            } onDismiss: {
+                showLocationPicker = false
+            }
         }
         // Photos picker
         .photosPicker(isPresented: $showPhotoPicker, selection: $selectedPhotoItem, matching: .images)
@@ -278,39 +295,6 @@ struct PersonalChatView: View {
                 selectedPhotoItem = nil
             }
         }
-        .onChange(of: cameraImage) { _, newImage in
-            guard let image = newImage else { return }
-            Task {
-                await chatService.sendImageMessage(image: image, conversationId: conversation.id)
-                cameraImage = nil
-            }
-        }
-        // Location confirm alert
-        .alert("Share Location", isPresented: $showLocationConfirm) {
-            Button("Send") {
-                guard let loc = pendingLocation else { return }
-                Task {
-                    await chatService.sendLocationMessage(
-                        latitude: loc.coordinate.latitude,
-                        longitude: loc.coordinate.longitude,
-                        locationName: pendingLocationName,
-                        conversationId: conversation.id
-                    )
-                    pendingLocation = nil
-                    pendingLocationName = nil
-                }
-            }
-            Button("Cancel", role: .cancel) {
-                pendingLocation = nil
-                pendingLocationName = nil
-            }
-        } message: {
-            if let name = pendingLocationName {
-                Text("Send your location: \(name)?")
-            } else if let loc = pendingLocation {
-                Text("Send your location: \(loc.coordinate.latitude.formatted(.number.precision(.fractionLength(4)))), \(loc.coordinate.longitude.formatted(.number.precision(.fractionLength(4))))?")
-            }
-        }
         .sheet(isPresented: $showReport) {
             ReportUserView(reportedUserName: conversation.participantName, reportedUserImage: conversation.participantImage, reportedUserLocation: nil)
                 .environment(AppStore())
@@ -322,28 +306,6 @@ struct PersonalChatView: View {
         }
         .onDisappear {
             chatService.activeConversationId = nil
-        }
-    }
-    
-    // MARK: - Location Fetch
-    
-    private func fetchAndSendLocation() {
-        isFetchingLocation = true
-        chatService.requestCurrentLocation { location in
-            isFetchingLocation = false
-            Task {
-                let geocoder = CLGeocoder()
-                let placemarks = try? await geocoder.reverseGeocodeLocation(location)
-                let placemark = placemarks?.first
-                let name = [placemark?.name, placemark?.locality, placemark?.administrativeArea]
-                    .compactMap { $0 }
-                    .joined(separator: ", ")
-                await MainActor.run {
-                    pendingLocation = location
-                    pendingLocationName = name.isEmpty ? nil : name
-                    showLocationConfirm = true
-                }
-            }
         }
     }
 }
@@ -596,42 +558,6 @@ struct FullScreenMapView: View {
     }
 }
 
-// MARK: - Camera Picker
-
-struct CameraPickerView: UIViewControllerRepresentable {
-    @Binding var selectedImage: UIImage?
-    var onDismiss: () -> Void
-    
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
-    
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let picker = UIImagePickerController()
-        picker.sourceType = .camera
-        picker.delegate = context.coordinator
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
-    
-    class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-        let parent: CameraPickerView
-        init(_ parent: CameraPickerView) { self.parent = parent }
-        
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            if let image = info[.originalImage] as? UIImage {
-                parent.selectedImage = image
-            }
-            // Dismiss the UIKit picker first, then let SwiftUI react to the binding change
-            picker.dismiss(animated: true)
-            parent.onDismiss()
-        }
-        
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            picker.dismiss(animated: true)
-            parent.onDismiss()
-        }
-    }
-}
 
 // MARK: - Attachment Menu Helpers
 

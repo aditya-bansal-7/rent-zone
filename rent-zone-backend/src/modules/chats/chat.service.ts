@@ -119,6 +119,10 @@ export const sendMessage = async (
   const [message] = await prisma.$transaction([
     prisma.chatMessage.create({ data: { conversationId, senderId, content, messageType: 'text' } }),
     prisma.chatConversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } }),
+    prisma.chatParticipant.updateMany({
+      where: { conversationId, userId: { not: senderId } },
+      data: { unreadCount: { increment: 1 } }
+    }),
   ]);
 
   return message;
@@ -145,6 +149,10 @@ export const sendImageMessage = async (
       },
     }),
     prisma.chatConversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } }),
+    prisma.chatParticipant.updateMany({
+      where: { conversationId, userId: { not: senderId } },
+      data: { unreadCount: { increment: 1 } }
+    }),
   ]);
 
   return message;
@@ -177,11 +185,22 @@ export const sendLocationMessage = async (
       },
     }),
     prisma.chatConversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } }),
+    prisma.chatParticipant.updateMany({
+      where: { conversationId, userId: { not: senderId } },
+      data: { unreadCount: { increment: 1 } }
+    }),
   ]);
 
   return message;
 };
 
+
+export const markConversationAsRead = async (conversationId: string, userId: string) => {
+  await prisma.chatParticipant.updateMany({
+    where: { conversationId, userId },
+    data: { unreadCount: 0 },
+  });
+};
 
 export const deleteConversation = async (
   conversationId: string,

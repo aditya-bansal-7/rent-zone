@@ -13,6 +13,7 @@ struct ChatConversation: Codable, Identifiable, Hashable {
     var isOnline: Bool = false
     var isVerified: Bool = false
     var hasUnread: Bool = false
+    var unreadCount: Int = 0
     var lastMessageTime: String
     var messages: [ChatMessage] = []
     // Product context for rental inquiries

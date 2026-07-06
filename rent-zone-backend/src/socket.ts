@@ -26,6 +26,31 @@ export const broadcastToAllUsers = (notification: any) => {
   });
 };
 
+export const broadcastMessageToConversation = async (conversationId: string, message: any) => {
+  try {
+    const conversation = await prisma.chatConversation.findUnique({
+      where: { id: conversationId },
+      include: { participants: true },
+    });
+
+    if (conversation) {
+      const broadcastPayload = JSON.stringify({
+        action: 'newMessage',
+        message,
+      });
+
+      conversation.participants.forEach((p) => {
+        const clientWs = wsClients.get(p.userId);
+        if (clientWs && clientWs.readyState === WebSocket.OPEN) {
+          clientWs.send(broadcastPayload);
+        }
+      });
+    }
+  } catch (error) {
+    console.error('WS broadcast error:', error);
+  }
+};
+
 export const setupWebSocket = (server: HttpServer) => {
   const wss = new WebSocketServer({ server });
 
@@ -62,24 +87,7 @@ export const setupWebSocket = (server: HttpServer) => {
           const message = await chatService.sendMessage(conversationId, ws.userId!, content);
 
           // Find participants to broadcast
-          const conversation = await prisma.chatConversation.findUnique({
-            where: { id: conversationId },
-            include: { participants: true },
-          });
-
-          if (conversation) {
-            const broadcastPayload = JSON.stringify({
-              action: 'newMessage',
-              message,
-            });
-
-            conversation.participants.forEach((p) => {
-              const clientWs = wsClients.get(p.userId);
-              if (clientWs && clientWs.readyState === WebSocket.OPEN) {
-                clientWs.send(broadcastPayload);
-              }
-            });
-          }
+          await broadcastMessageToConversation(conversationId, message);
         }
       } catch (error) {
         console.error('WS message error:', error);
