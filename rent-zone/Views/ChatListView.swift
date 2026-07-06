@@ -129,6 +129,13 @@ struct ChatListView: View {
                 Task {
                     if searchText.isEmpty {
                         await chatService.fetchConversations()
+                        
+                        // Prevent stale backend unread counts from overriding local zero
+                        if let selected = appStore.selectedChatConversation,
+                           let index = chatService.conversations.firstIndex(where: { $0.id == selected.id }) {
+                            chatService.conversations[index].hasUnread = false
+                            chatService.conversations[index].unreadCount = 0
+                        }
                     }
                     chatService.startWebSocket()
                 }

@@ -8,6 +8,7 @@ enum ChatMessageType: String, Codable {
 
 struct ChatConversation: Codable, Identifiable, Hashable {
     var id: String = UUID().uuidString
+    let participantId: String
     let participantName: String
     let participantImage: String?
     var isOnline: Bool = false

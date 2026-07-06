@@ -30,52 +30,63 @@ struct PersonalChatView: View {
             HStack(spacing: 12) {
                 Button(action: { dismiss() }) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.primary)
                         .frame(width: 40, height: 40)
-                        .background(Color(UIColor.systemBackground))
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
                 }
                 
-                // Avatar
-                if let imageName = conversation.participantImage, imageName.hasPrefix("http"), let url = URL(string: imageName) {
-                    AsyncImage(url: url) { phase in
-                        if case .success(let image) = phase {
-                            image.resizable().scaledToFill()
+                NavigationLink(destination: OtherUserProfileView(
+                    user: User(
+                        id: conversation.participantId,
+                        name: conversation.participantName,
+                        location: "",
+                        isVerified: conversation.isVerified,
+                        profileImage: conversation.participantImage
+                    ),
+                    userId: conversation.participantId
+                )) {
+                    HStack(spacing: 12) {
+                        // Avatar
+                        if let imageName = conversation.participantImage, imageName.hasPrefix("http"), let url = URL(string: imageName) {
+                            AsyncImage(url: url) { phase in
+                                if case .success(let image) = phase {
+                                    image.resizable().scaledToFill()
+                                } else {
+                                    Image(systemName: "person.crop.circle.fill").resizable().foregroundColor(.gray.opacity(0.4))
+                                }
+                            }
+                            .frame(width: 40, height: 40)
+                            .clipShape(Circle())
+                        } else if let imageName = conversation.participantImage {
+                            Image(imageName)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 40, height: 40)
+                                .clipShape(Circle())
                         } else {
-                            Image(systemName: "person.crop.circle.fill").resizable().foregroundColor(.gray.opacity(0.4))
+                            Image(systemName: "person.crop.circle.fill")
+                                .resizable()
+                                .frame(width: 40, height: 40)
+                                .foregroundColor(.gray.opacity(0.4))
                         }
-                    }
-                    .frame(width: 40, height: 40)
-                    .clipShape(Circle())
-                } else if let imageName = conversation.participantImage {
-                    Image(imageName)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 40, height: 40)
-                        .clipShape(Circle())
-                } else {
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.gray.opacity(0.4))
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
-                        Text(conversation.participantName)
-                            .font(.system(size: 16, weight: .bold))
-                        if conversation.isVerified {
-                            Image(systemName: "checkmark.seal.fill")
-                                .foregroundColor(.brandPurple)
-                                .font(.system(size: 14))
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: 4) {
+                                Text(conversation.participantName)
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.primary)
+                                if conversation.isVerified {
+                                    Image(systemName: "checkmark.seal.fill")
+                                        .foregroundColor(.brandPurple)
+                                        .font(.system(size: 14))
+                                }
+                            }
+                            if conversation.isOnline {
+                                Text("Online")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.primary)
+                            }
                         }
-                    }
-                    if conversation.isOnline {
-                        Text("Online")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.primary)
                     }
                 }
                 
@@ -699,6 +710,7 @@ struct LocationIconView: View {
 
 #Preview {
     PersonalChatView(conversation: ChatConversation(
+        participantId: "dummy_id",
         participantName: "Shreya Singh",
         participantImage: "sharara_orange",
         isOnline: true,
