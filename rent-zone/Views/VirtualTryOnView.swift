@@ -10,7 +10,7 @@ struct VirtualTryOnView: View {
     @State private var isProcessing = false
     @State private var showNoPhotoError = false
     @State private var showResult = false
-    @State private var resultImageURL: String? = nil
+    @State private var resultImageURL: String = ""
     @State private var errorMessage: String? = nil
     @State private var processingStage: String = "Uploading your photo..."
 
@@ -202,10 +202,8 @@ struct VirtualTryOnView: View {
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: isProcessing)
 
         .fullScreenCover(isPresented: $showResult) {
-            if let resultImageURL {
-                TryOnResultView(product: product, resultImageURL: resultImageURL)
-                    .environment(appStore)
-            }
+            TryOnResultView(product: product, resultImageURL: resultImageURL)
+                .environment(appStore)
         }
     }
 
@@ -250,10 +248,16 @@ struct VirtualTryOnView: View {
                     isProcessing = false
                 }
                 resultImageURL = result.resultImageURL
-                showResult = true
                 if let model = result.modelUsed {
                     print("[TryOn] Model used: \(model)")
                 }
+            }
+            // Defer showResult to the next run-loop tick so SwiftUI
+            // commits resultImageURL to state before the fullScreenCover
+            // body is evaluated — prevents the blank/white screen.
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50 ms
+            await MainActor.run {
+                showResult = true
             }
         } catch {
             await MainActor.run {
