@@ -183,7 +183,7 @@ struct VirtualTryOnView: View {
 
                         Text("Upload a full-body photo to try on outfits")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.primary)
                     }
                 }
             }
@@ -245,7 +245,7 @@ struct VirtualTryOnView: View {
         VStack(spacing: 8) {
             ZStack(alignment: .topTrailing) {
                 Circle()
-                    .fill(lightPurple)
+                    .fill(Color(.systemGray5))
                     .frame(width: 56, height: 56)
                     .overlay {
                         Image(systemName: icon)

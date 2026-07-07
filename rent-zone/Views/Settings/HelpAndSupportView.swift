@@ -3,9 +3,12 @@ import SwiftUI
 struct HelpAndSupportView: View {
     @Environment(\.dismiss) var dismiss
     
+    @State private var showBugReport = false
+    @State private var showFeatureRequest = false
+    @State private var showEmailAlert = false
+    
     var body: some View {
-        NavigationView {
-            List {
+        List {
                 Section(header: Text("FAQs")) {
                     NavigationLink(destination: FAQDetailView(title: "How to rent?", content: "To rent an outfit, browse the categories, select an item, choose your dates, and proceed to checkout. Coordinate with the lender via chat for pickup.")) {
                         Text("How to rent?")
@@ -13,43 +16,41 @@ struct HelpAndSupportView: View {
                     NavigationLink(destination: FAQDetailView(title: "How to list an item?", content: "Go to the Upload tab, take photos of your outfit, add a description and price, and publish it for others to see.")) {
                         Text("How to list an item?")
                     }
-                    NavigationLink(destination: FAQDetailView(title: "Payment safety", content: "All payments are processed securely. Funds are held until the rental is successfully initiated.")) {
-                        Text("Payment safety")
+                    NavigationLink(destination: FAQDetailView(title: "Virtual Try-On", content: "To use the Virtual Try-On feature, select a compatible outfit and tap 'Virtual Try-On'. Upload a clear, full-body photo of yourself to see how the outfit looks on you before renting!")) {
+                        Text("Virtual Try-On")
                     }
                 }
                 
                 Section(header: Text("Contact Us")) {
                     Button(action: {
-                        // Open email
+                        showEmailAlert = true
                     }) {
                         Label("Email Support", systemImage: "envelope")
-                    }
-                    Button(action: {
-                        // Open chat
-                    }) {
-                        Label("Live Chat", systemImage: "bubble.left.and.right")
                     }
                 }
                 
                 Section(header: Text("Feedback")) {
-                    Button(action: {}) {
+                    Button(action: { showBugReport = true }) {
                         Label("Report a Bug", systemImage: "ladybug")
                     }
-                    Button(action: {}) {
+                    Button(action: { showFeatureRequest = true }) {
                         Label("Suggest a Feature", systemImage: "lightbulb")
                     }
                 }
             }
             .navigationTitle("Help & Support")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
+            .sheet(isPresented: $showBugReport) {
+                FeedbackView(type: .bug)
             }
-        }
+            .sheet(isPresented: $showFeatureRequest) {
+                FeedbackView(type: .feature)
+            }
+            .alert("Email Support", isPresented: $showEmailAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Contact us via our email:\nrentzone0@gmail.com")
+            }
     }
 }
 

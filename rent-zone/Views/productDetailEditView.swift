@@ -13,6 +13,8 @@ struct ProductDetailEditView: View {
     @State private var selectedSize: String
     @State private var pricePerDay: String
     @State private var pickupLocation: String
+    @State private var selectedCategoryId: String
+    @State private var selectedCategoryType: CategoryType? = nil
     
     // Description fields
     @State private var fabricDescription: String
@@ -43,6 +45,7 @@ struct ProductDetailEditView: View {
         _selectedSize = State(initialValue: product.size)
         _pricePerDay = State(initialValue: "\(Int(product.rentPricePerDay))")
         _pickupLocation = State(initialValue: product.pickupLocation)
+        _selectedCategoryId = State(initialValue: product.categoryId)
         
         // Map dictionary to separate fields
         _fabricDescription = State(initialValue: product.description[.fabric] ?? "")
@@ -70,6 +73,85 @@ struct ProductDetailEditView: View {
                                 .background(Color(.systemGray6))
                                 .cornerRadius(12)
                         }
+                        
+                        // MARK: - Gender
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Gender")
+                                .font(.system(size: 16, weight: .bold))
+                            
+                            Menu {
+                                Picker("Gender", selection: $selectedCategoryType) {
+                                    Text("Select Gender").tag(CategoryType?.none)
+                                    Text("Men").tag(CategoryType?.some(.men))
+                                    Text("Women").tag(CategoryType?.some(.women))
+                                }
+                            } label: {
+                                HStack {
+                                    Text(selectedCategoryType == nil ? "Select Gender" : (selectedCategoryType == .men ? "Men" : "Women"))
+                                        .foregroundColor(.primary)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
+                                    
+                                    Spacer(minLength: 4)
+                                    
+                                    Image(systemName: "chevron.up.chevron.down")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                .padding(.horizontal, 16)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(12)
+                            }
+                            .onChange(of: selectedCategoryType) { _, _ in
+                                if let type = selectedCategoryType,
+                                   let currentCat = appStore.categoryStore.categories.first(where: { $0.id == selectedCategoryId }),
+                                   currentCat.type != type {
+                                    selectedCategoryId = ""
+                                } else if selectedCategoryType == nil {
+                                    selectedCategoryId = ""
+                                }
+                            }
+                        }
+                        
+                        // MARK: - Category
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Category")
+                                .font(.system(size: 16, weight: .bold))
+                            
+                            Menu {
+                                if let type = selectedCategoryType {
+                                    ForEach(appStore.categoryStore.categories.filter { $0.type == type }, id: \.id) { cat in
+                                        Button(action: {
+                                            selectedCategoryId = cat.id
+                                        }) {
+                                            Text(cat.name)
+                                        }
+                                    }
+                                }
+                            } label: {
+                                HStack {
+                                    Text(appStore.categoryStore.categories.first(where: { $0.id == selectedCategoryId })?.name ?? "Select Category")
+                                        .foregroundColor(.primary)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
+                                    
+                                    Spacer(minLength: 4)
+                                    
+                                    Image(systemName: "chevron.up.chevron.down")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                .padding(.horizontal, 16)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(12)
+                            }
+                        }
+                        .disabled(selectedCategoryType == nil)
+                        .opacity(selectedCategoryType == nil ? 0.5 : 1.0)
                         
                         // MARK: - Condition & Size
                         HStack(spacing: 16) {
@@ -143,6 +225,8 @@ struct ProductDetailEditView: View {
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .disabled(selectedCategoryType == nil)
+                        .opacity(selectedCategoryType == nil ? 0.5 : 1.0)
                         
                         // MARK: - Price
                         VStack(alignment: .leading, spacing: 8) {
@@ -180,19 +264,19 @@ struct ProductDetailEditView: View {
                         }
                         
                         // MARK: - Update Button
-                        Button(action: handleUpdate) {
+                        Button(action: { showDeleteAlert = true }) {
                             if isLoading {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             } else {
-                                Text("Update Product")
+                                Text("Delete Product")
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(.white)
                             }
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
-                        .background(Color.brandPurple)
+                        .background(Color.red)
                         .cornerRadius(30)
                         .disabled(isLoading)
                     }
@@ -207,22 +291,26 @@ struct ProductDetailEditView: View {
             .navigationTitle("Edit Listing")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button(role: .close) { dismiss() }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showDeleteAlert = true }) {
-                        Image(systemName: "trash")
-                            .foregroundColor(.red)
-                    }
-                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(action: handleUpdate) {
+                        Image(systemName: "checkmark")
+                            .foregroundColor(.green)
+                    }                }
             }
             .alert("Delete Listing?", isPresented: $showDeleteAlert) {
                 Button("Delete", role: .destructive) { handleDelete() }
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("Are you sure you want to delete \"\(product.name)\"? This action cannot be undone.")
+            }
+            .onAppear {
+                if let cat = appStore.categoryStore.categories.first(where: { $0.id == selectedCategoryId }) {
+                    selectedCategoryType = cat.type
+                }
             }
         }
     }
@@ -330,7 +418,8 @@ struct ProductDetailEditView: View {
             "size": selectedSize,
             "rentPricePerDay": price,
             "description": description,
-            "imageURLs": existingImageURLs
+            "imageURLs": existingImageURLs,
+            "categoryId": selectedCategoryId
         ]
         
         Task {

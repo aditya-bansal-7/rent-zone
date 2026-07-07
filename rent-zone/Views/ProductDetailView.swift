@@ -312,15 +312,15 @@ struct ProductDetailView: View {
                         } else {
                             Text(rentButtonText)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(startDate != nil && endDate != nil ? .white : .white.opacity(0.7))
                         }
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
-                    .background(startDate != nil && endDate != nil ? Color.brandPurple : Color.gray.opacity(0.1))
+                    .background(startDate != nil && endDate != nil ? Color.brandPurple : Color.brandPurple.opacity(0.3))
                     .cornerRadius(30)
                 }
-                .disabled(isRequestingRent || startDate == nil || endDate == nil)
+                .disabled(isRequestingRent)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 24)
                 
@@ -605,6 +605,7 @@ struct ProductDetailView: View {
     }
 
     private func handleDateSelection(_ date: Date) {
+        rentError = nil
         let calendar = Calendar.current
         if startDate == nil || (startDate != nil && endDate != nil) {
             startDate = date
@@ -633,7 +634,7 @@ struct ProductDetailView: View {
 
     private func handleRentRequest() async {
         guard let start = startDate, let end = endDate else {
-            rentError = "Please select rental dates"
+            rentError = "Please select a date first"
             return
         }
         

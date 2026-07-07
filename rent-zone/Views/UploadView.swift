@@ -16,6 +16,7 @@ struct UploadView: View {
     @State private var newSelectedItems: [PhotosPickerItem] = []
 
     @State private var name = ""
+    @State private var selectedCategoryType: CategoryType? = nil
     @State private var selectedCategoryId = ""
     @State private var selectedCondition = "likeNew"
     @State private var selectedSize = "M"
@@ -49,18 +50,40 @@ struct UploadView: View {
                     TextField("e.g. Elegant Silk Saree", text: $name)
                 }
 
+                // MARK: - Gender
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Gender")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                    
+                    Picker("Gender", selection: $selectedCategoryType) {
+                        Text("Select Gender").tag(CategoryType?.none)
+                        Text("Men").tag(CategoryType?.some(.men))
+                        Text("Women").tag(CategoryType?.some(.women))
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: selectedCategoryType) { _, _ in
+                        selectedCategoryId = ""
+                    }
+                }
+
+                // MARK: - Category
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Category")
                         .font(.subheadline).foregroundStyle(.secondary)
+
                     Picker("Category", selection: $selectedCategoryId) {
                         Text("Select a category").tag("")
-                        ForEach(categories, id: \.id) { cat in
-                            Text(cat.name).tag(cat.id)
+                        if let type = selectedCategoryType {
+                            ForEach(categories.filter { $0.type == type }, id: \.id) { cat in
+                                Text(cat.name).tag(cat.id)
+                            }
+                            Text("Other").tag("other")
                         }
-                        Text("Other").tag("other")
                     }
                     .pickerStyle(.menu)
                 }
+                .disabled(selectedCategoryType == nil)
+                .opacity(selectedCategoryType == nil ? 0.5 : 1.0)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Condition")
@@ -72,6 +95,8 @@ struct UploadView: View {
                     }
                     .pickerStyle(.menu)
                 }
+                .disabled(selectedCategoryType == nil)
+                .opacity(selectedCategoryType == nil ? 0.5 : 1.0)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Size")
@@ -215,7 +240,7 @@ struct UploadView: View {
                     .background(Color.brandPurple)
                     .cornerRadius(30)
                 }
-                .disabled(isUploading || name.isEmpty || selectedCategoryId.isEmpty || price.isEmpty)
+                .disabled(isUploading || name.isEmpty || selectedCategoryId.isEmpty || price.isEmpty || selectedCategoryType == nil)
                 .listRowBackground(Color.clear)
             }
         }
@@ -225,13 +250,12 @@ struct UploadView: View {
             LoginView()
                 .presentationDetents([.fraction(0.85), .large])
         }
-        .sheet(isPresented: $navigateToListing) {
+        .navigationDestination(isPresented: $navigateToListing) {
             ListingInfoView()
                 .environment(appStore)
         }
         .alert("Outfit Listed!", isPresented: $uploadSuccess) {
             Button("View My Listings") {
-                appStore.rentTabResetId += 1
                 navigateToListing = true
             }
             Button("Done") {

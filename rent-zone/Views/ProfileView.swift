@@ -117,7 +117,9 @@ struct ProfileView: View {
             SettingsView()
         }
         .sheet(isPresented: $isHelpPresented) {
-            HelpAndSupportView()
+            NavigationStack {
+                HelpAndSupportView()
+            }
         }
         .sheet(isPresented: $isMyRentalsPresented) {
             MyRentalsView()
