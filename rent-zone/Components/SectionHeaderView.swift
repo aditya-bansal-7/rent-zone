@@ -12,11 +12,11 @@ struct SectionHeaderView<Destination: View>: View {
     }
     
     var body: some View {
-        HStack {
+        HStack(spacing: 8) {
             Text(title)
                 .font(.system(size: 14, weight: .bold))
                 .tracking(0.5)
-            Spacer()
+            
             if showViewAll {
                 if let destination = destination {
                     NavigationLink(destination: destination) {
@@ -29,6 +29,7 @@ struct SectionHeaderView<Destination: View>: View {
                     // The user's original code had an empty button.
                 }
             }
+            Spacer()
         }
         .padding(.top, 8)
     }

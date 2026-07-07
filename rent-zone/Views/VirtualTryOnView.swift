@@ -9,11 +9,11 @@ struct VirtualTryOnView: View {
     @State private var uploadedImage: UIImage? = nil
     @State private var isProcessing = false
     @State private var showNoPhotoError = false
-    @State private var showResult = false
-    @State private var resultImageURL: String = ""
+    @State private var tryOnResult: TryOnResultItem? = nil
     @State private var errorMessage: String? = nil
     @State private var processingStage: String = "Uploading your photo..."
     @State private var showInfoSheet = false
+    @State private var tryOnTask: Task<Void, Never>? = nil
 
     // Brand colors
     private let accentPurple = Color.brandPurple
@@ -78,8 +78,8 @@ struct VirtualTryOnView: View {
                 }
             }
         }
-        .fullScreenCover(isPresented: $showResult) {
-            TryOnResultView(product: product, resultImageURL: resultImageURL)
+        .fullScreenCover(item: $tryOnResult) { resultItem in
+            TryOnResultView(product: product, resultImageURL: resultItem.url)
                 .environment(appStore)
         }
         .sheet(isPresented: $showInfoSheet) {
@@ -327,7 +327,7 @@ struct VirtualTryOnView: View {
         VStack(spacing: 10) {
             Button {
                 if let image = uploadedImage {
-                    Task { await performTryOn(with: image) }
+                    tryOnTask = Task { await performTryOn(with: image) }
                 } else {
                     withAnimation { showNoPhotoError = true }
                 }
@@ -362,35 +362,61 @@ struct VirtualTryOnView: View {
     // MARK: - Processing Overlay
     private var processingOverlay: some View {
         ZStack {
-            Color.black.opacity(0.4)
+            Color.black.opacity(0.55)
                 .ignoresSafeArea()
                 .transition(.opacity)
 
-            VStack(spacing: 20) {
+            VStack(spacing: 24) {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .scaleEffect(1.5)
+                    .scaleEffect(1.8)
+                    .padding(.bottom, 4)
+
                 Text(processingStage)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
+
                 Text("This usually takes 30–60 seconds")
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(.white.opacity(0.65))
+
+                Button {
+                    cancelTryOn()
+                } label: {
+                    Text("Cancel")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.9))
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 12)
+                        .background(
+                            Capsule()
+                                .stroke(Color.white.opacity(0.4), lineWidth: 1)
+                        )
+                }
+                .padding(.top, 4)
             }
-            .padding(40)
-            .background {
-                Group {
-                    if #available(iOS 26.0, *) {
-                        Color.clear
-                    } else {
+            .padding(.horizontal, 40)
+            .padding(.vertical, 36)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color(.systemGray6).opacity(0.22))
+                    .background(
                         RoundedRectangle(cornerRadius: 24)
                             .fill(.ultraThinMaterial)
-                    }
-                }
-            }
-            .if26GlassEffect(cornerRadius: 24)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+            )
             .transition(.scale.combined(with: .opacity))
+        }
+    }
+
+    // MARK: - Cancel Try-On
+    private func cancelTryOn() {
+        tryOnTask?.cancel()
+        tryOnTask = nil
+        withAnimation {
+            isProcessing = false
         }
     }
 
@@ -457,12 +483,8 @@ struct VirtualTryOnView: View {
             }
         }
 
-        // Animate through processing stages that match the real backend workflow:
-        // 1. Upload person photo → Cloudinary (~2s)
-        // 2. Upload both images to YCE → file_ids (~4s)
-        // 3. Submit & poll YCE try-on task (~15-20s)
-        // 4. Upload result → Cloudinary, save to DB (~3s)
-        Task {
+        // Animate through processing stages that match the real backend workflow
+        let stageTask = Task {
             try? await Task.sleep(nanoseconds: 4_000_000_000)
             await MainActor.run {
                 if isProcessing { processingStage = "Preparing images for AI..." }
@@ -483,31 +505,49 @@ struct VirtualTryOnView: View {
                 personImage: personImage
             )
 
-            await MainActor.run {
-                withAnimation {
-                    isProcessing = false
-                }
-                resultImageURL = result.resultImageURL
-                if let model = result.modelUsed {
-                    print("[TryOn] Model used: \(model)")
-                }
+            // Check if task was cancelled while waiting
+            guard !Task.isCancelled else {
+                stageTask.cancel()
+                return
             }
-            // Defer showResult to the next run-loop tick so SwiftUI
-            // commits resultImageURL to state before the fullScreenCover
-            // body is evaluated — prevents the blank/white screen.
-            try? await Task.sleep(nanoseconds: 50_000_000) // 50 ms
+
+            stageTask.cancel()
+
+            let resultURL = result.resultImageURL
+            if let model = result.modelUsed {
+                print("[TryOn] Model used: \(model)")
+            }
+
             await MainActor.run {
-                showResult = true
+                isProcessing = false
+            }
+
+            // Give SwiftUI a full run-loop cycle to dismiss the overlay
+            try? await Task.sleep(nanoseconds: 300_000_000)
+
+            await MainActor.run {
+                tryOnResult = TryOnResultItem(url: resultURL)
+                tryOnTask = nil
             }
         } catch {
+            stageTask.cancel()
+            // Don't show error if the task was cancelled by user
+            guard !Task.isCancelled else { return }
             await MainActor.run {
                 withAnimation {
                     isProcessing = false
                 }
                 errorMessage = error.localizedDescription
+                tryOnTask = nil
             }
         }
     }
+}
+
+// MARK: - Try-On Result Item (for fullScreenCover item-based presentation)
+struct TryOnResultItem: Identifiable {
+    let id = UUID()
+    let url: String
 }
 
 // MARK: - Dashed Line Shape

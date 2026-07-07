@@ -13,8 +13,6 @@ struct ProductCardView: View {
         product.imageURLs.first
     }
 
-    // Responsive card width — updated from actual geometry, never uses UIScreen
-    @State private var cardWidth: CGFloat = 160
 
     var body: some View {
         NavigationLink(destination: ProductDetailView(product: product)) {
@@ -34,7 +32,8 @@ struct ProductCardView: View {
                                 image
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: cardWidth, height: 220)
+                                    .frame(minWidth: 0, maxWidth: .infinity)
+                                    .frame(height: 220)
                                     .clipped()
                                     .clipShape(
                                         RoundedRectangle(cornerRadius: 12)
@@ -53,7 +52,8 @@ struct ProductCardView: View {
                         Image(localName)
                             .resizable()
                             .scaledToFill()
-                            .frame(width: cardWidth, height: 220)
+                            .frame(minWidth: 0, maxWidth: .infinity)
+                            .frame(height: 220)
                             .clipped()
                             .clipShape(
                                 RoundedRectangle(cornerRadius: 12)
@@ -114,23 +114,17 @@ struct ProductCardView: View {
                     }
                 }
             }
-            .frame(width: cardWidth, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(.plain)
-        .background(
-            GeometryReader { geo in
-                Color.clear.onAppear {
-                    cardWidth = geo.size.width
-                }
-            }
-        )
     }
 
     // MARK: - Placeholder View
     private var placeholderView: some View {
         RoundedRectangle(cornerRadius: 12)
             .fill(Color(.systemGray5))
-            .frame(width: cardWidth, height: 220)
+            .frame(minWidth: 0, maxWidth: .infinity)
+            .frame(height: 220)
             .overlay(
                 Image(systemName: "photo")
                     .font(.system(size: 24))
