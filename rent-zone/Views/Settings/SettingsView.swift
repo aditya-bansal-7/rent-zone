@@ -34,7 +34,7 @@ struct SettingsView: View {
                     NavigationLink(destination: HelpAndSupportView()) {
                         Label("Help & Support", systemImage: "questionmark.circle")
                     }
-                    NavigationLink(destination: Text("Terms of Service Content").navigationTitle("Terms of Service")) {
+                    NavigationLink(destination: TermsOfServiceView()) {
                         Label("Terms of Service", systemImage: "doc.text")
                     }
                 }
