@@ -17,7 +17,6 @@ struct ChatConversation: Codable, Identifiable, Hashable {
     var unreadCount: Int = 0
     var lastMessageTime: String
     var messages: [ChatMessage] = []
-    // Product context for rental inquiries
     var productContext: ChatProductContext?
 }
 

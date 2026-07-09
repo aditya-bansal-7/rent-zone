@@ -15,11 +15,6 @@ struct VirtualTryOnView: View {
     @State private var showInfoSheet = false
     @State private var tryOnTask: Task<Void, Never>? = nil
 
-    // Brand colors
-    private let accentPurple = Color.brandPurple
-    private let lightPurple = Color.brandPurple.opacity(0.10)
-    private let mediumPurple = Color.brandPurple.opacity(0.18)
-
     var body: some View {
         ZStack {
             Color(UIColor.systemGroupedBackground)
@@ -27,19 +22,22 @@ struct VirtualTryOnView: View {
 
             VStack(spacing: 0) {
                 // MARK: - Header
-                headerSection
+                TryOnHeaderView(onDismiss: { dismiss() })
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
 
                 Spacer(minLength: 16)
 
                 // MARK: - Photo Upload Area
-                photoUploadSection
-                    .padding(.horizontal, 20)
+                TryOnPhotoUploadSection(
+                    selectedPhoto: $selectedPhoto,
+                    uploadedImage: uploadedImage
+                )
+                .padding(.horizontal, 20)
 
                 // MARK: - Error Message
                 if let errorMessage {
-                    errorBanner(errorMessage)
+                    TryOnErrorBanner(message: errorMessage)
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
                 }
@@ -47,24 +45,36 @@ struct VirtualTryOnView: View {
                 Spacer(minLength: 16)
 
                 // MARK: - How It Works
-                howItWorksSection
+                TryOnHowItWorksSection()
                     .padding(.horizontal, 20)
 
                 Spacer(minLength: 16)
 
                 // MARK: - Tips for Best Results
-                tipsSection
+                TryOnTipsSection()
                     .padding(.horizontal, 20)
 
                 Spacer(minLength: 16)
 
                 // MARK: - Bottom CTA (inline, not overlay)
-                bottomCTASection
+                TryOnBottomCTASection(
+                    showNoPhotoError: $showNoPhotoError,
+                    onTryOn: {
+                        if let image = uploadedImage {
+                            tryOnTask = Task { await performTryOn(with: image) }
+                        } else {
+                            withAnimation { showNoPhotoError = true }
+                        }
+                    }
+                )
             }
 
             // Processing overlay
             if isProcessing {
-                processingOverlay
+                TryOnProcessingOverlay(
+                    processingStage: processingStage,
+                    onCancel: { cancelTryOn() }
+                )
             }
         }
         .navigationBarHidden(true)
@@ -83,331 +93,7 @@ struct VirtualTryOnView: View {
                 .environment(appStore)
         }
         .sheet(isPresented: $showInfoSheet) {
-            infoSheetContent
-        }
-    }
-
-    // MARK: - Header Section
-    private var headerSection: some View {
-        HStack(alignment: .center) {
-            Button(action: { dismiss() }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.primary)
-                    .frame(width: 44, height: 44)
-                    .background {
-                        Group {
-                            if #available(iOS 26.0, *) {
-                                Color.clear
-                            } else {
-                                Circle()
-                                    .fill(Color(UIColor.secondarySystemBackground))
-                            }
-                        }
-                    }
-                    .if26GlassEffect(cornerRadius: 22)
-                    .clipShape(Circle())
-            }
-
-            Spacer()
-
-            Text("Virtual Try-On")
-                .font(.system(size: 22, weight: .bold))
-
-            Spacer()
-
-            Color.clear
-                .frame(width: 44, height: 44)
-        }
-    }
-
-    // MARK: - Photo Upload Section
-    private var photoUploadSection: some View {
-        PhotosPicker(selection: $selectedPhoto, matching: .images) {
-            ZStack {
-                // Dashed border container
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                accentPurple.opacity(0.04),
-                                accentPurple.opacity(0.08),
-                                accentPurple.opacity(0.04)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24)
-                            .strokeBorder(
-                                style: StrokeStyle(lineWidth: 2, dash: [10, 8])
-                            )
-                            .foregroundColor(accentPurple.opacity(0.35))
-                    )
-
-                if let uploadedImage {
-                    // Show uploaded image
-                    Image(uiImage: uploadedImage)
-                        .resizable()
-                        .scaledToFit()
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .padding(20)
-                        .overlay(alignment: .bottomTrailing) {
-                            // Change photo badge
-                            HStack(spacing: 6) {
-                                Image(systemName: "camera.fill")
-                                    .font(.system(size: 12))
-                                Text("Change")
-                                    .font(.system(size: 12, weight: .semibold))
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(accentPurple)
-                            .clipShape(Capsule())
-                            .padding(24)
-                        }
-                } else {
-                    // Empty state
-                    VStack(spacing: 16) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(accentPurple.opacity(0.08))
-                                .frame(width: 72, height: 72)
-
-                            Image(systemName: "photo.on.rectangle.angled")
-                                .font(.system(size: 32, weight: .light))
-                                .foregroundColor(accentPurple.opacity(0.6))
-                        }
-
-                        Text("Upload a full-body photo to try on outfits")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.primary)
-                    }
-                }
-            }
-            .frame(maxHeight: 260)
-        }
-    }
-
-    // MARK: - Error Banner
-    private func errorBanner(_ message: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundColor(.orange)
-                .font(.system(size: 14))
-            Text(message)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.red.opacity(0.8))
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.red.opacity(0.06))
-        )
-    }
-
-    // MARK: - How It Works Section
-    private var howItWorksSection: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("How It Works")
-                .font(.system(size: 20, weight: .bold))
-
-            HStack(spacing: 0) {
-                stepColumn(
-                    number: "1",
-                    icon: "camera.fill",
-                    title: "Upload Photo",
-                    subtitle: "Upload a clear\nfull-body photo"
-                )
-
-                stepColumn(
-                    number: "2",
-                    icon: "wand.and.stars",
-                    title: "AI Processing",
-                    subtitle: "Our AI fits the outfit\nto your body"
-                )
-
-                stepColumn(
-                    number: "3",
-                    icon: "tshirt.fill",
-                    title: "See The Result",
-                    subtitle: "View your look from\nmultiple angles"
-                )
-            }
-        }
-    }
-
-    private func stepColumn(number: String, icon: String, title: String, subtitle: String) -> some View {
-        VStack(spacing: 8) {
-            ZStack(alignment: .topTrailing) {
-                Circle()
-                    .fill(Color(.systemGray5))
-                    .frame(width: 56, height: 56)
-                    .overlay {
-                        Image(systemName: icon)
-                            .font(.system(size: 22, weight: .medium))
-                            .foregroundColor(.primary)
-                    }
-
-            }
-
-            Text(title)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(.primary)
-                .multilineTextAlignment(.center)
-
-            Text(subtitle)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .lineSpacing(2)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Tips Section
-    private var tipsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Tips for Best Results")
-                .font(.system(size: 18, weight: .bold))
-
-            HStack(alignment: .center, spacing: 16) {
-                // Tips list
-                VStack(alignment: .leading, spacing: 14) {
-                    tipRow(icon: "figure.stand", text: "Stand straight in a well-lit area")
-                    tipRow(icon: "person.fill", text: "Make sure your full body is visible")
-                    tipRow(icon: "camera.metering.none", text: "Avoid blurry or dark photos")
-                }
-
-                Spacer()
-
-                // Body silhouette illustration
-                Image("BodySilhouette")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 160)
-                    .padding(.trailing, 4)
-            }
-        }
-        .padding(20)
-        .background {
-            Group {
-                if #available(iOS 26.0, *) {
-                    Color.clear
-                } else {
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color(UIColor.secondarySystemBackground))
-                }
-            }
-        }
-        .if26GlassEffect(cornerRadius: 20)
-    }
-
-    private func tipRow(icon: String, text: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(accentPurple)
-                .frame(width: 24, height: 24)
-
-            Text(text)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.primary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    // MARK: - Bottom CTA Section
-    private var bottomCTASection: some View {
-        VStack(spacing: 10) {
-            Button {
-                if let image = uploadedImage {
-                    tryOnTask = Task { await performTryOn(with: image) }
-                } else {
-                    withAnimation { showNoPhotoError = true }
-                }
-            } label: {
-                Text("Try This Outfit")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.brandPurple)
-                    .cornerRadius(30)
-            }
-            .padding(.horizontal, 20)
-
-            // Inline hint shown when tapping without photo
-            if showNoPhotoError {
-                Text("Please upload a photo first")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.orange)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                    .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                            withAnimation { showNoPhotoError = false }
-                        }
-                    }
-            }
-        }
-        .padding(.horizontal, 0)
-        .padding(.bottom, 8)
-    }
-
-    // MARK: - Processing Overlay
-    private var processingOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.55)
-                .ignoresSafeArea()
-                .transition(.opacity)
-
-            VStack(spacing: 24) {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .scaleEffect(1.8)
-                    .padding(.bottom, 4)
-
-                Text(processingStage)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-
-                Text("This usually takes 30–60 seconds")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.65))
-
-                Button {
-                    cancelTryOn()
-                } label: {
-                    Text("Cancel")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 12)
-                        .background(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.4), lineWidth: 1)
-                        )
-                }
-                .padding(.top, 4)
-            }
-            .padding(.horizontal, 40)
-            .padding(.vertical, 36)
-            .background(
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(Color(.systemGray6).opacity(0.22))
-                    .background(
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(.ultraThinMaterial)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 24))
-            )
-            .transition(.scale.combined(with: .opacity))
+            TryOnInfoSheet(onDismiss: { showInfoSheet = false })
         }
     }
 
@@ -417,59 +103,6 @@ struct VirtualTryOnView: View {
         tryOnTask = nil
         withAnimation {
             isProcessing = false
-        }
-    }
-
-    // MARK: - Info Sheet
-    private var infoSheetContent: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Text("How Virtual Try-On Works")
-                        .font(.system(size: 22, weight: .bold))
-
-                    Text("Our AI-powered virtual try-on lets you see how an outfit looks on your body before renting it.")
-                        .font(.system(size: 15))
-                        .foregroundColor(.secondary)
-
-                    VStack(alignment: .leading, spacing: 16) {
-                        infoItem(icon: "camera.fill", title: "Upload a Photo", description: "Take or upload a clear, full-body photo of yourself standing straight.")
-                        infoItem(icon: "wand.and.stars", title: "AI Processing", description: "Our AI analyzes your body shape and fits the selected outfit onto your photo.")
-                        infoItem(icon: "tshirt.fill", title: "See Results", description: "View the result showing how the outfit would look on you.")
-                        infoItem(icon: "lock.shield.fill", title: "Privacy", description: "Your photos are processed securely and are not shared with anyone.")
-                    }
-                }
-                .padding(24)
-            }
-            .navigationTitle("About Try-On")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") { showInfoSheet = false }
-                        .foregroundColor(.primary)
-                }
-            }
-        }
-        .presentationDetents([.medium])
-    }
-
-    private func infoItem(icon: String, title: String, description: String) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 18))
-                .foregroundColor(.primary)
-                .frame(width: 36, height: 36)
-                .background(Color.primary.opacity(0.10))
-                .clipShape(Circle())
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.system(size: 15, weight: .bold))
-                Text(description)
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
     }
 
@@ -539,6 +172,446 @@ struct VirtualTryOnView: View {
                 }
                 errorMessage = error.localizedDescription
                 tryOnTask = nil
+            }
+        }
+    }
+}
+
+// MARK: - Header View
+struct TryOnHeaderView: View {
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center) {
+            Button(action: onDismiss) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.primary)
+                    .frame(width: 44, height: 44)
+                    .background {
+                        Group {
+                            if #available(iOS 26.0, *) {
+                                Color.clear
+                            } else {
+                                Circle()
+                                    .fill(Color(UIColor.secondarySystemBackground))
+                            }
+                        }
+                    }
+                    .if26GlassEffect(cornerRadius: 22)
+                    .clipShape(Circle())
+            }
+
+            Spacer()
+
+            Text("Virtual Try-On")
+                .font(.system(size: 22, weight: .bold))
+
+            Spacer()
+
+            Color.clear
+                .frame(width: 44, height: 44)
+        }
+    }
+}
+
+// MARK: - Photo Upload Section
+struct TryOnPhotoUploadSection: View {
+    @Binding var selectedPhoto: PhotosPickerItem?
+    let uploadedImage: UIImage?
+
+    private let accentPurple = Color.brandPurple
+
+    var body: some View {
+        PhotosPicker(selection: $selectedPhoto, matching: .images) {
+            ZStack {
+                // Dashed border container
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                accentPurple.opacity(0.04),
+                                accentPurple.opacity(0.08),
+                                accentPurple.opacity(0.04)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24)
+                            .strokeBorder(
+                                style: StrokeStyle(lineWidth: 2, dash: [10, 8])
+                            )
+                            .foregroundColor(accentPurple.opacity(0.35))
+                    )
+
+                if let uploadedImage {
+                    // Show uploaded image
+                    Image(uiImage: uploadedImage)
+                        .resizable()
+                        .scaledToFit()
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .padding(20)
+                        .overlay(alignment: .bottomTrailing) {
+                            // Change photo badge
+                            HStack(spacing: 6) {
+                                Image(systemName: "camera.fill")
+                                    .font(.system(size: 12))
+                                Text("Change")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(accentPurple)
+                            .clipShape(Capsule())
+                            .padding(24)
+                        }
+                } else {
+                    // Empty state
+                    VStack(spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(accentPurple.opacity(0.08))
+                                .frame(width: 72, height: 72)
+
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 32, weight: .light))
+                                .foregroundColor(accentPurple.opacity(0.6))
+                        }
+
+                        Text("Upload a full-body photo to try on outfits")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
+            .frame(maxHeight: 260)
+        }
+    }
+}
+
+// MARK: - Error Banner
+struct TryOnErrorBanner: View {
+    let message: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.orange)
+                .font(.system(size: 14))
+            Text(message)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.red.opacity(0.8))
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.red.opacity(0.06))
+        )
+    }
+}
+
+// MARK: - How It Works Section
+struct TryOnHowItWorksSection: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Text("How It Works")
+                .font(.system(size: 20, weight: .bold))
+
+            HStack(spacing: 0) {
+                TryOnStepColumn(
+                    number: "1",
+                    icon: "camera.fill",
+                    title: "Upload Photo",
+                    subtitle: "Upload a clear\nfull-body photo"
+                )
+
+                TryOnStepColumn(
+                    number: "2",
+                    icon: "wand.and.stars",
+                    title: "AI Processing",
+                    subtitle: "Our AI fits the outfit\nto your body"
+                )
+
+                TryOnStepColumn(
+                    number: "3",
+                    icon: "tshirt.fill",
+                    title: "See The Result",
+                    subtitle: "View your look from\nmultiple angles"
+                )
+            }
+        }
+    }
+}
+
+// MARK: - Step Column
+struct TryOnStepColumn: View {
+    let number: String
+    let icon: String
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack(alignment: .topTrailing) {
+                Circle()
+                    .fill(Color(.systemGray5))
+                    .frame(width: 56, height: 56)
+                    .overlay {
+                        Image(systemName: icon)
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundColor(.primary)
+                    }
+            }
+
+            Text(title)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.primary)
+                .multilineTextAlignment(.center)
+
+            Text(subtitle)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Tips Section
+struct TryOnTipsSection: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Tips for Best Results")
+                .font(.system(size: 18, weight: .bold))
+
+            HStack(alignment: .center, spacing: 16) {
+                // Tips list
+                VStack(alignment: .leading, spacing: 14) {
+                    TryOnTipRow(icon: "figure.stand", text: "Stand straight in a well-lit area")
+                    TryOnTipRow(icon: "person.fill", text: "Make sure your full body is visible")
+                    TryOnTipRow(icon: "camera.metering.none", text: "Avoid blurry or dark photos")
+                }
+
+                Spacer()
+
+                // Body silhouette illustration
+                Image("BodySilhouette")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 160)
+                    .padding(.trailing, 4)
+            }
+        }
+        .padding(20)
+        .background {
+            Group {
+                if #available(iOS 26.0, *) {
+                    Color.clear
+                } else {
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color(UIColor.secondarySystemBackground))
+                }
+            }
+        }
+        .if26GlassEffect(cornerRadius: 20)
+    }
+}
+
+// MARK: - Tip Row
+struct TryOnTipRow: View {
+    let icon: String
+    let text: String
+
+    private let accentPurple = Color.brandPurple
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(accentPurple)
+                .frame(width: 24, height: 24)
+
+            Text(text)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.primary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+// MARK: - Bottom CTA Section
+struct TryOnBottomCTASection: View {
+    @Binding var showNoPhotoError: Bool
+    let onTryOn: () -> Void
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Button(action: onTryOn) {
+                Text("Try This Outfit")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.brandPurple)
+                    .cornerRadius(30)
+            }
+            .padding(.horizontal, 20)
+
+            // Inline hint shown when tapping without photo
+            if showNoPhotoError {
+                Text("Please upload a photo first")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.orange)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                            withAnimation { showNoPhotoError = false }
+                        }
+                    }
+            }
+        }
+        .padding(.horizontal, 0)
+        .padding(.bottom, 8)
+    }
+}
+
+// MARK: - Processing Overlay
+struct TryOnProcessingOverlay: View {
+    let processingStage: String
+    let onCancel: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.55)
+                .ignoresSafeArea()
+                .transition(.opacity)
+
+            VStack(spacing: 24) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .scaleEffect(1.8)
+                    .padding(.bottom, 4)
+
+                Text(processingStage)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+
+                Text("This usually takes 30\u{2013}60 seconds")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.65))
+
+                Button(action: onCancel) {
+                    Text("Cancel")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.9))
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 12)
+                        .background(
+                            Capsule()
+                                .stroke(Color.white.opacity(0.4), lineWidth: 1)
+                        )
+                }
+                .padding(.top, 4)
+            }
+            .padding(.horizontal, 40)
+            .padding(.vertical, 36)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color(.systemGray6).opacity(0.22))
+                    .background(
+                        RoundedRectangle(cornerRadius: 24)
+                            .fill(.ultraThinMaterial)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+            )
+            .transition(.scale.combined(with: .opacity))
+        }
+    }
+}
+
+// MARK: - Info Sheet
+struct TryOnInfoSheet: View {
+    let onDismiss: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("How Virtual Try-On Works")
+                        .font(.system(size: 22, weight: .bold))
+
+                    Text("Our AI-powered virtual try-on lets you see how an outfit looks on your body before renting it.")
+                        .font(.system(size: 15))
+                        .foregroundColor(.secondary)
+
+                    VStack(alignment: .leading, spacing: 16) {
+                        TryOnInfoItem(
+                            icon: "camera.fill",
+                            title: "Upload a Photo",
+                            description: "Take or upload a clear, full-body photo of yourself standing straight."
+                        )
+                        TryOnInfoItem(
+                            icon: "wand.and.stars",
+                            title: "AI Processing",
+                            description: "Our AI analyzes your body shape and fits the selected outfit onto your photo."
+                        )
+                        TryOnInfoItem(
+                            icon: "tshirt.fill",
+                            title: "See Results",
+                            description: "View the result showing how the outfit would look on you."
+                        )
+                        TryOnInfoItem(
+                            icon: "lock.shield.fill",
+                            title: "Privacy",
+                            description: "Your photos are processed securely and are not shared with anyone."
+                        )
+                    }
+                }
+                .padding(24)
+            }
+            .navigationTitle("About Try-On")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done", action: onDismiss)
+                        .foregroundColor(.primary)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+}
+
+// MARK: - Info Item
+struct TryOnInfoItem: View {
+    let icon: String
+    let title: String
+    let description: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18))
+                .foregroundColor(.primary)
+                .frame(width: 36, height: 36)
+                .background(Color.primary.opacity(0.10))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 15, weight: .bold))
+                Text(description)
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

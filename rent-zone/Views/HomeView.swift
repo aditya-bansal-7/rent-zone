@@ -140,7 +140,9 @@ struct HomeView: View {
                     if let favorites = appStore.userStore.currentUser?.favouriteProducts {
                         favoriteProductIds = Set(favorites)
                     }
-                    if allProducts.isEmpty {
+                }
+                .onAppear {
+                    Task {
                         await appStore.productStore.fetchItems()
                     }
                 }
