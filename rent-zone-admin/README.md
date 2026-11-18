@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rent Zone Marketplace Studio
 
-## Getting Started
+The Rent Zone admin web app is the operations workspace for the Rent Zone fashion rental marketplace. It connects to the Express API in `rent-zone-backend` for sign-in, authorization, dashboard data, and marketplace management.
 
-First, run the development server:
+## Run locally
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Start the backend from `rent-zone-backend` and make sure its environment and database are configured. By default, the API runs at `http://localhost:3000`.
+2. In this directory, copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_API_URL` if the backend is hosted somewhere other than the default.
+3. Install dependencies and start the web app:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+   ```bash
+   pnpm install
+   pnpm dev
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. Open the URL printed by Next.js. If the API already occupies port 3000, Next.js will choose another available port.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Sign-in uses the backend `POST /api/auth/login` endpoint and checks administrator access through `GET /api/admin/me`. Admin-only API routes remain protected by the backend; the web app's route proxy is only a navigation convenience.
 
-## Learn More
+## Configuration
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Default | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:3000/api` | Base URL for the Rent Zone backend API |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Set this variable to the backend's public API URL in deployed environments. The API URL is public browser configuration and must not contain credentials or secrets.

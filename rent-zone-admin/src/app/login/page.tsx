@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShirtIcon, Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, Eye, EyeOff, Lock, Mail, ShirtIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-
 import { auth } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -15,83 +15,117 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setLoading(true);
     setError("");
 
     try {
       await auth.login(email, password);
-      // Verify admin status
       await auth.getMe();
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Invalid credentials.");
+      router.replace("/dashboard");
+    } catch (err: unknown) {
+      auth.logout();
+      const message = err instanceof Error ? err.message : "Unable to sign in. Please try again.";
+      setError(
+        message.toLowerCase().includes("admin access")
+          ? "This account does not have administrator access."
+          : message
+      );
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-violet-50 flex items-center justify-center p-4">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-100 rounded-full opacity-40 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-100 rounded-full opacity-40 blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-50 rounded-full opacity-30 blur-3xl" />
-      </div>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#fbfaff] p-5 text-[#211936] sm:p-8">
+      <div className="pointer-events-none absolute -left-44 top-[-100px] h-[450px] w-[450px] rounded-full bg-violet-200/50 blur-[100px]" />
+      <div className="pointer-events-none absolute -bottom-48 -right-36 h-[500px] w-[500px] rounded-full bg-fuchsia-100/70 blur-[110px]" />
 
-      <div className="relative w-full max-w-md">
-        {/* Card */}
-        <div className="bg-white rounded-2xl border border-purple-100 shadow-modal p-8">
-          {/* Logo */}
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg mb-4">
-              <ShirtIcon className="w-7 h-7 text-white" />
+      <Link
+        href="/"
+        className="absolute left-5 top-6 inline-flex items-center gap-2 text-sm font-medium text-[#797185] transition hover:text-[#7043cf] sm:left-8 sm:top-8"
+      >
+        <ArrowLeft size={16} /> Back to Rent Zone
+      </Link>
+
+      <div className="relative w-full max-w-[460px] py-16">
+        <div className="rounded-[28px] border border-[#eee8f7] bg-white p-7 shadow-[0_28px_90px_-42px_rgba(75,48,119,0.32)] sm:p-10">
+          <div className="mb-8">
+            <div className="mb-7 flex h-12 w-12 items-center justify-center rounded-[17px] bg-gradient-to-br from-[#8b5cf6] to-[#6d36d8] text-white shadow-lg shadow-violet-200/80">
+              <ShirtIcon size={23} strokeWidth={2.2} />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-            <p className="text-sm text-gray-500 mt-1">Sign in to the Rent Zone Admin Console</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.17em] text-[#8054dc]">
+              Your Rent Zone workspace
+            </p>
+            <h1 className="mt-2 text-[34px] font-semibold tracking-[-0.06em] text-[#211936]">
+              Welcome back
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-[#81788f]">
+              Sign in to keep your marketplace moving.
+            </p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-5">
             {error && (
-              <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">
-                <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
+              <div
+                role="alert"
+                className="flex items-start gap-2.5 rounded-xl border border-red-100 bg-red-50 p-3.5 text-sm text-red-700"
+              >
+                <AlertCircle size={17} className="mt-0.5 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">Email Address</label>
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-semibold text-[#40384e]">
+                Email address
+              </label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a098ac]" />
                 <input
+                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@rentzone.com"
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   required
-                  className={cn("form-input pl-9", error && "border-red-300 focus:border-red-400")}
+                  className={cn(
+                    "w-full rounded-xl border border-[#eae5f0] bg-[#fdfcff] py-3 pl-11 pr-4 text-sm text-[#332a43] outline-none transition placeholder:text-[#b2abba] focus:border-[#a98be7] focus:bg-white focus:ring-4 focus:ring-[#8b5cf6]/10",
+                    error && "border-red-300 focus:border-red-400 focus:ring-red-100"
+                  )}
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-semibold text-[#40384e]">
+                Password
+              </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a098ac]" />
                 <input
+                  id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
+                  autoComplete="current-password"
                   required
-                  className={cn("form-input pl-9 pr-10", error && "border-red-300 focus:border-red-400")}
+                  className={cn(
+                    "w-full rounded-xl border border-[#eae5f0] bg-[#fdfcff] py-3 pl-11 pr-12 text-sm text-[#332a43] outline-none transition placeholder:text-[#b2abba] focus:border-[#a98be7] focus:bg-white focus:ring-4 focus:ring-[#8b5cf6]/10",
+                    error && "border-red-300 focus:border-red-400 focus:ring-red-100"
+                  )}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#a098ac] transition hover:text-[#6f43c8]"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -101,38 +135,27 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className={cn(
-                "w-full py-2.5 rounded-lg font-medium text-sm text-white transition-all duration-200",
-                loading
-                  ? "bg-purple-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 shadow-sm hover:shadow-md"
-              )}
+              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#8250e8] to-[#713bd7] py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-200/70 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-violet-200/80 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Signing in...
-                </span>
-              ) : "Sign in to Admin Console"}
+              {loading && (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              )}
+              {loading ? "Signing in..." : "Sign in to your workspace"}
             </button>
           </form>
 
-          {/* Hint */}
-          <div className="mt-6 p-3 bg-purple-50 rounded-lg">
-            <p className="text-xs text-purple-600 font-medium text-center">
-              Demo credentials: admin@rentzone.com / admin123
+          <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-[#f8f5fd] p-3.5">
+            <Lock size={14} className="mt-0.5 shrink-0 text-[#7950d8]" />
+            <p className="text-xs leading-5 text-[#777084]">
+              This workspace is for authorized Rent Zone administrators. Your account is verified securely when you sign in.
             </p>
           </div>
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-gray-400 mt-4">
-          © 2024 Rent Zone. Admin access only.
+        <p className="mt-6 text-center text-xs text-[#9991a4]">
+          © {new Date().getFullYear()} Rent Zone
         </p>
       </div>
-    </div>
+    </main>
   );
 }

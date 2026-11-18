@@ -1,21 +1,33 @@
 import { api } from './api';
 
+interface LoginResponse {
+  user: {
+    id: string;
+    name: string;
+    email?: string;
+  };
+  accessToken: string;
+  refreshToken: string;
+}
+
 export const auth = {
   login: async (email: string, password: string) => {
-    const res = await api.post<{ user: any; accessToken: string; refreshToken: string }>('/auth/login', { email, password });
-    
-    if (res.accessToken) {
-      localStorage.setItem('admin_token', res.accessToken);
-      // Set a cookie so the Next.js middleware knows we are logged in
-      document.cookie = `admin_session=${res.accessToken}; max-age=86400; path=/`;
+    const res = await api.post<LoginResponse>('/auth/login', { email, password });
+
+    if (!res.accessToken) {
+      throw new Error('The server did not return an access token.');
     }
-    
+
+    localStorage.setItem('admin_token', res.accessToken);
+    const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `admin_session=${res.accessToken}; Max-Age=900; Path=/; SameSite=Lax${secure}`;
+
     return res;
   },
 
   logout: () => {
     localStorage.removeItem('admin_token');
-    document.cookie = "admin_session=; max-age=0; path=/";
+    document.cookie = "admin_session=; Max-Age=0; Path=/; SameSite=Lax";
   },
 
   getToken: () => {
@@ -25,5 +37,5 @@ export const auth = {
 
   getMe: async () => {
     return await api.get<{ userId: string; email: string; name: string }>('/admin/me');
-  }
+  },
 };
